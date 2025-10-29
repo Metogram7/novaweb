@@ -99,7 +99,8 @@ recognition.onresult=async(e)=>{ const text=e.results[0][0].transcript; logMessa
 canvas.addEventListener("click",()=>{ if(recognition && !talking) recognition.start(); });
 
 // --- Backend ---
-const API_URL="http://localhost:5000/api/chat";
+const API_URL = "https://nova-chat-d50f.onrender.com/api/chat";
+
 async function sendMessage(message){ try{ const response=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:"demoUser",currentChat:"default",message:message,userInfo:{}})}); const data=await response.json(); await speakAndLog(data.response);}catch(err){console.error(err); await speakAndLog("❌ Sunucuya bağlanılamıyor.");} }
 
 // --- Konuşma Sentezi (İnsan gibi) ---
