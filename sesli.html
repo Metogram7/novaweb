@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NoVa — Mobil Uyumluluklu Sesli Mod</title>
+<title>NoVa — Canlı Yüzlü Mobil Sesli Mod</title>
 <style>
 body { margin:0; background:black; font-family:"Segoe UI",sans-serif; overflow:hidden; height:100vh; }
 #canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
@@ -37,12 +37,11 @@ const ctx = canvas.getContext("2d");
 let width = canvas.width = window.innerWidth;
 let height = canvas.height = window.innerHeight;
 let waves = new Array(128).fill(0);
-let talking = false;
-let novaTalking = false;
-let volumeLevel = 0;
-let freqData = new Uint8Array(0);
+let talking = false, novaTalking = false, volumeLevel = 0;
 let particles = [];
-let flashOpacity = 0;
+
+// --- Göz kırpma ---
+let blinkTimer = 0, blinkDuration = 150, eyesClosed = false;
 
 // --- Particle sınıfı ---
 class Particle{
@@ -51,36 +50,48 @@ class Particle{
 }
 
 // --- Renk fonksiyonu ---
-function getColor(f,opacity){ if(f<0.33) return `rgba(128,0,128,${opacity})`; else if(f<0.66) return `rgba(0,200,255,${opacity})`; else return `rgba(150,255,255,${opacity})`; }
+function getColor(f,opacity){ if(f<0.33) return `rgba(128,0,255,${opacity})`; else if(f<0.66) return `rgba(0,200,255,${opacity})`; else return `rgba(150,255,255,${opacity})`; }
 
 // --- Canvas çizim ---
 function draw(){
   ctx.clearRect(0,0,width,height);
   let bg = ctx.createLinearGradient(0,0,width,height); bg.addColorStop(0,"#000011"); bg.addColorStop(1,"#000033"); ctx.fillStyle=bg; ctx.fillRect(0,0,width,height);
 
-  if(flashOpacity>0){ ctx.fillStyle=`rgba(255,255,255,${flashOpacity})`; ctx.fillRect(0,0,width,height); flashOpacity-=0.05; }
+  const cx=width/2, cy=height/2, baseRadius=Math.min(width,height)/6;
 
-  const cx=width/2, cy=height/2, baseRadius=120;
-  ctx.beginPath(); ctx.arc(cx,cy,baseRadius,0,Math.PI*2); ctx.fillStyle="rgb(200,0,0)"; ctx.fill();
-  ctx.fillStyle="white"; ctx.font="bold 80px Segoe Script"; ctx.textAlign="center"; ctx.fillText("NoVa", cx, cy+25);
+  // --- Göz kırpma ---
+  if(blinkTimer<=0){ eyesClosed=true; blinkTimer=2000 + Math.random()*3000; }
+  if(eyesClosed){ ctx.beginPath(); ctx.ellipse(cx - baseRadius*0.6, cy - baseRadius*0.4, 10, 2, 0, 0, Math.PI*2); ctx.ellipse(cx + baseRadius*0.6, cy - baseRadius*0.4, 10, 2, 0, 0, Math.PI*2); ctx.fillStyle="#00c8ff"; ctx.fill(); setTimeout(()=>{eyesClosed=false;}, blinkDuration); }
+  else{ ctx.beginPath(); ctx.arc(cx - baseRadius*0.6, cy - baseRadius*0.4, 10, 0, Math.PI*2); ctx.arc(cx + baseRadius*0.6, cy - baseRadius*0.4, 10, 0, Math.PI*2); ctx.fillStyle="#00c8ff"; ctx.fill(); }
+  blinkTimer--;
 
+  // --- Ağız hareketi ---
+  const mouthY = cy + baseRadius*0.4;
+  const mouthWidth = baseRadius*0.6;
+  const mouthHeight = novaTalking ? 8 + Math.sin(Date.now()/60)*10 : 4;
+  ctx.beginPath();
+  ctx.ellipse(cx, mouthY, mouthWidth/2, mouthHeight, 0, 0, Math.PI*2);
+  ctx.fillStyle="rgba(0,200,255,0.7)"; ctx.fill();
+
+  // --- Çevresel halkalar ---
   for(let i=0;i<waves.length;i++){
-    const angle=(Math.PI*2/waves.length)*i; let len=baseRadius+waves[i]; const f=i/waves.length;
-    let opacity=0.4; if(talking) opacity=0.4+Math.min(1,volumeLevel/100); if(novaTalking) opacity=0.4+0.6*Math.sin(Date.now()/300+i/5);
+    const angle=(Math.PI*2/waves.length)*i;
+    let len=baseRadius+waves[i];
+    const f=i/waves.length;
+    let opacity=0.4;
+    if(talking) opacity=0.4+Math.min(1,volumeLevel/100);
+    if(novaTalking) opacity=0.4+0.6*Math.sin(Date.now()/300+i/5);
     const color=getColor(f,opacity);
-    let modRadius = baseRadius + Math.sin(Date.now()/500 + i/10)*10;
-    const x1=cx+Math.cos(angle)*modRadius; const y1=cy+Math.sin(angle)*modRadius;
+    const x1=cx+Math.cos(angle)*baseRadius; const y1=cy+Math.sin(angle)*baseRadius;
     const x2=cx+Math.cos(angle)*len; const y2=cy+Math.sin(angle)*len;
-    ctx.strokeStyle=color; ctx.shadowBlur=10; ctx.shadowColor=color; ctx.lineWidth=Math.max(2,waves[i]/15+2);
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    if((talking&&Math.random()<0.05)||(novaTalking&&Math.random()<0.03)) particles.push(new Particle(x2,y2,color,Math.random()*3+1,(Math.random()-0.5)*2,(Math.random()-0.5)*2,20+Math.random()*20));
-    if(talking) waves[i]+=((Math.random()*volumeLevel*2.5)-waves[i])*0.3; else if(novaTalking) waves[i]+=((Math.random()*20)-waves[i])*0.1; else waves[i]+=(0-waves[i])*0.05;
-    if(waves[i]>40 && Math.random()<0.02) particles.push(new Particle(cx+Math.cos(angle)*(len+10), cy+Math.sin(angle)*(len+10), color, Math.random()*3+1,(Math.random()-0.5)*2,(Math.random()-0.5)*2,15+Math.random()*10));
-    if(talking && volumeLevel>60 && Math.random()<0.02){ document.body.style.transform=`translate(${Math.random()*10-5}px,${Math.random()*10-5}px)`; flashOpacity=0.5; }
+    ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    if(talking) waves[i]+=((Math.random()*volumeLevel*2.5)-waves[i])*0.3;
+    else if(novaTalking) waves[i]+=((Math.random()*20)-waves[i])*0.1;
+    else waves[i]+=(0-waves[i])*0.05;
   }
 
   for(let i=particles.length-1;i>=0;i--){ particles[i].update(); if(particles[i].life<=0) particles.splice(i,1); }
-  document.body.style.transform=`translate(0px,0px)`;
+
   requestAnimationFrame(draw);
 }
 draw();
@@ -93,76 +104,86 @@ function logMessage(sender,text){ const div=document.createElement("div"); div.c
 // --- Mikrofon ---
 let audioContext, analyser, source;
 async function startMicVisualizer(){
-  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-  audioContext = new AudioContext();
-  source = audioContext.createMediaStreamSource(stream);
-  analyser = audioContext.createAnalyser();
-  analyser.fftSize=256; freqData=new Uint8Array(analyser.frequencyBinCount);
-  source.connect(analyser);
-  talking=true;
-  function updateVolume(){
-    analyser.getByteFrequencyData(freqData);
-    let sum=0; for(let i=0;i<freqData.length;i++) sum+=freqData[i]; volumeLevel=sum/freqData.length;
-    if(talking) requestAnimationFrame(updateVolume);
-  }
-  updateVolume();
-  return stream;
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    audioContext=new AudioContext();
+    source=audioContext.createMediaStreamSource(stream);
+    analyser=audioContext.createAnalyser();
+    analyser.fftSize=256; freqData=new Uint8Array(analyser.frequencyBinCount);
+    source.connect(analyser); talking=true;
+    function updateVolume(){ analyser.getByteFrequencyData(freqData); let sum=0; for(let i=0;i<freqData.length;i++)sum+=freqData[i]; volumeLevel=sum/freqData.length; if(talking)requestAnimationFrame(updateVolume);}
+    updateVolume(); return stream;
+  }catch(err){ logMessage("system","🎙️ Mikrofon erişimi reddedildi veya desteklenmiyor."); }
 }
 
 // --- Speech Recognition ---
 let recognition;
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 if(SpeechRecognition){
-  recognition = new SpeechRecognition();
-  recognition.lang = "tr-TR";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.onstart = ()=> logMessage("system","Dinleniyor...");
-  recognition.onend = ()=> { logMessage("system","Dinleme Sonlandı."); talking=false; if(audioContext) audioContext.close(); };
-  recognition.onresult = async(e)=>{ const text = e.results[0][0].transcript; logMessage("user",text); await sendMessage(text); };
-} else { logMessage("system","❌ Konuşma tanıma bu tarayıcıda desteklenmiyor."); }
+  recognition=new SpeechRecognition();
+  recognition.lang="tr-TR";
+  recognition.onstart=()=>logMessage("system","Dinleniyor...");
+  recognition.onend=()=>{ logMessage("system","Dinleme bitti."); talking=false; if(audioContext)audioContext.close(); };
+  recognition.onresult=async(e)=>{ const text=e.results[0][0].transcript; logMessage("user",text); await sendMessage(text); };
+}else logMessage("system","❌ Bu tarayıcıda sesli tanıma yok.");
 
 // --- Backend ---
-const API_URL = "https://nova-chat-d50f.onrender.com/api/chat";
+const API_URL="https://nova-chat-d50f.onrender.com/api/chat";
 async function sendMessage(message){
   try{
-    const response = await fetch(API_URL,{
+    const response=await fetch(API_URL,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({userId:"demoUser",currentChat:"default",message:message,userInfo:{}})
     });
-    const data = await response.json();
+    const data=await response.json();
     await speakAndLog(data.response);
-  } catch(err){
-    console.error(err);
-    await speakAndLog("❌ Sunucuya bağlanılamıyor.");
-  }
+  }catch(err){ await speakAndLog("❌ Sunucuya bağlanılamıyor."); }
 }
 
-// --- Konuşma Sentezi ---
+// --- Konuşma ve ağız animasyonu ---
 function speakAndLog(text){
   return new Promise(resolve=>{
     novaTalking=true;
-    const cleanText=text.replace(/[^\w\s.,?!çğıöşüÇĞİÖŞÜ]/g,"");
-    const utter = new SpeechSynthesisUtterance(cleanText);
-    utter.lang="tr-TR";
+    const sentences = text.split(/([.!?])/).reduce((acc,val,idx,arr)=>{
+      if(/[.!?]/.test(val)) acc[acc.length-1]+=val;
+      else acc.push(val);
+      return acc;
+    }, []);
+
     const div=document.createElement("div");
     div.classList.add("message","nova");
     terminal.appendChild(div);
     const breathSound=document.getElementById("breathSound");
-    let words=text.split(" "), idx=0;
-    function speakNextWord(){
-      if(idx<words.length){
-        div.textContent+=(idx>0?" ":"")+words[idx];
+
+    let idx=0;
+    function speakNextSentence(){
+      if(idx<sentences.length){
+        let s=sentences[idx].trim();
+        if(s.length===0){ idx++; speakNextSentence(); return; }
+
+        div.textContent += (idx>0?" ":"") + s;
         terminal.scrollTop=terminal.scrollHeight;
+
+        const utter = new SpeechSynthesisUtterance(s);
+        utter.lang="tr-TR"; 
+        utter.rate=1; 
+        utter.pitch=0.9; // Erkek sesi
+        const voices = window.speechSynthesis.getVoices();
+        utter.voice = voices.find(v=>v.lang.startsWith("tr") && v.name.toLowerCase().includes("male")) 
+                      || voices.find(v=>v.lang.startsWith("tr")) || null;
+
+        utter.onstart = ()=>{ novaTalking=true; };
+        utter.onend = ()=>{
+          setTimeout(()=>{ novaTalking=false; idx++; speakNextSentence(); }, 300);
+        };
+
         if(Math.random()<0.18){ breathSound.currentTime=0; breathSound.play(); }
-        utter.pitch=1+Math.random()*0.1-0.05;
-        utter.rate=0.9+Math.random()*0.2;
-        idx++; setTimeout(speakNextWord,120+Math.random()*150);
+        window.speechSynthesis.speak(utter);
       } else { novaTalking=false; resolve(); }
     }
-    speakNextWord();
-    window.speechSynthesis.speak(utter);
+
+    speakNextSentence();
   });
 }
 
@@ -171,10 +192,7 @@ document.getElementById("startBtn").addEventListener("click", async()=>{
   try{
     await startMicVisualizer();
     if(recognition) recognition.start();
-  } catch(e){
-    console.error(e);
-    logMessage("system","Mikrofon erişimi reddedildi.");
-  }
+  }catch(e){ console.error(e); logMessage("system","Mikrofon erişimi reddedildi."); }
 });
 </script>
 </body>
