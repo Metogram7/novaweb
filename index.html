@@ -243,8 +243,6 @@ button#stopBtn:hover { background: #660303; }
   z-index: 2000;
 }
 
-/* --- Güncelleme Banner --- */
-/* --- Güncelleme Banner Ortada --- */
 #updateBanner {
   position: fixed;
   top: 50%;
@@ -273,9 +271,7 @@ button#stopBtn:hover { background: #660303; }
   cursor: pointer;
 }
 
-#updateBanner button:hover {
-  background: #0088cc;
-}
+#updateBanner button:hover { background: #0088cc; }
 
 #updateProgress {
   width: 0%;
@@ -315,9 +311,7 @@ button#stopBtn:hover { background: #660303; }
   cursor: pointer;
 }
 
-#changelogScreen button:hover {
-  background: #0088cc;
-}
+#changelogScreen button:hover { background: #0088cc; }
 
 /* --- ANİMASYON --- */
 @keyframes fadeIn {
@@ -347,8 +341,7 @@ img { border-radius: 30px; font-size: 40px; }
 </head>
 <body>
 
-<button style="color: #000000;background-color: #8280ff;color: #ffffff;" id="menuToggle">☰ Menü</button>
-
+<button style="color: #000000;background-color: #0099cc;" id="menuToggle">☰ Menü</button>
 <div id="updateBanner">
   🚀 Nova'nın yeni sürümü var! <span id="latestVersionText"></span>
   <br>
@@ -356,11 +349,12 @@ img { border-radius: 30px; font-size: 40px; }
   <div id="updateProgress"></div>
 </div>
 
+<!-- Changelog Ekranı -->
 <div id="changelogScreen" style="display:none;">
   <div id="changelogContent00">
-    <h1>Yeni Güncelleme !</h1>
-    <h2>NoVa V4.1 </h2>
-    <h4> Güncelleme Ekranı<br>Hatalar Düzeltildi</h4>
+    <h1>Yeni Güncelleme!</h1>
+    <h2>NoVa V4.3</h2>
+    <h4>Güncelleme Ekranı<br>Hatalar Düzeltildi</h4>
   </div>
   <button id="changelogOkBtn">Tamam</button>
 </div>
@@ -565,8 +559,8 @@ quickBtns.querySelectorAll("button").forEach(b=>{ b.addEventListener("click", e=
 
 window.addEventListener("DOMContentLoaded", ()=>{ loadChat(currentChat); renderMenu(); });
 // ----------------------------------------------------------------------------------------------
-const CURRENT_VERSION = "4.1";
-const LATEST_VERSION = "4.2";
+const CURRENT_VERSION = "4.2";
+const LATEST_VERSION = "4.3";
 
 const updateBanner = document.getElementById("updateBanner");
 const updateBtn = document.getElementById("updateBtn");
@@ -594,19 +588,14 @@ updateBtn.addEventListener("click", () => {
   let progress = 0;
 
   const interval = setInterval(() => {
-    progress += Math.random()*3; // daha yavaş ve uzun
+    progress += Math.random()*3;
     if(progress >= 100) progress = 100;
     updateProgress.style.width = progress + "%";
 
     if(progress === 100){
       clearInterval(interval);
-      // Kullanıcının artık tekrar görmemesi için işaretle
       localStorage.setItem("nova_updated", "true");
-
-      // Bannerı gizle
       updateBanner.style.display = "none";
-
-      // Changelog ekranını göster
       changelogScreen.style.display = "block";
     }
   }, 150);
@@ -618,8 +607,6 @@ changelogOkBtn.addEventListener("click", () => {
 });
 
 window.addEventListener("DOMContentLoaded", checkForUpdate);
-
-
 
 </script>
 
