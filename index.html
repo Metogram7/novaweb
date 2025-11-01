@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nova Chat — Tam Sürüm</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00bfff">
+
 <style>
 /* === GENEL === */
 body {
@@ -514,6 +517,15 @@ quickBtns.querySelectorAll("button").forEach(b=>{ b.addEventListener("click", e=
 
 window.addEventListener("DOMContentLoaded", ()=>{ loadChat(currentChat); renderMenu(); });
 </script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js")
+    .then(() => console.log("Service Worker kayıt oldu"))
+    .catch(err => console.log("Service Worker hatası:", err));
+}
+</script>
+
 
 </body>
 </html>
