@@ -311,6 +311,21 @@ button#stopBtn:hover { background: #660303; }
   cursor: pointer;
 }
 
+.voice-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  margin-top: 5px;
+  color: #00bcd4;
+  transition: 0.2s;
+}
+.voice-btn:hover {
+  transform: scale(1.2);
+  color: #4dd0e1;
+}
+
+
 #changelogScreen button:hover { background: #0088cc; }
 
 /* --- ANİMASYON --- */
@@ -430,7 +445,7 @@ const emojiPicker = document.getElementById("emojiPicker");
 const newChatBtn = document.getElementById("newChatBtn");
 const themeToggle = document.getElementById("themeToggle");
 const toast = document.getElementById("toast");
-const BACKEND_URL = 'https://nova-chat-d50f.onrender.com/api';
+const BACKEND_URL = 'https://nova-chat-d50f.onrender.com';
 
 menuToggle.onclick = ()=>{ sideMenu.classList.toggle("active"); };
 
@@ -518,14 +533,76 @@ function addMessage(text,sender,container=null){
 }
 
 // Yazma efekti
-async function addTypingMessage(text,sender,container=null,delay=5){
+// Mesajları animasyonlu şekilde eklemek için kullanılan fonksiyon
+async function addTypingMessage(text, sender, container = null, delay = 5) {
   const parent = container || document.getElementById(currentChat);
-  const div=document.createElement("div"); div.className="msg "+sender;
-  const timestamp=document.createElement("div"); timestamp.className="timestamp"; timestamp.textContent=formatDate(new Date());
-  div.appendChild(timestamp); parent.appendChild(div); parent.scroll({top: parent.scrollHeight, behavior:"smooth"});
-  for(let i=0;i<text.length;i++){ div.innerHTML = sanitize(text.slice(0,i+1)); parent.scroll({top: parent.scrollHeight, behavior:"smooth"}); await new Promise(r=>setTimeout(r,delay)); }
+
+  // Mesaj div'i oluştur
+  const div = document.createElement("div");
+  div.className = "msg " + sender;
+
+  // Zaman damgası
+  const timestamp = document.createElement("div");
+  timestamp.className = "timestamp";
+  timestamp.textContent = formatDate(new Date());
+  div.appendChild(timestamp);
+
+  // Mesaj içeriği
+  const content = document.createElement("div");
+  content.className = "message-content";
+  div.appendChild(content);
+
+  // Mesajı harf harf yaz
+  parent.appendChild(div);
+  parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
+
+  for (let i = 0; i < text.length; i++) {
+    content.innerHTML = sanitize(text.slice(0, i + 1));
+    parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
+    await new Promise((r) => setTimeout(r, delay));
+  }
+
+  // --- Sesli okuma butonu ---
+  if (sender === "nova") {
+    const voiceButton = document.createElement("button");
+    voiceButton.className = "voice-btn";
+    voiceButton.textContent = "🔉";
+    voiceButton.title = "Nova bu mesajı okusun";
+
+    voiceButton.onclick = () => {
+      const msgText = content.textContent.replace(
+        /[^\w\s.,!?ğüşıöçĞÜŞİÖÇ]/g, ""
+      ); // Emoji ve sembolleri temizle
+      speakNova(msgText);
+    };
+
+    div.appendChild(voiceButton);
+  }
+
   return div;
 }
+
+// --- Nova konuşma fonksiyonu ---
+function speakNova(text) {
+  if (!window.speechSynthesis) {
+    alert("Tarayıcın sesli okuma özelliğini desteklemiyor.");
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "tr-TR";
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  // Nova'nın doğal sesi varsa onu seç
+  const voices = speechSynthesis.getVoices();
+  const turkishVoice = voices.find((v) => v.lang === "tr-TR");
+  if (turkishVoice) utterance.voice = turkishVoice;
+
+  speechSynthesis.cancel(); // Önceki sesi durdur
+  speechSynthesis.speak(utterance);
+}
+
 
 async function sendMessage(msg=null){
   if(sending) return;
@@ -578,7 +655,9 @@ const updated = localStorage.getItem("nova_updated");
 
 function checkForUpdate() {
   if(LATEST_VERSION !== CURRENT_VERSION && !updated){
-    updateBanner.style.display = "block"; // Bannerı göster
+  const el = document.getElementById("something");
+  if (el) el.style.display = "block";
+
   }
 }
 
