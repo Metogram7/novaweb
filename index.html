@@ -257,11 +257,11 @@ button#stopBtn:hover { background: #660303; }
   #sideMenu.active { transform: translateX(0); }
   #mainContent { flex: 1; width: 100%; margin-left: 0; }
   #inputArea { flex-direction: column; gap: 8px; }
-  #input, button.sendBtn, #stopBtn { width: 100%; }
+  #input, button.sendBtn, #stopBtn { width: 92%; border-radius: 150px; }
   header { font-size: 1.3rem; padding: 10px; }
   header img { height: 32px; }
 }
-img { border-radius: 30px; }
+img { border-radius: 30px; font-size: 40px; }
 @media (max-width: 600px) {
   header { font-size: 1.1rem; }
   .msg { font-size: 0.9rem; padding: 10px 12px; }
@@ -271,7 +271,7 @@ img { border-radius: 30px; }
 </head>
 <body>
 
-<button id="menuToggle">☰ Menü</button>
+<button style="color: #000000;background-color: #0099cc;" id="menuToggle">☰ Menü</button>
 
 <!-- Açılış Ekranı -->
 <div id="splash-screen" style="
@@ -279,12 +279,14 @@ img { border-radius: 30px; }
   background:#a9e2f0; display:flex; align-items:center; justify-content:center;
   flex-direction:column; z-index:9999;
 ">
-  <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" style="width:100px; animation:spin 2s linear infinite;">
+  <img src="icons/nova-192.png" style="width:100px; animation:spin 2s linear infinite;">
   <h2 style="color:white; margin-top:20px;">Nova Yükleniyor...</h2>
 </div>
 
 <div id="sideMenu">
-  <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="nova">
+<img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="nova"
+     style="width: 80%; max-width: 400px; height: auto; border-radius: 30px; display: block; margin: 0 auto;">
+
   <h3>💬 Nova Chat</h3>
   <button id="newChatBtn">➕ Yeni Sohbet</button>
   <div id="menu"></div>
@@ -481,4 +483,3 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
-
