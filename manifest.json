@@ -1,12 +1,19 @@
 {
-  "name": "Nova AI v4",
-  "short_name": "Nova AI",
+  "name": "Nova",
+  "short_name": "Nova",
   "description": "Nova Web — Yapay Zeka Asistanın",
   "start_url": "https://metogram7.github.io/novaweb/",
   "display": "standalone",
   "background_color": "#a9e2f0",
-  "theme_color": "#00bfff",
+  "theme_color": "#1e90ff",
+  "orientation": "portrait",
+  "scope": "/",
   "icons": [
+    {
+      "src": "ChatGPT Image 1 Kas 2025 12_57_42.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
     {
       "src": "ChatGPT Image 1 Kas 2025 12_57_42.png",
       "sizes": "192x192",
@@ -19,5 +26,3 @@
     }
   ]
 }
-
-
