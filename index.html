@@ -243,6 +243,49 @@ button#stopBtn:hover { background: #660303; }
   z-index: 2000;
 }
 
+/* --- Güncelleme Banner --- */
+#updateBanner {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: #fff;
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  display: none;
+  z-index: 3000;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+}
+
+#updateBanner button {
+  margin-top: 10px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #00bfff;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#updateBanner button:hover {
+  background: #0088cc;
+}
+
+#updateProgress {
+  width: 0%;
+  height: 6px;
+  background: #00ff00;
+  border-radius: 4px;
+  margin-top: 10px;
+  transition: width 0.3s;
+}
+
+
 /* --- ANİMASYON --- */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px);}
@@ -272,6 +315,14 @@ img { border-radius: 30px; font-size: 40px; }
 <body>
 
 <button style="color: #000000;background-color: #0099cc;" id="menuToggle">☰ Menü</button>
+
+<div id="updateBanner">
+  🚀 Yeni güncelleme var!
+  <br>
+  <button id="updateBtn">Güncelle</button>
+  <div id="updateProgress"></div>
+</div>
+
 
 <!-- Açılış Ekranı -->
 <div id="splash-screen" style="
@@ -471,6 +522,42 @@ emojiPicker.innerHTML=""; "😀😂😍😎🤔😢❤️🤖".split("").forEach
 quickBtns.querySelectorAll("button").forEach(b=>{ b.addEventListener("click", e=>{ e.preventDefault(); sendMessage(b.textContent); }); });
 
 window.addEventListener("DOMContentLoaded", ()=>{ loadChat(currentChat); renderMenu(); });
+// ----------------------------------------------------------------------------------------------
+const CURRENT_VERSION = "1.0.0";  // Mevcut sürüm
+const LATEST_VERSION = "1.0.1";   // Yeni sürüm (güncellendiğinde değiştir)
+
+const updateBanner = document.getElementById("updateBanner");
+const updateBtn = document.getElementById("updateBtn");
+const updateProgress = document.getElementById("updateProgress");
+
+// Versiyon kontrolü
+function checkForUpdate() {
+  if(LATEST_VERSION !== CURRENT_VERSION){
+    updateBanner.style.display = "block"; // Bannerı göster
+  }
+}
+
+// Güncelleme butonu
+updateBtn.addEventListener("click", async () => {
+  updateBtn.textContent = "Yükleniyor...";
+  let progress = 0;
+
+  // Progress bar simülasyonu
+  const interval = setInterval(() => {
+    progress += Math.random()*10; // rastgele dolma efekti
+    if(progress >= 100) progress = 100;
+    updateProgress.style.width = progress + "%";
+
+    if(progress === 100){
+      clearInterval(interval);
+      setTimeout(() => { window.location.reload(true); }, 500); // Yükleme bitti, sayfayı yenile
+    }
+  }, 100);
+});
+
+// Sayfa açıldığında kontrol et
+window.addEventListener("DOMContentLoaded", checkForUpdate);
+
 </script>
 
 <script>
