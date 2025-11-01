@@ -310,8 +310,49 @@ button#stopBtn:hover { background: #660303; }
   font-weight: bold;
   cursor: pointer;
 }
+.speak-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 6px;
+  font-size: 18px;
+  transition: 0.2s;
+}
 
-#changelogScreen button:hover { background: #0088cc; }
+.speak-btn:hover {
+  transform: scale(1.2);
+}
+#welcome-screen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  animation: fadeColors 6s ease-in-out infinite;
+  transition: opacity 0.6s ease;
+}
+
+#welcome-screen h1 {
+  font-size: 1.6em;
+  font-weight: 600;
+  background: linear-gradient(90deg, #1e90ff, #a855f7, #00ffff);
+  background-size: 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 4s linear infinite;
+}
+
+#welcome-screen img {
+  width: 60px;
+  margin-top: 10px;
+  opacity: 0.7;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0%; }
+  100% { background-position: 200%; }
+}
 
 /* --- ANİMASYON --- */
 @keyframes fadeIn {
@@ -352,13 +393,12 @@ img { border-radius: 30px; font-size: 40px; }
 <!-- Changelog Ekranı -->
 <div id="changelogScreen" style="display:none;">
   <div id="changelogContent00">
-    <h1>Yeni Güncelleme!</h1>
-    <h2>NoVa V4.3</h2>
-    <h4>Güncelleme Ekranı<br>Hatalar Düzeltildi</h4>
+    <h1 style="color: #00ff00;"> Yeni Güncelleme!</h1>
+    <h2>NoVa V4.4</h2>
+    <h4>Novanın yazdığı mesajların sonuna 🔉 butonu eklendi <br> Hatalar Düzeltildi </h4>
   </div>
   <button id="changelogOkBtn">Tamam</button>
 </div>
-
 
 <!-- Açılış Ekranı -->
 <div id="splash-screen" style="
@@ -403,16 +443,131 @@ img { border-radius: 30px; font-size: 40px; }
   <div id="emojiPicker"></div>
 </div>
 
+
+
+<script>
+// 🧠 Nova'nın mesaj alanı boş mu kontrol et
+function toggleWelcomeScreen() {
+  const chat = document.getElementById(currentChat);
+  const welcome = document.getElementById("welcome-screen");
+  if (!chat || !welcome) return;
+
+  if (chat.children.length === 0) {
+    welcome.style.display = "block";
+    welcome.style.opacity = "1";
+  } else {
+    welcome.style.opacity = "0";
+    setTimeout(() => welcome.style.display = "none", 500);
+  }
+}
+
+// Her mesaj eklenince çağır
+const oldAddMessage = addMessage;
+addMessage = function(text, sender, container = null) {
+  const msg = oldAddMessage(text, sender, container);
+  toggleWelcomeScreen();
+  return msg;
+};
+
+// Sayfa yüklendiğinde ilk kontrol
+window.addEventListener("load", toggleWelcomeScreen);
+</script>
+
+
 <div id="toast"></div>
 <script>
-// Açılış ekranı süresi
+// === Splash ekranı ===
 window.addEventListener('DOMContentLoaded', () => {
   setTimeout(()=>{
     document.getElementById('splash-screen').style.display='none';
-    document.getElementById('nova-widget').style.display='block';
   },2000);
 });
+
+// === Nova Sesli Okuma Sistemi ===
+function speakText(text) {
+  const cleanText = text
+    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
+    .replace(/[^\w\s.,!?ğüşöçıİĞÜŞÖÇ]/g, '')
+    .trim();
+
+  if (!cleanText) return;
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = "tr-TR";
+  utterance.rate = 1;
+  utterance.pitch = 1;
+
+  // Türkçe ses bulma (bazı tarayıcılarda gecikebilir)
+  const loadVoices = () => {
+    const voices = speechSynthesis.getVoices();
+    const trVoice = voices.find(v => v.lang === "tr-TR");
+    if (trVoice) utterance.voice = trVoice;
+    speechSynthesis.speak(utterance);
+  };
+
+  if (speechSynthesis.getVoices().length === 0) {
+    speechSynthesis.addEventListener("voiceschanged", loadVoices);
+  } else {
+    loadVoices();
+  }
+}
+
+// === Nova Mesajlarına Sesli Okuma Butonu ===
+// --- Sesli okuma butonu ekleme ---
+function addSpeechButton(div, text) {
+  const btn = document.createElement("button");
+  btn.textContent = "🔉";
+  btn.className = "speak-btn";
+  btn.title = "Mesajı sesli oku";
+
+  // --- Tıklama olayları ---
+  let isSpeaking = false;
+  const synth = window.speechSynthesis;
+  let utterance = null;
+
+  btn.addEventListener("click", () => {
+    // Eğer zaten konuşuyorsa durdur
+    if (isSpeaking) {
+      synth.cancel();
+      isSpeaking = false;
+      btn.textContent = "🔉";
+      return;
+    }
+
+    // Yeni okuma başlat
+    utterance = new SpeechSynthesisUtterance(cleanTextForSpeech(text));
+    utterance.lang = "tr-TR";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    synth.cancel(); // önceki sesleri iptal et
+    synth.speak(utterance);
+
+    btn.textContent = "⏸️";
+    isSpeaking = true;
+
+    // Konuşma bittiğinde butonu sıfırla
+    utterance.onend = () => {
+      isSpeaking = false;
+      btn.textContent = "🔉";
+    };
+  });
+
+  // Butonu mesaja ekle
+  div.appendChild(btn);
+}
+
+// --- Emojileri ve gereksiz karakterleri konuşmadan temizler ---
+function cleanTextForSpeech(text) {
+  return text
+    .replace(/[\p{Emoji_Presentation}\p{Emoji}\p{Extended_Pictographic}]/gu, "") // emoji temizle
+    .replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ\s.,!?]/g, "") // özel karakterleri temizle
+    .trim();
+}
+
+
 </script>
+
 
 <script>
 /* --- JavaScript kodu (hiç değiştirilmedi) --- */
@@ -510,22 +665,51 @@ function startNewChat(){ const newId = "chat_"+Date.now()+"_"+Math.floor(Math.ra
 
 newChatBtn.addEventListener("click", e=>{ e.preventDefault(); startNewChat(); });
 
-function addMessage(text,sender,container=null){
+// Normal mesaj ekleme
+function addMessage(text, sender, container = null) {
   const parent = container || document.getElementById(currentChat);
-  const div=document.createElement("div"); div.className="msg "+sender; div.innerHTML = sanitize(text);
-  const timestamp=document.createElement("div"); timestamp.className="timestamp"; timestamp.textContent=formatDate(new Date());
-  div.appendChild(timestamp); parent.appendChild(div); parent.scroll({top: parent.scrollHeight, behavior:"smooth"}); return div;
-}
+  const div = document.createElement("div");
+  div.className = "msg " + sender;
+  div.innerHTML = sanitize(text);
 
-// Yazma efekti
-async function addTypingMessage(text,sender,container=null,delay=5){
-  const parent = container || document.getElementById(currentChat);
-  const div=document.createElement("div"); div.className="msg "+sender;
-  const timestamp=document.createElement("div"); timestamp.className="timestamp"; timestamp.textContent=formatDate(new Date());
-  div.appendChild(timestamp); parent.appendChild(div); parent.scroll({top: parent.scrollHeight, behavior:"smooth"});
-  for(let i=0;i<text.length;i++){ div.innerHTML = sanitize(text.slice(0,i+1)); parent.scroll({top: parent.scrollHeight, behavior:"smooth"}); await new Promise(r=>setTimeout(r,delay)); }
+  const timestamp = document.createElement("div");
+  timestamp.className = "timestamp";
+  timestamp.textContent = formatDate(new Date());
+  div.appendChild(timestamp);
+  parent.appendChild(div);
+  parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
+
+  // Nova mesajlarına sesli okuma butonu ekle
+  if (sender === "nova") addSpeechButton(div, text);
+
   return div;
 }
+
+// Yazma efekti (Nova yazarken animasyonlu)
+async function addTypingMessage(text, sender, container = null, delay = 5) {
+  const parent = container || document.getElementById(currentChat);
+  const div = document.createElement("div");
+  div.className = "msg " + sender;
+
+  const timestamp = document.createElement("div");
+  timestamp.className = "timestamp";
+  timestamp.textContent = formatDate(new Date());
+  div.appendChild(timestamp);
+  parent.appendChild(div);
+  parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
+
+  for (let i = 0; i < text.length; i++) {
+    div.innerHTML = sanitize(text.slice(0, i + 1));
+    parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
+    await new Promise(r => setTimeout(r, delay));
+  }
+
+  // Nova mesajlarında sesli okuma butonu ekle
+  if (sender === "nova") addSpeechButton(div, text);
+
+  return div;
+}
+
 
 async function sendMessage(msg=null){
   if(sending) return;
@@ -559,8 +743,8 @@ quickBtns.querySelectorAll("button").forEach(b=>{ b.addEventListener("click", e=
 
 window.addEventListener("DOMContentLoaded", ()=>{ loadChat(currentChat); renderMenu(); });
 // ----------------------------------------------------------------------------------------------
-const CURRENT_VERSION = "4.2";
-const LATEST_VERSION = "4.3";
+const CURRENT_VERSION = "4.3";
+const LATEST_VERSION = "4.4";
 
 const updateBanner = document.getElementById("updateBanner");
 const updateBtn = document.getElementById("updateBtn");
