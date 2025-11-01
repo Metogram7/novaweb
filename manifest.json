@@ -2,7 +2,7 @@
   "name": "Nova",
   "short_name": "Nova",
   "description": "Nova Web — Yapay Zeka Asistanın",
-  "start_url": "/index.html",
+  "start_url": "https://metogram7.github.io/novaweb/",
   "display": "standalone",
   "background_color": "#a9e2f0",
   "theme_color": "#00bfff",
@@ -19,3 +19,4 @@
     }
   ]
 }
+
