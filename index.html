@@ -242,111 +242,119 @@ button#stopBtn:hover { background: #660303; }
   display: none;
   z-index: 2000;
 }
-
+/* Update Banner tam ortada */
 #updateBanner {
-  position: fixed;
+  display: none;
+  position: fixed;      /* Body’den bağımsız */
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background: #1a1a1a;
-  color: #fff;
-  padding: 20px 30px;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  display: none;
-  z-index: 5000;
-  text-align: center;
+  transform: translate(-50%, -50%); /* Hem yatay hem dikey ortala */
+  background: #1b1b1b;
+  border: 2px solid #00ffaa;
+  border-radius: 15px;
+  padding: 20px;
   width: 90%;
-  max-width: 400px;
+  max-width: 500px;
+  box-shadow: 0 0 20px #00ffaa55;
+  font-size: 17px;
+  z-index: 2000;       /* Yan menünün üstünde */
 }
 
-#updateBanner button {
-  margin-top: 15px;
-  padding: 12px 20px;
+
+/* Güncelleme butonu */
+/* Güncelleme Butonu */
+#updateBtn {
+  background: #00ffaa;
+  color: #000;
   border: none;
   border-radius: 10px;
-  background: #00bfff;
-  color: #fff;
-  font-weight: bold;
+  padding: 10px 25px;
+  margin-top: 10px;
+  font-weight: 600;
   cursor: pointer;
+  transition: 0.2s;
+}
+#updateBtn:hover {
+  background: #00dd99;
 }
 
-#updateBanner button:hover { background: #0088cc; }
-
+/* İlerleme Çubuğu */
 #updateProgress {
   width: 0%;
   height: 8px;
-  background: #00ff00;
-  border-radius: 4px;
-  margin-top: 15px;
-  transition: width 0.3s;
+  background: #00ffaa;
+  border-radius: 5px;
+  margin-top: 10px;
+  transition: width 0.1s;
 }
 
-/* Changelog ekranı */
+/* Changelog Ekranı (tam ekran, ortalanmış) */
 #changelogScreen {
+  display: none; /* Başlangıçta gizli */
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #1a1a1a;
-  color: #fff;
-  padding: 20px 30px;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  display: none;
-  z-index: 5000;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  justify-content: center; /* Yatay ortala */
+  align-items: center;     /* Dikey ortala */
+  z-index: 1000;
   text-align: center;
-  width: 90%;
-  max-width: 400px;
+  padding: 15px; /* Küçük ekranlar için boşluk */
+  box-sizing: border-box;
 }
 
-#changelogScreen button {
-  margin-top: 15px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 10px;
-  background: #00bfff;
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
+/* Changelog Kutusu */
+#changelogContent00 {
+  background: #1b1b1b;
+  border: 2px solid #00ffaa;
+  border-radius: 15px;
+  padding: 25px;
+  width: 90%;          /* Küçük ekranlarda taşmasın */
+  max-width: 450px;    /* Büyük ekranlarda sınırlı genişlik */
+  box-shadow: 0 0 25px #00ffaa55;
+  box-sizing: border-box;
 }
-.speak-btn {
-  background: none;
+
+/* Changelog Tamam Butonu */
+#changelogOkBtn {
+  margin-top: 20px;
+  background: #00ffaa;
+  color: #000;
   border: none;
+  padding: 10px 25px;
+  font-weight: 600;
+  border-radius: 10px;
   cursor: pointer;
-  margin-left: 6px;
-  font-size: 18px;
   transition: 0.2s;
 }
-
-.speak-btn:hover {
-  transform: scale(1.2);
-}
-#welcome-screen {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  animation: fadeColors 6s ease-in-out infinite;
-  transition: opacity 0.6s ease;
+#changelogOkBtn:hover {
+  background: #00dd99;
 }
 
-#welcome-screen h1 {
-  font-size: 1.6em;
-  font-weight: 600;
-  background: linear-gradient(90deg, #1e90ff, #a855f7, #00ffff);
-  background-size: 200%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradientShift 4s linear infinite;
+#menuToggle {
+    position: fixed; /* Ekranın belirli bir noktasına sabitler */
+    top: 20px; /* Ekranın üst kenarından 20 piksel aşağıda */
+    right: 20px; /* Ekranın sağ kenarından 20 piksel solda */
+    background-color: #007bff; /* Güzel bir arka plan rengi */
+    color: white; /* Yazı rengi */
+    padding: 10px 15px; /* İç boşluk */
+    border: none; /* Kenarlık yok */
+    border-radius: 5px; /* Köşeleri biraz yuvarla */
+    cursor: pointer; /* Fare üzerine geldiğinde el işareti çıksın */
+    font-size: 1.2em; /* Yazı boyutunu biraz büyüt */
+    z-index: 1000; /* Diğer elementlerin üzerinde görünmesini sağlar */
+    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.2); /* Hafif bir gölge efekti */
+    transition: all 1s;
 }
 
-#welcome-screen img {
-  width: 60px;
-  margin-top: 10px;
-  opacity: 0.7;
+/* Butonun üzerine gelindiğinde ufak bir değişim olsun */
+#menuToggle:hover {
+    background-color: #1100ff; /* Daha koyu bir mavi */
+    transform: translateY(-3px);
+    font-size: 20px /* Hafif yukarı kalkma efekti */
 }
 
 @keyframes gradientShift {
@@ -382,20 +390,23 @@ img { border-radius: 30px; font-size: 40px; }
 </head>
 <body>
 
-<button style="color: #000000;background-color: #0099cc;" id="menuToggle">☰ Menü</button>
+<button id="menuToggle">☰ Menü</button>
 <div id="updateBanner">
   🚀 Nova'nın yeni sürümü var! <span id="latestVersionText"></span>
   <br>
   <button id="updateBtn">Güncelle</button>
-  <div id="updateProgress"></div>
+  <div id="updateProgress" style="height: 8px; background: #00ffaa; width: 0%; margin-top: 5px;"></div>
 </div>
 
 <!-- Changelog Ekranı -->
 <div id="changelogScreen" style="display:none;">
   <div id="changelogContent00">
-    <h1 style="color: #00ff00;"> Yeni Güncelleme!</h1>
+    <h1 style="color: #00ff00;">Yeni Güncelleme!</h1>
     <h2>NoVa V4.4</h2>
-    <h4>Novanın yazdığı mesajların sonuna 🔉 butonu eklendi <br> Hatalar Düzeltildi </h4>
+    <h4>
+      Nova'nın yazdığı mesajların sonuna 🔉 butonu eklendi <br>
+      Hatalar düzeltildi
+    </h4>
   </div>
   <button id="changelogOkBtn">Tamam</button>
 </div>
@@ -406,7 +417,7 @@ img { border-radius: 30px; font-size: 40px; }
   background:#a9e2f0; display:flex; align-items:center; justify-content:center;
   flex-direction:column; z-index:9999;
 ">
-  <img src="icons/nova-192.png" style="width:100px; animation:spin 2s linear infinite;">
+  <img src="ChatGPT Image 1 Kas 2025 12_57_42 copy.png" style="width:100px; animation:spin 2s linear infinite;">
   <h2 style="color:white; margin-top:20px;">Nova Yükleniyor...</h2>
 </div>
 
@@ -743,56 +754,66 @@ quickBtns.querySelectorAll("button").forEach(b=>{ b.addEventListener("click", e=
 
 window.addEventListener("DOMContentLoaded", ()=>{ loadChat(currentChat); renderMenu(); });
 // ----------------------------------------------------------------------------------------------
-const CURRENT_VERSION = "4.3";
-const LATEST_VERSION = "4.4";
+</script>
+<script>
+// Sürüm bilgisi
+const CURRENT_VERSION = "4.3";  // Mevcut sürüm
+const LATEST_VERSION = "4.5";   // Yeni sürüm
 
+// HTML elemanlarını seç
 const updateBanner = document.getElementById("updateBanner");
 const updateBtn = document.getElementById("updateBtn");
 const updateProgress = document.getElementById("updateProgress");
 const latestVersionText = document.getElementById("latestVersionText");
-
 const changelogScreen = document.getElementById("changelogScreen");
 const changelogOkBtn = document.getElementById("changelogOkBtn");
 
-// Bannerda sürümü göster
+// Bannerda yeni sürüm numarasını göster
 latestVersionText.textContent = LATEST_VERSION;
 
-// Kullanıcı bir kere güncellemiş mi kontrol et
-const updated = localStorage.getItem("nova_updated");
-
+// Güncelleme kontrolü
 function checkForUpdate() {
-  if(LATEST_VERSION !== CURRENT_VERSION && !updated){
-    updateBanner.style.display = "block"; // Bannerı göster
+  const updated = localStorage.getItem("nova_updated");
+  if (LATEST_VERSION !== CURRENT_VERSION && !updated) {
+    updateBanner.style.display = "block";
   }
 }
 
-// Güncelleme butonu
+// Güncelle butonuna basılınca
 updateBtn.addEventListener("click", () => {
   updateBtn.textContent = "Yükleniyor...";
   let progress = 0;
 
+  // İlerleme çubuğu animasyonu
   const interval = setInterval(() => {
-    progress += Math.random()*3;
-    if(progress >= 100) progress = 100;
+    progress += Math.random() * 5; // Rastgele hız
+    if (progress >= 100) progress = 100;
     updateProgress.style.width = progress + "%";
 
-    if(progress === 100){
+    if (progress === 100) {
       clearInterval(interval);
-      localStorage.setItem("nova_updated", "true");
-      updateBanner.style.display = "none";
-      changelogScreen.style.display = "block";
+      localStorage.setItem("nova_updated", "true"); // Güncelleme kaydı
+      setTimeout(() => {
+        updateBanner.style.display = "none";
+        // Changelog ekranını göster
+        changelogScreen.style.display = "flex";
+
+      }, 400);
     }
   }, 150);
 });
 
-// Tamam butonu
+// Changelog "Tamam" butonuna basınca ekranı kapat
 changelogOkBtn.addEventListener("click", () => {
   changelogScreen.style.display = "none";
 });
 
+// Sayfa yüklendiğinde kontrol et
 window.addEventListener("DOMContentLoaded", checkForUpdate);
 
 </script>
+
+
 
 </body>
 </html>
