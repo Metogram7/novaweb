@@ -9,407 +9,567 @@
 <meta name="theme-color" content="#00bfff">
 
 <style>
-/* === GENEL === */
+/* === GENEL İYİLEŞTİRMELER === */
+:root {
+  --primary-color: #00bfff;
+  --secondary-color: #8be0ff;
+  --background-light: #a9e2f0;
+  --background-dark: #1b1b1b;
+  --user-msg-bg: #3949db;
+  --nova-msg-bg: #b1e6ff;
+  --success-color: #00ffaa;
+  --error-color: #ff6b6b;
+  --text-light: #ffffff;
+  --text-dark: #111111;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --border-radius: 12px;
+}
+
+/* === GENEL STİLLER === */
 body {
-  margin: 9px;
-  font-family: "Poppins", "Segoe UI", sans-serif;
+  margin: 0;
+  font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
   display: flex;
   flex-direction: row;
   height: 100vh;
-  background: #a9e2f0;
-  color: #ffffff;
+  background: var(--background-light);
+  color: var(--text-dark);
   overflow: hidden;
-  transition: background 0.3s, color 0.3s;
+  transition: all 0.3s ease;
   scroll-behavior: smooth;
 }
 
-/* --- YAN MENÜ --- */
+body.dark-mode {
+  background: var(--background-dark);
+  color: var(--text-light);
+}
+
+/* === HATA MESAJI === */
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+  border-radius: var(--border-radius);
+  padding: 12px 16px;
+  margin: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.retry-btn {
+  background: var(--error-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  min-width: 60px;
+}
+
+.retry-btn:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+}
+
+/* === YAN MENÜ === */
 #sideMenu {
   width: 280px;
-  min-width: 150px;
-  max-width: 500px;
-  background: #b8ddee;
-  border-right: 2px solid #00bfff;
+  min-width: 200px;
+  background: linear-gradient(135deg, #b8ddee 0%, #a9e2f0 100%);
+  border-right: 2px solid var(--primary-color);
   display: flex;
   flex-direction: column;
-  padding: 15px;
+  padding: 20px 15px;
   overflow-y: auto;
-  box-shadow: 2px 0 10px rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow);
   transition: transform 0.3s ease;
   z-index: 1000;
+  position: relative;
 }
+
+.dark-mode #sideMenu {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+}
+
 #sideMenu h3 {
-  margin: 0 0 15px 0;
-  color: #08b3ec;
+  margin: 0 0 20px 0;
+  color: var(--primary-color);
   font-size: 1.4rem;
   text-align: center;
-  border-bottom: 1px solid #00bfff;
-  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 12px;
+  font-weight: 700;
 }
+
 #sideMenu button,
 #sideMenu .chatRow button.chatBtn {
-  margin: 5px 0;
+  margin: 6px 0;
   border: none;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: var(--border-radius);
+  padding: 12px 16px;
   cursor: pointer;
-  font-weight: bold;
-  transition: all 0.4s;
-  background: linear-gradient(45deg, #8be0ff, #00bfff);
-  color: #494949;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+  color: #2c3e50;
   text-align: left;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 9px 6px rgba(0, 0, 0, 0.15);
-}
-#sideMenu button:hover {
-  background: linear-gradient(45deg, #00bfff, #000000);
-  color: #fff;
+  box-shadow: var(--shadow);
+  font-size: 0.95rem;
 }
 
-/* --- ANA ALAN --- */
+#sideMenu button:hover {
+  background: linear-gradient(135deg, var(--primary-color), #0077b3);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 191, 255, 0.3);
+}
+
+/* === ANA İÇERİK === */
 #mainContent {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #c3d5eb;
 }
 
-/* --- ÜST KISIM --- */
+.dark-mode #mainContent {
+  background: #2c3e50;
+}
+
+/* === HEADER === */
 header {
   text-align: center;
-  padding: 15px;
-  font-size: 1.5rem;
-  font-weight: bold;
+  padding: 15px 20px;
+  font-size: 1.4rem;
+  font-weight: 700;
   color: #00080a;
-  border-bottom: 2px solid #ffffff;
-  background: #d7dde0;
+  border-bottom: 2px solid var(--primary-color);
+  background: linear-gradient(135deg, #d7dde0, #e8ecee);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
+.dark-mode header {
+  background: linear-gradient(135deg, #34495e, #2c3e50);
+  color: var(--text-light);
+}
+
 header img {
   height: 40px;
   border-radius: 10px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-  margin-right: 8px;
+  box-shadow: var(--shadow);
+  margin-right: 12px;
 }
+
 #themeToggle {
   border: none;
-  background: #12a8da;
+  background: var(--primary-color);
   color: white;
-  font-weight: bold;
-  border-radius: 10px;
-  padding: 8px 14px;
+  font-weight: 600;
+  border-radius: var(--border-radius);
+  padding: 10px 18px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
 }
-#themeToggle:hover { background: #0099cc; }
 
-/* --- MESAJLAR --- */
+#themeToggle:hover {
+  background: #0077b3;
+  transform: translateY(-1px);
+}
+
+/* === MESAJLAR ALANI === */
 #chatsContainer {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   position: relative;
-  padding: 10px;
-  background: #c3d5eb;
+  padding: 15px;
+  background: transparent;
 }
+
 .chatDiv {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 2px;
+  padding: 5px;
+  gap: 12px;
 }
+
 .msg {
-  max-width: 80%;
-  margin: 8px 0;
-  padding: 16px 16px;
-  border-radius: 16px;
+  max-width: 75%;
+  margin: 4px 0;
+  padding: 14px 18px;
+  border-radius: 18px;
   white-space: pre-wrap;
   word-wrap: break-word;
-  font-size: 1rem;
-  line-height: 1.4;
+  font-size: 0.95rem;
+  line-height: 1.5;
   position: relative;
   word-break: break-word;
-  box-shadow: 0 1px 5px rgba(240, 5, 5, 0.05);
+  box-shadow: var(--shadow);
   animation: fadeIn 0.4s ease;
+  backdrop-filter: blur(10px);
 }
+
 .msg .timestamp {
   font-size: 0.7rem;
-  color: #370eee;
+  opacity: 0.7;
   position: absolute;
-  bottom: -16px;
-  right: 10px;
+  bottom: -18px;
+  right: 12px;
+  font-weight: 500;
 }
+
 .user {
-  background: #3949db;
-  color: #f0f0f0;
+  background: var(--user-msg-bg);
+  color: var(--text-light);
   align-self: flex-end;
   margin-left: auto;
-}
-.nova {
-  color: #111;
-  margin-right: auto;
-  background-color: rgb(177, 230, 255);
+  border-bottom-right-radius: 6px;
 }
 
-/* --- GİRİŞ ALANI --- */
+.nova {
+  background-color: var(--nova-msg-bg);
+  color: var(--text-dark);
+  margin-right: auto;
+  border-bottom-left-radius: 6px;
+}
+
+.dark-mode .nova {
+  background: #34495e;
+  color: var(--text-light);
+}
+
+/* === GİRİŞ ALANI === */
 #inputArea {
   display: flex;
-  padding: 10px 15px;
+  padding: 15px 20px;
   background: #98b6df;
-  border-top: 1px solid #00bfff;
-  gap: 5px;
+  border-top: 2px solid var(--primary-color);
+  gap: 10px;
   flex-wrap: wrap;
-  box-shadow: 0 0 10px rgb(0, 110, 255);
+  box-shadow: 0 -4px 12px rgba(0, 110, 255, 0.1);
+  align-items: flex-end;
 }
+
+.dark-mode #inputArea {
+  background: #2c3e50;
+}
+
 #input {
-  flex: 99;
-  padding: 12px 16px;
-  border-radius: 200px;
-  border: 0.5px solid #ffffff;
+  flex: 1;
+  min-width: 200px;
+  padding: 14px 18px;
+  border-radius: 25px;
+  border: 2px solid var(--primary-color);
   outline: none;
   font-size: 1rem;
-  background: #2c2d2e;
-  color: #fafafa;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-dark);
   resize: none;
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+  font-family: inherit;
 }
+
+#input:focus {
+  border-color: #0077b3;
+  box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.dark-mode #input {
+  background: #34495e;
+  color: var(--text-light);
+  border-color: var(--secondary-color);
+}
+
 button.sendBtn {
-  padding: 10px 20px;
-  border-radius: 100px;
+  padding: 12px 24px;
+  border-radius: 25px;
   border: none;
-  background: #1ebfff;
-  color: rgb(255, 255, 255);
-  font-weight: bold;
+  background: linear-gradient(135deg, var(--primary-color), #0077b3);
+  color: white;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.4s;
-  box-shadow: 5px 5px 5px black;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+  min-width: 80px;
+  font-size: 0.95rem;
 }
-button.sendBtn:hover { background: #0400ff; }
+
+button.sendBtn:hover {
+  background: linear-gradient(135deg, #0077b3, #005580);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 191, 255, 0.4);
+}
+
 button#stopBtn {
-  background: #fa0000;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
   color: white;
 }
-button#stopBtn:hover { background: #660303; }
 
-/* --- KISA BUTONLAR --- */
+button#stopBtn:hover {
+  background: linear-gradient(135deg, #ee5a52, #d63031);
+}
+
+/* === HIZLI BUTONLAR === */
 #quickBtns {
   display: flex;
-  gap: 5px;
-  margin-top: 5px;
+  gap: 8px;
+  margin-top: 8px;
   flex-wrap: wrap;
+  width: 100%;
 }
+
 #quickBtns button {
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: var(--border-radius);
   border: none;
-  background: #91ff00;
+  background: linear-gradient(135deg, #91ff00, #76d700);
   color: #000;
   cursor: pointer;
-  font-weight: bold;
-  box-shadow: 5px 5px 5px black;
-  transition: all 0.3s;
-}
-#quickBtns button:hover { background: #ffdd00; }
-
-/* --- EMOJİLER --- */
-#emojiPicker {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  margin-top: 5px;
-}
-#emojiPicker span {
-  cursor: pointer;
-  font-size: 1.3rem;
-}
-
-/* --- TOAST MESAJ --- */
-#toast {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: rgb(255, 255, 255);
-  padding: 10px 20px;
-  border-radius: 10px;
-  display: none;
-  z-index: 2000;
-}
-/* Update Banner tam ortada */
-#updateBanner {
-  display: none;
-  position: fixed;      /* Body’den bağımsız */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); /* Hem yatay hem dikey ortala */
-  background: #1b1b1b;
-  border: 2px solid #00ffaa;
-  border-radius: 15px;
-  padding: 20px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 0 20px #00ffaa55;
-  font-size: 17px;
-  z-index: 2000;       /* Yan menünün üstünde */
-}
-
-
-/* Güncelleme butonu */
-/* Güncelleme Butonu */
-#updateBtn {
-  background: #00ffaa;
-  color: #000;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 25px;
-  margin-top: 10px;
   font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-}
-#updateBtn:hover {
-  background: #00dd99;
-}
-
-/* İlerleme Çubuğu */
-#updateProgress {
-  width: 0%;
-  height: 8px;
-  background: #00ffaa;
-  border-radius: 5px;
-  margin-top: 10px;
-  transition: width 0.1s;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
+  flex: 1;
+  min-width: 80px;
 }
 
-/* Changelog Ekranı (tam ekran, ortalanmış) */
-#changelogScreen {
-  display: none; /* Başlangıçta gizli */
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.92);
-  display: flex;
-  justify-content: center; /* Yatay ortala */
-  align-items: center;     /* Dikey ortala */
-  z-index: 1000;
-  text-align: center;
-  padding: 15px; /* Küçük ekranlar için boşluk */
-  box-sizing: border-box;
+#quickBtns button:hover {
+  background: linear-gradient(135deg, #ffdd00, #ffd000);
+  transform: translateY(-2px);
 }
 
-/* Changelog Kutusu */
-#changelogContent00 {
-  background: #1b1b1b;
-  border: 2px solid #00ffaa;
-  border-radius: 15px;
-  padding: 25px;
-  width: 90%;          /* Küçük ekranlarda taşmasın */
-  max-width: 450px;    /* Büyük ekranlarda sınırlı genişlik */
-  box-shadow: 0 0 25px #00ffaa55;
-  box-sizing: border-box;
-}
-
-/* Changelog Tamam Butonu */
-#changelogOkBtn {
-  margin-top: 20px;
-  background: #00ffaa;
-  color: #000;
-  border: none;
-  padding: 10px 25px;
-  font-weight: 600;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-#changelogOkBtn:hover {
-  background: #00dd99;
-}
-
+/* === MENÜ TOGGLE === */
 #menuToggle {
-    position: fixed; /* Ekranın belirli bir noktasına sabitler */
-    top: 20px; /* Ekranın üst kenarından 20 piksel aşağıda */
-    right: 20px; /* Ekranın sağ kenarından 20 piksel solda */
-    background-color: #007bff; /* Güzel bir arka plan rengi */
-    color: white; /* Yazı rengi */
-    padding: 10px 15px; /* İç boşluk */
-    border: none; /* Kenarlık yok */
-    border-radius: 5px; /* Köşeleri biraz yuvarla */
-    cursor: pointer; /* Fare üzerine geldiğinde el işareti çıksın */
-    font-size: 1.2em; /* Yazı boyutunu biraz büyüt */
-    z-index: 1000; /* Diğer elementlerin üzerinde görünmesini sağlar */
-    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.2); /* Hafif bir gölge efekti */
-    transition: all 1s;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, var(--primary-color), #0077b3);
+  color: white;
+  padding: 12px 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1.1rem;
+  z-index: 1100;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  font-weight: 600;
 }
 
-/* Butonun üzerine gelindiğinde ufak bir değişim olsun */
 #menuToggle:hover {
-    background-color: #1100ff; /* Daha koyu bir mavi */
-    transform: translateY(-3px);
-    font-size: 20px /* Hafif yukarı kalkma efekti */
+  background: linear-gradient(135deg, #0077b3, #005580);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 191, 255, 0.4);
 }
 
-@keyframes gradientShift {
-  0% { background-position: 0%; }
-  100% { background-position: 200%; }
+/* === RESPONSIVE TASARIM === */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+  
+  #sideMenu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 85%;
+    max-width: 300px;
+    height: 100%;
+    transform: translateX(-100%);
+    z-index: 1000;
+  }
+  
+  #sideMenu.active {
+    transform: translateX(0);
+  }
+  
+  #mainContent {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .msg {
+    max-width: 85%;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+  
+  #inputArea {
+    padding: 12px 15px;
+    gap: 8px;
+  }
+  
+  #input, button.sendBtn {
+    border-radius: 20px;
+  }
+  
+  header {
+    font-size: 1.2rem;
+    padding: 12px 15px;
+  }
+  
+  header img {
+    height: 32px;
+  }
+  
+  #menuToggle {
+    top: 15px;
+    right: 15px;
+    padding: 10px 14px;
+    font-size: 1rem;
+  }
 }
 
-/* --- ANİMASYON --- */
+@media (max-width: 480px) {
+  header {
+    font-size: 1.1rem;
+    padding: 10px 12px;
+  }
+  
+  .msg {
+    max-width: 90%;
+    font-size: 0.85rem;
+    padding: 10px 14px;
+  }
+  
+  #inputArea {
+    padding: 10px 12px;
+  }
+  
+  #input {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+  
+  button.sendBtn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+/* === ANİMASYONLAR === */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px);}
-  to { opacity: 1; transform: translateY(0);}
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* --- MOBİL TASARIM --- */
-@media (max-width: 800px) {
-  body { flex-direction: column; }
-  #sideMenu { position: fixed; top: 0; left: 0; width: 80%; max-width: 300px; height: 100%; transform: translateX(-100%); transition: transform 0.3s ease; }
-  #sideMenu.active { transform: translateX(0); }
-  #mainContent { flex: 1; width: 100%; margin-left: 0; }
-  #inputArea { flex-direction: column; gap: 8px; }
-  #input, button.sendBtn, #stopBtn { width: 92%; border-radius: 150px; }
-  header { font-size: 1.3rem; padding: 10px; }
-  header img { height: 32px; }
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
-img { border-radius: 30px; font-size: 40px; }
-@media (max-width: 600px) {
-  header { font-size: 1.1rem; }
-  .msg { font-size: 0.9rem; padding: 10px 12px; }
-  #inputArea { padding: 8px; }
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Görsel iyileştirmeler */
+img {
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+/* Scrollbar stilleri */
+#chatsContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+pre {
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+
+
+.code-window {
+  background: #1e1e1e;
+  color: #dcdcdc;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 8px 0;
+  position: relative;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+.code-window pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  margin: 0;
+}
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  background: #333;
+  color: white;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.copy-btn:hover { background: #555; }
+.lang-label {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  font-size: 12px;
+  color: #999;
+}
+
+#chatsContainer::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+#chatsContainer::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 3px;
+}
+
+#chatsContainer::-webkit-scrollbar-thumb:hover {
+  background: #0077b3;
 }
 </style>
 </head>
 <body>
 
 <button id="menuToggle">☰ Menü</button>
-<div id="updateBanner">
-  🚀 Nova'nın yeni sürümü var! <span id="latestVersionText"></span>
-  <br>
-  <button id="updateBtn">Güncelle</button>
-  <div id="updateProgress" style="height: 8px; background: #00ffaa; width: 0%; margin-top: 5px;"></div>
-</div>
 
-<!-- Changelog Ekranı -->
-<div id="changelogScreen" style="display:none;">
-  <div id="changelogContent00">
-    <h1 style="color: #00ff00;">Yeni Güncelleme!</h1>
-    <h2>NoVa V4.4</h2>
-    <h4>
-      Nova'nın yazdığı mesajların sonuna 🔉 butonu eklendi <br>
-      Hatalar düzeltildi
-    </h4>
-  </div>
-  <button id="changelogOkBtn">Tamam</button>
-</div>
 
 <!-- Açılış Ekranı -->
 <div id="splash-screen" style="
@@ -442,7 +602,7 @@ img { border-radius: 30px; font-size: 40px; }
   </header>
   <div id="chatsContainer"></div>
   <div id="inputArea">
-    <textarea id="input" placeholder="Ask The Nova..." autocomplete="off" rows="1"></textarea>
+    <textarea id="input" placeholder="Ask The Nova...🚀" autocomplete="off" rows="1"></textarea>
     <button type="button" class="sendBtn" id="sendBtn">↑</button>
     <button type="button" class="sendBtn" id="stopBtn">Durdur</button>
   </div>
@@ -753,64 +913,94 @@ emojiPicker.innerHTML=""; "😀😂😍😎🤔😢❤️🤖".split("").forEach
 quickBtns.querySelectorAll("button").forEach(b=>{ b.addEventListener("click", e=>{ e.preventDefault(); sendMessage(b.textContent); }); });
 
 window.addEventListener("DOMContentLoaded", ()=>{ loadChat(currentChat); renderMenu(); });
-// ----------------------------------------------------------------------------------------------
-</script>
-<script>
-// Sürüm bilgisi
-const CURRENT_VERSION = "4.3";  // Mevcut sürüm
-const LATEST_VERSION = "4.5";   // Yeni sürüm
 
-// HTML elemanlarını seç
-const updateBanner = document.getElementById("updateBanner");
-const updateBtn = document.getElementById("updateBtn");
-const updateProgress = document.getElementById("updateProgress");
-const latestVersionText = document.getElementById("latestVersionText");
-const changelogScreen = document.getElementById("changelogScreen");
-const changelogOkBtn = document.getElementById("changelogOkBtn");
+// 🔴 Nova'dan hata geldiğinde çağrılacak fonksiyon
+function showErrorMessage(errorText, lastUserMessage) {
+  const chat = document.getElementById("chat");
 
-// Bannerda yeni sürüm numarasını göster
-latestVersionText.textContent = LATEST_VERSION;
+  // Hata mesajı kutusu
+  const errorDiv = document.createElement("div");
+  errorDiv.className = "error-message";
+  errorDiv.innerHTML = `
+    <div class="error-text">⚠️ ${errorText}</div>
+    <button class="retry-btn">🔄 Yeniden Dene</button>
+  `;
 
-// Güncelleme kontrolü
-function checkForUpdate() {
-  const updated = localStorage.getItem("nova_updated");
-  if (LATEST_VERSION !== CURRENT_VERSION && !updated) {
-    updateBanner.style.display = "block";
-  }
+  // Butona tıklanınca son mesaj yeniden gönderilecek
+  const retryBtn = errorDiv.querySelector(".retry-btn");
+  retryBtn.addEventListener("click", () => {
+    errorDiv.remove(); // Eski hata mesajını sil
+    if (lastUserMessage) {
+      sendMessage(lastUserMessage); // 👈 Kullanıcının son mesajını yeniden gönder
+    }
+  });
+
+  chat.appendChild(errorDiv);
+  chat.scrollTop = chat.scrollHeight;
 }
 
-// Güncelle butonuna basılınca
-updateBtn.addEventListener("click", () => {
-  updateBtn.textContent = "Yükleniyor...";
-  let progress = 0;
+// ----------------------------------------------------------------------------------------------
+</script>
 
-  // İlerleme çubuğu animasyonu
-  const interval = setInterval(() => {
-    progress += Math.random() * 5; // Rastgele hız
-    if (progress >= 100) progress = 100;
-    updateProgress.style.width = progress + "%";
+<script>
+function renderNovaMessage(text) {
+  const chatBox = document.getElementById("chatBox");
+  const codeRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  let match;
+  let lastIndex = 0;
+  const messageContainer = document.createElement("div");
+  messageContainer.className = "nova-message";
 
-    if (progress === 100) {
-      clearInterval(interval);
-      localStorage.setItem("nova_updated", "true"); // Güncelleme kaydı
-      setTimeout(() => {
-        updateBanner.style.display = "none";
-        // Changelog ekranını göster
-        changelogScreen.style.display = "flex";
-
-      }, 400);
+  while ((match = codeRegex.exec(text)) !== null) {
+    const normalText = text.substring(lastIndex, match.index);
+    if (normalText.trim()) {
+      const p = document.createElement("p");
+      p.innerHTML = normalText
+        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+        .replace(/\*(.*?)\*/g, "<i>$1</i>");
+      messageContainer.appendChild(p);
     }
-  }, 150);
-});
 
-// Changelog "Tamam" butonuna basınca ekranı kapat
-changelogOkBtn.addEventListener("click", () => {
-  changelogScreen.style.display = "none";
-});
+    const lang = match[1] || "Kod";
+    const code = match[2].trim();
 
-// Sayfa yüklendiğinde kontrol et
-window.addEventListener("DOMContentLoaded", checkForUpdate);
+    const codeWindow = document.createElement("div");
+    codeWindow.className = "code-window";
 
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "copy-btn";
+    copyBtn.textContent = "📋 Kopyala";
+    copyBtn.onclick = () => navigator.clipboard.writeText(code);
+
+    const langLabel = document.createElement("div");
+    langLabel.className = "lang-label";
+    langLabel.textContent = lang;
+
+    const pre = document.createElement("pre");
+    const codeEl = document.createElement("code");
+    codeEl.textContent = code;
+    pre.appendChild(codeEl);
+
+    codeWindow.appendChild(langLabel);
+    codeWindow.appendChild(copyBtn);
+    codeWindow.appendChild(pre);
+    messageContainer.appendChild(codeWindow);
+
+    lastIndex = codeRegex.lastIndex;
+  }
+
+  const remaining = text.substring(lastIndex);
+  if (remaining.trim()) {
+    const p = document.createElement("p");
+    p.innerHTML = remaining
+      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+      .replace(/\*(.*?)\*/g, "<i>$1</i>");
+    messageContainer.appendChild(p);
+  }
+
+  chatBox.appendChild(messageContainer);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
 </script>
 
 
