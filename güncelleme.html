@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoVa V4 Yeni Güncelleme</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+
+body {
+  margin: 0;
+  height: 300vh; /* 3 sahne için yeterli */
+  background: linear-gradient(135deg, #a8edea, #facad9);
+  font-family: 'Poppins', sans-serif;
+  overflow-x: hidden;
+}
+
+/* === 1. SAHNE === */
+.hero {
+  position: fixed;
+  width: 100%;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  transition: transform 1.2s ease, opacity 1s ease, filter 1s ease;
+  z-index: 3;
+}
+
+.hero h1 {
+  font-size: 70px;
+  color: #111;
+  text-shadow: 2px 2px 15px rgba(0,0,0,0.3);
+  margin: 0;
+}
+
+.scroll-down {
+  margin-top: 30px;
+  font-size: 18px;
+  color: #333;
+  animation: bounce 1.5s infinite;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.scroll-down span {
+  font-size: 30px;
+  color: #333;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+/* === 2. SAHNE === */
+.update-info {
+  position: relative;
+  top: 100vh;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(135deg, #facad9, #a8edea);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(-50px);
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+.update-info h2 {
+  font-size: 45px;
+  color: #ff0044;
+  text-shadow: 0 0 15px rgba(255,0,68,0.4);
+}
+
+.update-info ul {
+  list-style: none;
+  font-size: 22px;
+  color: #222;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.update-info li {
+  margin: 10px 0;
+}
+
+/* Metehan Akkaya yazısı */
+.update-info .author {
+  margin-top: 20px;       /* biraz boşluk bırak */
+  text-align: right;       /* sağa yasla */
+  font-weight: 600;
+  font-size: 18px;
+  color: #222;
+  width: 90%;              /* sağ kenara yaslanması için */
+}
+
+/* Scroll efektleri */
+body.stage1 .hero {
+  transform: scale(0.8) translateY(150px); /* geri gitme hissi */
+  opacity: 0;
+  filter: blur(5px);
+}
+
+body.stage1 .update-info {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === 3. SAHNE GEÇİŞİ === */
+body.end .update-info {
+  opacity: 0;
+  transform: translateY(-100px);
+  transition: all 1s ease;
+}
+</style>
+</head>
+
+<body>
+  <!-- 1. SAHNE -->
+  <div class="hero">
+    <h1>NoVa V4 New Update</h1>
+    <div class="scroll-down">
+      <div>Aşağı kaydır</div>
+      <span>⬇️</span>
+    </div>
+  </div>
+
+  <!-- 2. SAHNE -->
+  <div class="update-info">
+    <h2>🚀 NoVa V4 Güncelleme Notları</h2>
+    <ul>
+      <li>✨ TimeOut hatası çözüldü.</li>
+      <li>🧠 Yapay zeka tepkileri geliştirildi.</li>
+      <li>💤 Novanın uykuya geçmesi düzeldi.</li>
+    </ul>
+    <div class="author">Metehan Akkaya</div>
+  </div>
+
+<script>
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  const height = window.innerHeight;
+
+  // 1 → 2 geçiş
+  if (y > 100 && y < height * 1.5) {
+    document.body.classList.add('stage1');
+  } else {
+    document.body.classList.remove('stage1');
+  }
+
+  // 2 → 3 geçiş ve otomatik yönlendirme
+  if (y > height * 2 - 50) {
+    document.body.classList.add('end');
+    setTimeout(() => {
+      window.location.href = "index.html"; 
+    }, 1000);
+  } else {
+    document.body.classList.remove('end');
+  }
+});
+</script>
+</body>
+</html>

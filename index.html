@@ -550,6 +550,40 @@ pre {
   font-size: 12px;
   color: #999;
 }
+#welcome-screen {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex-direction: column;
+  color: var(--text-color);
+}
+
+#welcome-screen.visible {
+  display: flex;
+  opacity: 1;
+}
+
+#nova-active-pulse {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-color, #00bfff);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  pointer-events: none;
+}
+
+#nova-active-pulse.active {
+  opacity: 1;
+  transform: scale(1.8);
+}
 
 #chatsContainer::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.1);
@@ -564,6 +598,48 @@ pre {
 #chatsContainer::-webkit-scrollbar-thumb:hover {
   background: #0077b3;
 }
+#splash-screen {
+  transition: opacity 0.8s ease;
+  opacity: 1;
+}
+#splash-screen.fade-out {
+  opacity: 0;
+}
+
+/* === TOAST === */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 9999;
+}
+#toast.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* === Sesli okuma butonu === */
+.speak-btn {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform 0.2s;
+}
+.speak-btn:hover {
+  transform: scale(1.2);
+}
+
 </style>
 </head>
 <body>
@@ -596,7 +672,8 @@ pre {
   <header>
     <div style="display:flex; align-items:center;">
       <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="Nova Logo">
-      💬 Nova Chat
+      💬 Nova Chat   
+      <h4 style="color: #d32f2f;"> <a href="güncelleme.html">Nova V4 Güncellemesini Gör</a> </h4>
     </div>
     <span id="novaStatus">Hazır</span>
   </header>
@@ -623,119 +700,185 @@ function toggleWelcomeScreen() {
   const welcome = document.getElementById("welcome-screen");
   if (!chat || !welcome) return;
 
-  if (chat.children.length === 0) {
-    welcome.style.display = "block";
-    welcome.style.opacity = "1";
+  const isChatEmpty = chat.children.length === 0;
+  const isVisible = welcome.classList.contains("visible");
+
+  if ((isChatEmpty && isVisible) || (!isChatEmpty && !isVisible)) return;
+
+  if (isChatEmpty) {
+    welcome.style.display = "flex";
+    requestAnimationFrame(() => welcome.classList.add("visible"));
   } else {
-    welcome.style.opacity = "0";
-    setTimeout(() => welcome.style.display = "none", 500);
+    welcome.classList.remove("visible");
+    setTimeout(() => {
+      if (!welcome.classList.contains("visible")) {
+        welcome.style.display = "none";
+      }
+    }, 400);
   }
 }
 
-// Her mesaj eklenince çağır
-const oldAddMessage = addMessage;
-addMessage = function(text, sender, container = null) {
-  const msg = oldAddMessage(text, sender, container);
-  toggleWelcomeScreen();
-  return msg;
-};
+// Nova aktiflik animasyonu göstermek için
+function showNovaActivePulse() {
+  const pulse = document.getElementById("nova-active-pulse");
+  if (!pulse) return;
 
-// Sayfa yüklendiğinde ilk kontrol
-window.addEventListener("load", toggleWelcomeScreen);
+  pulse.classList.add("active");
+  clearTimeout(pulse._timeout);
+  pulse._timeout = setTimeout(() => pulse.classList.remove("active"), 600);
+}
+
+// AddMessage fonksiyonunu güvenli şekilde sarmala
+(function() {
+  const originalAddMessage = window.addMessage;
+  if (typeof originalAddMessage !== "function") return console.warn("addMessage not found!");
+
+  window.addMessage = async function(text, sender, container = null) {
+    const msg = await originalAddMessage(text, sender, container);
+
+    // DOM değişikliğinden hemen sonra kontrol et
+    requestAnimationFrame(() => {
+      toggleWelcomeScreen();
+      showNovaActivePulse();
+    });
+
+    return msg;
+  };
+})();
+
+// Sayfa yüklenince ekranı doğru başlat
+window.addEventListener("DOMContentLoaded", () => {
+  requestAnimationFrame(() => {
+    toggleWelcomeScreen();
+  });
+});
+
 </script>
 
 
 <div id="toast"></div>
+
 <script>
-// === Splash ekranı ===
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(()=>{
-    document.getElementById('splash-screen').style.display='none';
-  },2000);
+// === SPLASH EKRANI ===
+window.addEventListener("DOMContentLoaded", () => {
+  const splash = document.getElementById("splash-screen");
+  if (!splash) return;
+
+  setTimeout(() => {
+    splash.classList.add("fade-out");
+    setTimeout(() => (splash.style.display = "none"), 800);
+  }, 1800);
 });
 
-// === Nova Sesli Okuma Sistemi ===
-function speakText(text) {
-  const cleanText = text
-    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
-    .replace(/[^\w\s.,!?ğüşöçıİĞÜŞÖÇ]/g, '')
-    .trim();
+// === TOAST BİLDİRİM SİSTEMİ ===
+function showToast(message, duration = 2500) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("visible");
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => toast.classList.remove("visible"), duration);
+}
 
+// === NOVA SESLİ OKUMA SİSTEMİ ===
+function speakText(text) {
+  const cleanText = cleanTextForSpeech(text);
   if (!cleanText) return;
+
+  const synth = window.speechSynthesis;
+  if (synth.speaking) synth.cancel();
 
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = "tr-TR";
   utterance.rate = 1;
   utterance.pitch = 1;
 
-  // Türkçe ses bulma (bazı tarayıcılarda gecikebilir)
-  const loadVoices = () => {
-    const voices = speechSynthesis.getVoices();
-    const trVoice = voices.find(v => v.lang === "tr-TR");
+  // Sesleri yüklemeden önce bekle
+  const speakNow = () => {
+    let voices = synth.getVoices();
+    const trVoice = voices.find(v => v.lang === "tr-TR" || v.lang.startsWith("tr"));
     if (trVoice) utterance.voice = trVoice;
-    speechSynthesis.speak(utterance);
+    synth.speak(utterance);
   };
 
-  if (speechSynthesis.getVoices().length === 0) {
-    speechSynthesis.addEventListener("voiceschanged", loadVoices);
+  if (!synth.getVoices().length) {
+    synth.onvoiceschanged = () => speakNow();
   } else {
-    loadVoices();
+    speakNow();
   }
 }
 
-// === Nova Mesajlarına Sesli Okuma Butonu ===
-// --- Sesli okuma butonu ekleme ---
+
+// === NOVA MESAJLARINA SESLİ OKUMA BUTONU ===
 function addSpeechButton(div, text) {
   const btn = document.createElement("button");
   btn.textContent = "🔉";
   btn.className = "speak-btn";
   btn.title = "Mesajı sesli oku";
 
-  // --- Tıklama olayları ---
-  let isSpeaking = false;
   const synth = window.speechSynthesis;
+  let isSpeaking = false;
   let utterance = null;
 
   btn.addEventListener("click", () => {
-    // Eğer zaten konuşuyorsa durdur
     if (isSpeaking) {
       synth.cancel();
       isSpeaking = false;
       btn.textContent = "🔉";
+      showToast("⏸️ Okuma durduruldu");
       return;
     }
 
-    // Yeni okuma başlat
-    utterance = new SpeechSynthesisUtterance(cleanTextForSpeech(text));
+    const cleanText = cleanTextForSpeech(text);
+    if (!cleanText) return showToast("⚠️ Okunacak metin yok");
+
+    utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = "tr-TR";
     utterance.rate = 1;
     utterance.pitch = 1;
 
-    synth.cancel(); // önceki sesleri iptal et
+    const voices = synth.getVoices();
+    const trVoice = voices.find(v => v.lang === "tr-TR" || v.lang.startsWith("tr"));
+    if (trVoice) utterance.voice = trVoice;
+
+    synth.cancel();
     synth.speak(utterance);
 
     btn.textContent = "⏸️";
     isSpeaking = true;
+    showToast("🔊 Nova konuşuyor...");
 
-    // Konuşma bittiğinde butonu sıfırla
     utterance.onend = () => {
       isSpeaking = false;
       btn.textContent = "🔉";
+      showToast("✅ Okuma tamamlandı");
+    };
+
+    utterance.onerror = () => {
+      isSpeaking = false;
+      btn.textContent = "🔉";
+      showToast("⚠️ Sesli okuma hatası");
     };
   });
 
-  // Butonu mesaja ekle
   div.appendChild(btn);
 }
 
-// --- Emojileri ve gereksiz karakterleri konuşmadan temizler ---
+
+// === METİN TEMİZLEME (Emoji ve özel karakterleri kaldır) ===
 function cleanTextForSpeech(text) {
   return text
-    .replace(/[\p{Emoji_Presentation}\p{Emoji}\p{Extended_Pictographic}]/gu, "") // emoji temizle
-    .replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ\s.,!?]/g, "") // özel karakterleri temizle
+    .replace(/[\p{Emoji_Presentation}\p{Emoji}\p{Extended_Pictographic}]/gu, "")
+    .replace(/[^0-9a-zA-ZğüşıöçĞÜŞİÖÇ\s.,!?]/g, "")
+    // Virgülden sonra boşluk ekle ki sayılar düzgün okunsun
+    .replace(/,/g, ", ")
+    // Nokta varsa kısa duraklama sağla
+    .replace(/\./g, ". ")
     .trim();
 }
 
+
+</script>
 
 </script>
 
@@ -789,26 +932,28 @@ let sending = false;
 let userInfo = JSON.parse(localStorage.getItem("nova_user_info_"+userId)||"{}");
 
 // Sanitize function (basit)
-function sanitize(str){ const temp=document.createElement("div"); temp.textContent=str; return temp.innerHTML; }
+function sanitize(str) {
+    const temp = document.createElement("div");
+    temp.innerHTML = str;
 
-function formatDate(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')+"-"+String(d.getDate()).padStart(2,'0')+" "+String(d.getHours()).padStart(2,'0')+":"+String(d.getMinutes()).padStart(2,'0'); }
-
-function renderMenu(){
-  menu.innerHTML="";
-  const voiceBtn = document.createElement("button");
-  voiceBtn.textContent = "Sesli Mod";
-  voiceBtn.onclick = () => { window.location.href = "sesli.html"; };
-  menu.appendChild(voiceBtn);
-  fetch(`${BACKEND_URL}/history?userId=${userId}`)
-    .then(r=>r.json())
-    .then(data=>{
-      Object.keys(data).forEach(cid=>{
-        const msgs = data[cid] || [];
-        const lastMsg = msgs.length>0 ? msgs[msgs.length-1].text : "Yeni Sohbet";
-        addChatToMenu(cid, lastMsg, true);
-      });
+    // Tüm <a> etiketlerini hedef="_blank" ile güvenli hâle getir
+    temp.querySelectorAll('a').forEach(a => {
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
     });
+
+    return temp.innerHTML;
 }
+
+// 🔹 Tarih formatı
+function formatDate(d){
+    return d.getFullYear()+"-"+
+           String(d.getMonth()+1).padStart(2,'0')+"-"+
+           String(d.getDate()).padStart(2,'0')+" "+
+           String(d.getHours()).padStart(2,'0')+":"+
+           String(d.getMinutes()).padStart(2,'0');
+}
+
 
 function addChatToMenu(chatId, lastMessage="Yeni Sohbet", skipSave=false){
   if([...menu.querySelectorAll(".chatBtn")].some(b=>b.dataset.id===chatId)) return;
