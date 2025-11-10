@@ -1229,11 +1229,10 @@ function renderNovaMessage(text) {
   const banner = document.getElementById('nova-pwa-banner');
   const btnDefer = document.getElementById('nova-defer');
   const btnInstall = document.getElementById('nova-install');
-  const STORAGE_KEY = 'nova_pwa_installed_v1';
-  const DEFER_KEY = 'nova_pwa_defer_time';
+  const STORAGE_KEY = 'nova_pwa_installed_v2';
+  const DEFER_KEY = 'nova_pwa_defer_time_v2';
 
-  let deferredPrompt = null;
-
+  // Banner görünürlüğünü kontrol
   function isInstalled() {
     return localStorage.getItem(STORAGE_KEY) === 'true';
   }
@@ -1248,6 +1247,9 @@ function renderNovaMessage(text) {
     if(!isInstalled() && !isDeferred()) {
       banner.style.display = 'flex';
       document.body.dataset.novaPwaBanner = 'visible';
+    } else {
+      banner.style.display = 'none';
+      delete document.body.dataset.novaPwaBanner;
     }
   }
 
@@ -1256,46 +1258,23 @@ function renderNovaMessage(text) {
     delete document.body.dataset.novaPwaBanner;
   }
 
-  // Sayfa açılırken banner kontrol
+  // Sayfa açılırken kontrol et
   showBanner();
 
-  // beforeinstallprompt tetiklendiğinde yakala
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    showBanner();
-  });
-
-  // Daha sonra butonu
+  // “Daha sonra” butonu
   btnDefer.addEventListener('click', () => {
     hideBanner();
-    // 2 saat sonra tekrar göstermek için timestamp sakla
-    const deferUntil = new Date().getTime() + 2*60*60*1000;
+    const deferUntil = new Date().getTime() + 2*60*60*1000; // 2 saat
     localStorage.setItem(DEFER_KEY, deferUntil.toString());
   });
 
-  // Yükle butonu
-  btnInstall.addEventListener('click', async () => {
-    if(!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    if(choice.outcome === 'accepted') {
-      localStorage.setItem(STORAGE_KEY, 'true');
-      hideBanner();
-    } else {
-      hideBanner(); // reddederse bir sonraki sayfa yüklemesinde tekrar çıkacak
-    }
-    deferredPrompt = null;
-  });
-
-  // PWA yüklenirse
-  window.addEventListener('appinstalled', () => {
-    localStorage.setItem(STORAGE_KEY, 'true');
+  // “Yükle” butonu
+  btnInstall.addEventListener('click', () => {
     hideBanner();
+    localStorage.setItem(STORAGE_KEY, 'true');
   });
 
 })();
-
 
 </script>
 
