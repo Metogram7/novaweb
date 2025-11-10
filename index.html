@@ -1230,14 +1230,22 @@ function renderNovaMessage(text) {
   const btnDefer = document.getElementById('nova-defer');
   const btnInstall = document.getElementById('nova-install');
   const STORAGE_KEY = 'nova_pwa_installed_v1';
+  const DEFER_KEY = 'nova_pwa_defer_time';
+
   let deferredPrompt = null;
 
   function isInstalled() {
     return localStorage.getItem(STORAGE_KEY) === 'true';
   }
 
+  function isDeferred() {
+    const deferTime = localStorage.getItem(DEFER_KEY);
+    if(!deferTime) return false;
+    return new Date().getTime() < parseInt(deferTime);
+  }
+
   function showBanner() {
-    if(!isInstalled()) {
+    if(!isInstalled() && !isDeferred()) {
       banner.style.display = 'flex';
       document.body.dataset.novaPwaBanner = 'visible';
     }
@@ -1248,7 +1256,7 @@ function renderNovaMessage(text) {
     delete document.body.dataset.novaPwaBanner;
   }
 
-  // Banner sayfa açıldığında kontrol
+  // Sayfa açılırken banner kontrol
   showBanner();
 
   // beforeinstallprompt tetiklendiğinde yakala
@@ -1259,7 +1267,12 @@ function renderNovaMessage(text) {
   });
 
   // Daha sonra butonu
-  btnDefer.addEventListener('click', hideBanner);
+  btnDefer.addEventListener('click', () => {
+    hideBanner();
+    // 2 saat sonra tekrar göstermek için timestamp sakla
+    const deferUntil = new Date().getTime() + 2*60*60*1000;
+    localStorage.setItem(DEFER_KEY, deferUntil.toString());
+  });
 
   // Yükle butonu
   btnInstall.addEventListener('click', async () => {
@@ -1270,7 +1283,7 @@ function renderNovaMessage(text) {
       localStorage.setItem(STORAGE_KEY, 'true');
       hideBanner();
     } else {
-      hideBanner(); // reddederse bir sonraki sayfa açılışında tekrar çıkacak
+      hideBanner(); // reddederse bir sonraki sayfa yüklemesinde tekrar çıkacak
     }
     deferredPrompt = null;
   });
@@ -1282,6 +1295,7 @@ function renderNovaMessage(text) {
   });
 
 })();
+
 
 </script>
 
