@@ -621,100 +621,93 @@ pre {
   pointer-events: none;
   transition: all 0.3s ease;
   z-index: 9999;
-}
-#toast.visible {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-}
-
-/* === Sesli okuma butonu === */
-.speak-btn {
-  margin-left: 8px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  transition: transform 0.2s;
-}
-.speak-btn:hover {
-  transform: scale(1.2);
-}
-/* Banner stili */
-#nova-pwa-banner {
+}#nova-pwa-banner {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 99999;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  background: linear-gradient(90deg, #ff7a18, #af002d);
-  color: white;
-  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;
-  animation: slideDown 0.6s ease-out;
-}
-
-/* Slide-in animasyonu */
-@keyframes slideDown {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(0); }
-}
-
-#nova-pwa-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1500; /* üstte görünmesi için mevcut menüden yüksek */
+  z-index: 2000; /* üstte görünmesi için */
   display: none; /* JS ile kontrol edilecek */
   align-items: center;
   justify-content: space-between;
-  padding: 12px 18px;
+  padding: 14px 20px;
   border-radius: 0 0 12px 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
   background: linear-gradient(90deg, #ff7a18, #af002d);
   color: white;
   font-weight: 700;
   font-size: 15px;
-  font-family: inherit;
+  font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
+}
+
+#nova-pwa-banner .message {
+  flex: 1;
+  font-weight: 700;
+  font-size: 16px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
 #nova-pwa-banner .actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  align-items: center;
 }
 
 button.nova-pwa-btn {
   border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  cursor: pointer;
+  border-radius: 10px;
+  padding: 10px 18px;
   font-weight: 700;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-button#nova-defer { background: rgba(255,255,255,0.2); color: white; }
-button#nova-install { background: #fff100; color: #af002d; font-weight: 800; }
-
-body {
-  margin: 0;
-  padding-top: 72px; /* banner yüksekliği + boşluk */
-  background: #f0f0f0;
-  font-family: Arial, sans-serif;
+button#nova-defer {
+  background: rgba(255,255,255,0.2);
+  color: white;
+}
+button#nova-defer:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(255,255,255,0.4);
 }
 
-/* Mobil uyum */
+button#nova-install {
+  background: #fff100;
+  color: #af002d;
+  font-weight: 800;
+}
+button#nova-install:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(255,241,0,0.6);
+}
+
+/* Mobil uyumlu responsive */
 @media (max-width: 520px) {
-  #nova-pwa-banner { padding: 12px 16px; flex-direction: column; gap: 10px; text-align: center; }
-  .message { font-size: 15px; }
-  .actions { justify-content: center; gap: 8px; }
-  button.nova-pwa-btn { padding: 8px 14px; font-size: 14px; }
-  body { padding-top: 88px; }
+  #nova-pwa-banner {
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  #nova-pwa-banner .message {
+    font-size: 15px;
+  }
+  #nova-pwa-banner .actions {
+    justify-content: center;
+    gap: 8px;
+  }
+  button.nova-pwa-btn {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
 }
 
+/* Body padding banner ile uyumlu */
+body[data-nova-pwa-banner="visible"] {
+  padding-top: 72px;
+  transition: padding-top 0.3s ease;
+}
 
 </style>
 </head>
@@ -1236,52 +1229,58 @@ function renderNovaMessage(text) {
   const banner = document.getElementById('nova-pwa-banner');
   const btnDefer = document.getElementById('nova-defer');
   const btnInstall = document.getElementById('nova-install');
-  const KEY_INSTALLED = 'nova_pwa_installed_v1';
+  const STORAGE_KEY = 'nova_pwa_installed_v1';
   let deferredPrompt = null;
 
   function isInstalled() {
-    // Kullanıcı daha önce yükledi mi?
-    return localStorage.getItem(KEY_INSTALLED) === 'true';
+    return localStorage.getItem(STORAGE_KEY) === 'true';
   }
 
   function showBanner() {
     if(!isInstalled()) {
       banner.style.display = 'flex';
+      document.body.dataset.novaPwaBanner = 'visible';
     }
   }
 
   function hideBanner() {
     banner.style.display = 'none';
+    delete document.body.dataset.novaPwaBanner;
   }
 
+  // Banner sayfa açıldığında kontrol
+  showBanner();
+
+  // beforeinstallprompt tetiklendiğinde yakala
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     showBanner();
   });
 
+  // Daha sonra butonu
   btnDefer.addEventListener('click', hideBanner);
 
+  // Yükle butonu
   btnInstall.addEventListener('click', async () => {
     if(!deferredPrompt) return;
     deferredPrompt.prompt();
     const choice = await deferredPrompt.userChoice;
     if(choice.outcome === 'accepted') {
-      localStorage.setItem(KEY_INSTALLED, 'true');
+      localStorage.setItem(STORAGE_KEY, 'true');
       hideBanner();
     } else {
-      hideBanner(); // reddederse bir sonraki sayfa yüklemesinde tekrar çıkacak
+      hideBanner(); // reddederse bir sonraki sayfa açılışında tekrar çıkacak
     }
     deferredPrompt = null;
   });
 
+  // PWA yüklenirse
   window.addEventListener('appinstalled', () => {
-    localStorage.setItem(KEY_INSTALLED, 'true');
+    localStorage.setItem(STORAGE_KEY, 'true');
     hideBanner();
   });
 
-  // Sayfa açılırken kontrol et
-  showBanner();
 })();
 
 </script>
