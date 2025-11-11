@@ -3,9 +3,9 @@
   "short_name": "Nova",
   "description": "Nova Web — Yapay Zeka Asistanın",
   "start_url": "/novaweb/",
-  "display": "standalone",
-  "background_color": "#a9e2f0",
-  "theme_color": "#1e90ff",
+  "display": "fullscreen",
+  "background_color": "#A9E2F0",
+  "theme_color": "#A9E2F0",
   "orientation": "portrait",
   "scope": "/novaweb/",
   "icons": [
