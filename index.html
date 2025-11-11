@@ -709,6 +709,21 @@ body[data-nova-pwa-banner="visible"] {
   transition: padding-top 0.3s ease;
 }
 
+message-content a {
+  text-decoration: underline;
+  cursor: pointer;
+  color: #1e88e5;
+  /* pointer-events normal olmalı */
+  pointer-events: auto;
+}
+.message-content a code {
+  font-family: monospace;
+  font-size: 0.95em;
+  background: rgba(0,0,0,0.04);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
 </style>
 </head>
 <body>
@@ -742,7 +757,7 @@ body[data-nova-pwa-banner="visible"] {
     <div style="display:flex; align-items:center;">
       <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="Nova Logo">
       💬 Nova Chat   
-      <h4 style="color: #d32f2f;"> <a href="güncelleme.html">Nova V4 Güncellemesini Gör</a> </h4>
+      <h4 style="color: #d32f2f;"> <a href="güncelleme.html">Nova V4 Güncellemesini Gör</a>  </h4>
     </div>
     <span id="novaStatus">Hazır</span>
   </header>
@@ -759,15 +774,6 @@ body[data-nova-pwa-banner="visible"] {
   </div>
   <div id="emojiPicker"></div>
 </div>
-
-<div id="nova-pwa-banner" role="dialog" aria-live="polite">
-  <div class="message">📱 Nova’yı telefonuna yükle ve her zaman hazır ol!</div>
-  <div class="actions">
-    <button id="nova-defer" class="nova-pwa-btn">Daha sonra</button>
-    <button id="nova-install" class="nova-pwa-btn">Yükle</button>
-  </div>
-</div>
-
 
 <script>
 // 🧠 Nova'nın mesaj alanı boş mu kontrol et
@@ -1139,6 +1145,11 @@ window.addEventListener("DOMContentLoaded", ()=>{ loadChat(currentChat); renderM
 function showErrorMessage(errorText, lastUserMessage) {
   const chat = document.getElementById("chat");
 
+  if (!chat) {
+    console.error("Chat elementi bulunamadı. HTML'de id='chat' olduğundan emin ol.");
+    return;
+  }
+
   // Hata mesajı kutusu
   const errorDiv = document.createElement("div");
   errorDiv.className = "error-message";
@@ -1147,137 +1158,150 @@ function showErrorMessage(errorText, lastUserMessage) {
     <button class="retry-btn">🔄 Yeniden Dene</button>
   `;
 
-  // Butona tıklanınca son mesaj yeniden gönderilecek
   const retryBtn = errorDiv.querySelector(".retry-btn");
+  if (!retryBtn) {
+    console.error("Retry butonu bulunamadı.");
+    return;
+  }
+
+  // Butona tıklanınca son mesaj yeniden gönderilecek
   retryBtn.addEventListener("click", () => {
     errorDiv.remove(); // Eski hata mesajını sil
     if (lastUserMessage) {
-      sendMessage(lastUserMessage); // 👈 Kullanıcının son mesajını yeniden gönder
+      if (typeof sendMessage === "function") {
+        sendMessage(lastUserMessage); // Kullanıcının son mesajını yeniden gönder
+      } else {
+        console.error("sendMessage fonksiyonu tanımlı değil.");
+      }
     }
   });
 
   chat.appendChild(errorDiv);
   chat.scrollTop = chat.scrollHeight;
 }
-
-// ----------------------------------------------------------------------------------------------
 </script>
 
 <script>
-function renderNovaMessage(text) {
-  const chatBox = document.getElementById("chatBox");
-  const codeRegex = /```(\w+)?\n([\s\S]*?)```/g;
-  let match;
-  let lastIndex = 0;
-  const messageContainer = document.createElement("div");
-  messageContainer.className = "nova-message";
+/* linkify + external open handler */
+function linkifyElementOpenExternally(element) {
+  if (!element) return;
 
-  while ((match = codeRegex.exec(text)) !== null) {
-    const normalText = text.substring(lastIndex, match.index);
-    if (normalText.trim()) {
-      const p = document.createElement("p");
-      p.innerHTML = normalText
-        .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-        .replace(/\*(.*?)\*/g, "<i>$1</i>");
-      messageContainer.appendChild(p);
+  const urlRegex = /(?:(?:https?:\/\/)|(?:www\.))[\w\-\._~:\/?#[\]@!$&'()*+,;=%]+/gi;
+
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  for (const textNode of textNodes) {
+    const text = textNode.nodeValue;
+    if (!text) continue;
+    if (!urlRegex.test(text)) { urlRegex.lastIndex = 0; continue; }
+    urlRegex.lastIndex = 0;
+
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0;
+    let match;
+    while ((match = urlRegex.exec(text)) !== null) {
+      const urlText = match[0];
+      const start = match.index;
+      const end = urlRegex.lastIndex;
+
+      if (start > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, start)));
+
+      let href = urlText;
+      if (/^www\./i.test(href)) href = 'http://' + href;
+
+      // Trim trailing punctuation from href but keep punctuation in displayed text
+      const trailingPunctMatch = href.match(/([)\]\.,;:!?]+)$/);
+      let trailing = '';
+      if (trailingPunctMatch) {
+        trailing = trailingPunctMatch[1];
+        href = href.slice(0, -trailing.length);
+      }
+
+      const a = document.createElement('a');
+      a.href = href;
+      a.textContent = urlText.replace(/([)\]\.,;:!?]+)$/, '');
+      a.setAttribute('rel', 'noopener noreferrer');
+      // not setting target here — we'll handle opening explicitly
+      a.addEventListener('click', function (ev) {
+        // Allow action if user Ctrl/Cmd/Meta-clicks or middle-clicks (open in new tab intentionally)
+        if (ev.ctrlKey || ev.metaKey || ev.button === 1) return;
+        ev.preventDefault();
+        openExternally(href);
+      }, {passive: false});
+
+      frag.appendChild(a);
+      if (trailing) frag.appendChild(document.createTextNode(trailing));
+
+      lastIndex = end;
     }
 
-    const lang = match[1] || "Kod";
-    const code = match[2].trim();
-
-    const codeWindow = document.createElement("div");
-    codeWindow.className = "code-window";
-
-    const copyBtn = document.createElement("button");
-    copyBtn.className = "copy-btn";
-    copyBtn.textContent = "📋 Kopyala";
-    copyBtn.onclick = () => navigator.clipboard.writeText(code);
-
-    const langLabel = document.createElement("div");
-    langLabel.className = "lang-label";
-    langLabel.textContent = lang;
-
-    const pre = document.createElement("pre");
-    const codeEl = document.createElement("code");
-    codeEl.textContent = code;
-    pre.appendChild(codeEl);
-
-    codeWindow.appendChild(langLabel);
-    codeWindow.appendChild(copyBtn);
-    codeWindow.appendChild(pre);
-    messageContainer.appendChild(codeWindow);
-
-    lastIndex = codeRegex.lastIndex;
+    if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    textNode.parentNode.replaceChild(frag, textNode);
+    urlRegex.lastIndex = 0;
   }
-
-  const remaining = text.substring(lastIndex);
-  if (remaining.trim()) {
-    const p = document.createElement("p");
-    p.innerHTML = remaining
-      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-      .replace(/\*(.*?)\*/g, "<i>$1</i>");
-    messageContainer.appendChild(p);
-  }
-
-  chatBox.appendChild(messageContainer);
-  chatBox.scrollTop = chatBox.scrollHeight;
 }
-</script>
 
-<script>
-(function(){
-  const banner = document.getElementById('nova-pwa-banner');
-  const btnDefer = document.getElementById('nova-defer');
-  const btnInstall = document.getElementById('nova-install');
-  const STORAGE_KEY = 'nova_pwa_installed_v2';
-  const DEFER_KEY = 'nova_pwa_defer_time_v2';
-
-  // Banner görünürlüğünü kontrol
-  function isInstalled() {
-    return localStorage.getItem(STORAGE_KEY) === 'true';
+/* Açma mantığı: çeşitli ortamlar için fallback'ler */
+function openExternally(url) {
+  // Quick sanitization: allow only http/https/mailto/tel
+  if (!/^((https?:)|(mailto:)|(tel:))/.test(url)) {
+    // If user pasted "www.example.com" we already normalized to http:// earlier.
+    // If still something else, force https
+    url = 'https://' + url;
   }
 
-  function isDeferred() {
-    const deferTime = localStorage.getItem(DEFER_KEY);
-    if(!deferTime) return false;
-    return new Date().getTime() < parseInt(deferTime);
+  // 1) Try window.open with _blank (normal browser opens new tab)
+  try {
+    const newWin = window.open(url, '_blank', 'noopener,noreferrer');
+    // If returned window is non-null, assume browser handled it
+    if (newWin) return;
+  } catch (e) {
+    // ignore and fallback
   }
 
-  function showBanner() {
-    if(!isInstalled() && !isDeferred()) {
-      banner.style.display = 'flex';
-      document.body.dataset.novaPwaBanner = 'visible';
-    } else {
-      banner.style.display = 'none';
-      delete document.body.dataset.novaPwaBanner;
+  // 2) If running as installed PWA or inside some WebView, try location change as fallback
+  // Detect common 'display-mode' for PWAs
+  const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true; // iOS
+
+  // If standalone (installed PWA), use location.assign to try open in browser
+  if (isStandalone) {
+    // Force opening in a new top-level context by setting location.href.
+    // Many Android PWAs (TWA) will open external links outside the app if URL is outside scope.
+    // If the URL is same-origin and inside scope, this will still open inside the PWA.
+    window.location.href = url;
+    return;
+  }
+
+  // 3) For WebViews (wrapped APKs) - attempt to open via intent URL (Android Chrome)
+  // This is a reasonable fallback for Android devices; it will open Chrome if available.
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (isAndroid) {
+    try {
+      // Build an intent scheme which most Android browsers understand and will open externally
+      const intentUrl = 'intent://' + url.replace(/^https?:\/\//, '') +
+        '#Intent;scheme=https;package=com.android.chrome;end';
+      // try open intent
+      window.location.href = intentUrl;
+      return;
+    } catch (e) {
+      // ignore and continue fallback
     }
   }
 
-  function hideBanner() {
-    banner.style.display = 'none';
-    delete document.body.dataset.novaPwaBanner;
-  }
+  // 4) final fallback: try assigning top-level location (best-effort)
+  window.top.location.href = url;
+}
 
-  // Sayfa açılırken kontrol et
-  showBanner();
+/* Örnek kullanım */
+document.querySelectorAll('.message-content').forEach(el => linkifyElementOpenExternally(el));
 
-  // “Daha sonra” butonu
-  btnDefer.addEventListener('click', () => {
-    hideBanner();
-    const deferUntil = new Date().getTime() + 2*60*60*1000; // 2 saat
-    localStorage.setItem(DEFER_KEY, deferUntil.toString());
-  });
-
-  // “Yükle” butonu
-  btnInstall.addEventListener('click', () => {
-    hideBanner();
-    localStorage.setItem(STORAGE_KEY, 'true');
-  });
-
-})();
-
+/* Eğer dinamik ekleme varsa, yeni mesaj ekledikten sonra tek satır:
+   linkifyElementOpenExternally(newMessageContentElement);
+*/
 </script>
-
 
 </body>
 </html>
