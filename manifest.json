@@ -2,25 +2,25 @@
   "name": "Nova",
   "short_name": "Nova",
   "description": "Nova Web — Yapay Zeka Asistanın",
-  "start_url": "https://metogram7.github.io/novaweb/",
+  "start_url": "/novaweb/",
   "display": "standalone",
   "background_color": "#a9e2f0",
   "theme_color": "#1e90ff",
   "orientation": "portrait",
-  "scope": "/",
+  "scope": "/novaweb/",
   "icons": [
     {
-      "src": "ChatGPT Image 1 Kas 2025 12_57_42.png",
+      "src": "/icons/icon-72.png",
       "sizes": "72x72",
       "type": "image/png"
     },
     {
-      "src": "ChatGPT Image 1 Kas 2025 12_57_42.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "ChatGPT Image 1 Kas 2025 12_57_42.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
