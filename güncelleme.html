@@ -118,7 +118,7 @@ body.stage1 .update-info {
 body.end .update-info {
   opacity: 0;
   transform: translateY(-100px);
-  transition: all 1s ease;
+  transition: all 0.3s ease;
 }
 </style>
 </head>
@@ -126,7 +126,7 @@ body.end .update-info {
 <body>
   <!-- 1. SAHNE -->
   <div class="hero">
-    <h1>NoVa V4 New Update</h1>
+    <h1>NoVa V4.2 New Update</h1>
     <div class="scroll-down">
       <div>Aşağı kaydır</div>
       <span>⬇️</span>
@@ -135,13 +135,30 @@ body.end .update-info {
 
   <!-- 2. SAHNE -->
   <div class="update-info">
-    <h2>🚀 NoVa V4 Güncelleme Notları</h2>
+    <h2>🚀 NoVa V4.2 Güncelleme Notları</h2>
     <ul>
-      <li>✨ TimeOut hatası çözüldü.</li>
-      <li>🧠 Yapay zeka tepkileri geliştirildi.</li>
-      <li>💤 Novanın uykuya geçmesi düzeldi.</li>
+      <li>✨ API hatası çözüldü.</li>
+      <li>⛔ API hatası almamak için, 3tane API bağlandı <br></li>
+      <li>🧑‍🏫Nova Daha Çok eğitildi.</li>
+      <li>📱açılış ekranı düzeldi</li>
+      <li>📃 Nova Hakkında Sayfası.</li>
+      <p>
+       <p>
+        <p>
+          <p>
+            <li>▶️ Nova yakında PlayStore'ye geliyor...</li> 
+            <p>
+              <li> 
+                 <u>📨 Yakında Render Yerine çok daha profosyonel sunucuya geçiceğiz</u>
+              </li>
+            </p>
+          </p>
+        </p>
+       </p>
+      </p>
+      
     </ul>
-    <div class="author">Metehan Akkaya</div>
+    <div class="author"> BY: <br> Metehan Akkaya</div>
   </div>
 
 <script>
@@ -161,7 +178,7 @@ window.addEventListener('scroll', () => {
     document.body.classList.add('end');
     setTimeout(() => {
       window.location.href = "index.html"; 
-    }, 1000);
+    }, 400);
   } else {
     document.body.classList.remove('end');
   }

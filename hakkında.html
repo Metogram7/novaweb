@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova</title>
+<style>
+    body {
+        margin: 0;
+        font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #a9e2f0;
+        color: #111;
+        overflow: hidden;
+        scroll-behavior: smooth;
+    }
+
+    h1 {
+        background: linear-gradient(90deg, #ff6ec4, #7873f5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    #content {
+        background: linear-gradient(90deg, #ff6ec4, #7873f5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 18px;
+        line-height: 1.6;
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    /* Dil Seçici Stili */
+    .language-selector {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #ffffffcc;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: hidden;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .language-selector > .selected {
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .language-selector > .selected img {
+        width: 24px;
+        height: 24px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .language-options {
+        display: none;
+        flex-direction: column;
+        background: #fff;
+        border-top: 1px solid #ddd;
+    }
+
+    .language-options div {
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: background 0.2s;
+    }
+
+    .language-options div:hover {
+        background: #f0f0f0;
+    }
+
+    .language-options img {
+        width: 24px;
+        height: 24px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+</style>
+</head>
+<body>
+
+<div class="language-selector" id="languageSelector">
+    <div class="selected">
+        <img src="https://flagcdn.com/16x12/tr.png" alt="TR"> Türkçe
+    </div>
+    <div class="language-options">
+        <div data-lang="tr"><img src="https://flagcdn.com/16x12/tr.png" alt="TR"> Türkçe</div>
+        <div data-lang="en"><img src="https://flagcdn.com/16x12/gb.png" alt="EN"> English</div>
+        <div data-lang="es"><img src="https://flagcdn.com/16x12/es.png" alt="ES"> Español</div>
+        <div data-lang="ar"><img src="https://flagcdn.com/16x12/sa.png" alt="AR"> العربية</div>
+        <div data-lang="zh"><img src="https://flagcdn.com/16x12/cn.png" alt="ZH"> 中文</div>
+        <div data-lang="ko"><img src="https://flagcdn.com/16x12/kr.png" alt="KO"> 한국어</div>
+        <div data-lang="az"><img src="https://flagcdn.com/16x12/az.png" alt="AZ"> Azərbaycan</div>
+    </div>
+</div>
+
+<h1>NOVA</h1>
+
+<div id="content">
+    <h3>
+    Adı Nova.<br>
+    %100 Türkiye’de üretildi.<br>
+    26 gün önce ilk kez yapay zekâya dönüştü.<br>
+    Metehan Akkaya tarafından geliştirildi.<br>
+    Arkasında bir ekibi yok.<br>
+    Şu anda fazla hatalı.<br>
+    Hata olmaması için arkasında 2 tane yedek yapay zekâsı var.</h3> <p>developer= <a href="developer.html"> <u > Metehan Akkaya </u> </a> </p>
+</div>
+
+<script>
+const languageSelector = document.getElementById('languageSelector');
+const selected = languageSelector.querySelector('.selected');
+const options = languageSelector.querySelector('.language-options');
+const content = document.getElementById('content');
+
+const texts = {
+    tr: `Adı Nova.<br>%100 Türkiye’de üretildi.<br>26 gün önce ilk kez yapay zekâya dönüştü.<br>Metehan Akkaya tarafından geliştirildi.<br>Arkasında bir ekibi yok.<br>Şu anda fazla hatalı.<br>Hata olmaması için arkasında 2 tane yedek yapay zekâsı var.`,
+    en: `Name is Nova.<br>100% made in Turkey.<br>Transformed into AI for the first time 26 days ago.<br>Developed by Metehan Akkaya.<br>Has no team behind it.<br>Currently has many errors.<br>Has 2 backup AIs to prevent errors.`,
+    es: `Nombre es Nova.<br>100% fabricado en Turquía.<br>Se transformó en IA por primera vez hace 26 días.<br>Desarrollado por Metehan Akkaya.<br>No tiene equipo detrás.<br>Actualmente tiene muchos errores.<br>Tiene 2 IAs de respaldo para prevenir errores.`,
+    ar: `الاسم نوفا.<br>صُنع 100٪ في تركيا.<br>تم تحويله إلى ذكاء اصطناعي لأول مرة منذ 26 يومًا.<br>تم تطويره بواسطة متهان أكايا.<br>ليس لديه فريق خلفه.<br>يوجد به العديد من الأخطاء حاليًا.<br>يوجد 2 ذكاء اصطناعي احتياطي لمنع الأخطاء.`,
+    zh: `名称为Nova。<br>100%土耳其制造。<br>26天前首次转化为人工智能。<br>由Metehan Akkaya开发。<br>没有团队支持。<br>目前有很多错误。<br>有2个备用AI防止错误。`,
+    ko: `이름은 Nova입니다.<br>100% 터키산입니다.<br>26일 전에 처음으로 AI로 변환되었습니다.<br>Metehan Akkaya에 의해 개발됨.<br>뒤에 팀이 없습니다.<br>현재 오류가 많습니다.<br>오류를 방지하기 위해 2개의 백업 AI가 있습니다.`,
+    az: `Adı Nova.<br>%100 Türkiyədə istehsal edilib.<br>26 gün əvvəl ilk dəfə süni intellektə çevrildi.<br>Metehan Akkaya tərəfindən hazırlanıb.<br>Arxasında heç bir komandası yoxdur.<br>Hal-hazırda çoxlu səhvlər var.<br>Səhvlərin qarşısını almaq üçün 2 ehtiyat AI var.`
+};
+
+// Menü aç/kapa
+selected.addEventListener('click', () => {
+    options.style.display = options.style.display === 'flex' ? 'none' : 'flex';
+});
+
+// Dil seçimi
+options.querySelectorAll('div').forEach(option => {
+    option.addEventListener('click', () => {
+        const lang = option.getAttribute('data-lang');
+        content.innerHTML = texts[lang];
+        selected.innerHTML = option.innerHTML;
+        options.style.display = 'none';
+    });
+});
+
+// Sayfanın herhangi yerine tıklayınca menüyü kapat
+document.addEventListener('click', e => {
+    if (!languageSelector.contains(e.target)) {
+        options.style.display = 'none';
+    }
+});
+</script>
+
+</body>
+</html>
