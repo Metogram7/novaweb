@@ -51,7 +51,6 @@
         <h2 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">Hata Bildirim Formu</h2>
 
         <form id="bugReportForm">
-            <!-- Uyarı Notu -->
             <label for="not" class="text-red-600 font-bold text-lg mb-4 block p-2 border-2 border-red-300 rounded-lg bg-red-50">
                 Dalga Geçenler, burayı boşa dolduranlara ve yanlış bilgi girenler İçin İşlemler Yapılır!
             </label>
@@ -75,6 +74,10 @@
     </div>
 
     <script>
+        // *** DİKKAT: BURASI GÜNCELLENDİ! ***
+        const SERVER_URL = "https://nova-chat-d50f.onrender.com"; // <-- Render URL'si
+        // **********************************
+
         document.getElementById('bugReportForm').addEventListener('submit', function(event) {
             event.preventDefault(); // Varsayılan form gönderimini engelle
             sendBugReport(); 
@@ -93,8 +96,8 @@
             submitBtn.disabled = true;
 
             try {
-                // Arka uç sunucu adresini kullanıyoruz
-                const res = await fetch("http://127.0.0.1:5000/send-mail", {
+                // Sunucu adresine /send-mail eklenerek istek gönderiliyor
+                const res = await fetch(`${SERVER_URL}/send-mail`, {
                     method: "POST",
                     body: formData 
                 });
@@ -111,7 +114,7 @@
                 }
 
             } catch (err) {
-                statusElement.innerText = "Sunucuya ulaşılamadı. Sunucu (http://127.0.0.1:5000) çalışıyor mu? Detay: " + err.message;
+                statusElement.innerText = `Sunucuya ulaşılamadı. Sunucu (${SERVER_URL}) çalışıyor mu? Detay: ${err.message}`;
                 statusElement.style.color = "red";
             } finally {
                 submitBtn.disabled = false;
