@@ -11,9 +11,9 @@
 <style>
 /* === GENEL İYİLEŞTİRMELER === */
 :root {
-  --primary-color: #00bfff;
+  --primary-color: #b8e3ff;
   --secondary-color: #8be0ff;
-  --background-light: #a9e2f0;
+  --background-light: #000000;
   --background-dark: #1b1b1b;
   --user-msg-bg: #3949db;
   --nova-msg-bg: #b1e6ff;
@@ -46,7 +46,7 @@ body.dark-mode {
 
 /* === HATA MESAJI === */
 .error-message {
-  background: #ffebee;
+  background: #ff0026;
   color: #c62828;
   border: 1px solid #ffcdd2;
   border-radius: var(--border-radius);
@@ -61,7 +61,7 @@ body.dark-mode {
 
 .retry-btn {
   background: var(--error-color);
-  color: white;
+  color: rgb(255, 0, 0);
   border: none;
   padding: 8px 16px;
   border-radius: 8px;
@@ -80,7 +80,7 @@ body.dark-mode {
 #sideMenu {
   width: 280px;
   min-width: 200px;
-  background: linear-gradient(135deg, #b8ddee 0%, #a9e2f0 100%);
+  background: linear-gradient(135deg, #52c7fd 0%, #a9e2f0 100%);
   border-right: 2px solid var(--primary-color);
   display: flex;
   flex-direction: column;
@@ -138,7 +138,7 @@ body.dark-mode {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #c3d5eb;
+  background: #c5eaff;
 }
 
 .dark-mode #mainContent {
@@ -151,7 +151,7 @@ header {
   padding: 15px 20px;
   font-size: 1.4rem;
   font-weight: 700;
-  color: #00080a;
+  color: #240202;
   border-bottom: 2px solid var(--primary-color);
   background: linear-gradient(135deg, #d7dde0, #e8ecee);
   display: flex;
@@ -175,7 +175,7 @@ header img {
 #themeToggle {
   border: none;
   background: var(--primary-color);
-  color: white;
+  color: rgb(255, 255, 255);
   font-weight: 600;
   border-radius: var(--border-radius);
   padding: 10px 18px;
@@ -185,7 +185,7 @@ header img {
 }
 
 #themeToggle:hover {
-  background: #0077b3;
+  background: #ffffff;
   transform: translateY(-1px);
 }
 
@@ -258,7 +258,7 @@ header img {
 #inputArea {
   display: flex;
   padding: 15px 20px;
-  background: #98b6df;
+  background: #696969;
   border-top: 2px solid var(--primary-color);
   gap: 10px;
   flex-wrap: wrap;
@@ -749,7 +749,8 @@ message-content a {
   <h3>💬 Nova Chat</h3>
   <button id="newChatBtn">➕ Yeni Sohbet</button>
   <div id="menu"></div>
-  <button id="themeToggle">🌙 Tema Değiştir</button>
+  <button id="themeToggle">🌙 Tema Değiştir</button> <br> <br> 
+  <button id="themeToggle" onclick="window.location.href=('notify.html')" >geliştiriciye özel oda</button>
 </div>
 <div id="dragHandle"></div>
 
@@ -1303,6 +1304,51 @@ document.querySelectorAll('.message-content').forEach(el => linkifyElementOpenEx
    linkifyElementOpenExternally(newMessageContentElement);
 */
 </script>
+<script>
+async function askNotificationPermission() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        alert("Tarayıcınız push bildirimleri desteklemiyor.");
+        return;
+    }
 
+    // Kullanıcıya izin sor
+    let permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+        alert("Push bildirimleri için izin vermen gerekiyor.");
+        return;
+    }
+
+    // Service Worker kaydı
+    const reg = await navigator.serviceWorker.register('/service-worker.js');
+
+    // Push aboneliği
+    const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(
+            'BNh8G-snBG8cqiGaNxPYbdJXVige6fmIak6qhSM0rBEhhi6wcNjVnysUcJE22rbzUzRLKtvKp66zksv-o4mv27w='
+        )
+    });
+
+    // Aboneliği backend’e kaydet
+    await fetch('/subscribe', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+// Sayfa yüklenince izin sor
+window.addEventListener('load', () => {
+    askNotificationPermission();
+});
+
+</script>
 </body>
 </html>

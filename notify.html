@@ -1,0 +1,139 @@
+<h1>GELİŞTİRİCİYE ÖZEL ODAYA GİRMEK İÇİN  <br> ŞİFREYİ GİRİN </h1>
+
+<input type="password" id="passwordInput" placeholder="Şifreyi gir">
+<button id="loginBtn">Giriş</button>
+
+<div id="chatContainer" style="display:none; opacity:0; transform: translateY(-20px); transition: all 0.5s ease;">
+    <input type="text" id="messageInput" placeholder="Mesajını yaz ve Enter'a bas">
+    <button id="sendBtn">Gönder</button>
+    <p id="status"></p>
+</div>
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background: linear-gradient(135deg, #00bfff, #8be0ff);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        flex-direction: column;
+    }
+
+    input, button {
+        font-size: 16px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: none;
+        outline: none;
+        transition: all 0.2s ease;
+        margin: 5px 0;
+    }
+
+    #messageInput {
+        width: 300px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    #messageInput:focus {
+        box-shadow: 0 0 0 3px rgba(0,191,255,0.4);
+    }
+
+    #sendBtn, #loginBtn {
+        background-color: #00bfff;
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    #sendBtn:hover, #loginBtn:hover {
+        background-color: #009acd;
+        transform: translateY(-2px);
+    }
+
+    #status {
+        margin-top: 15px;
+        font-size: 14px;
+        color: #fff;
+        text-align: center;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    /* Yanlış şifre animasyonu */
+    .shake {
+        animation: shake 0.3s;
+    }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-8px); }
+        50% { transform: translateX(8px); }
+        75% { transform: translateX(-8px); }
+        100% { transform: translateX(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 400px) {
+        #messageInput {
+            width: 200px;
+            margin-bottom: 10px;
+        }
+        #sendBtn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+const correctPassword = "sd157metehanak"; // Buraya kendi şifreni yaz
+
+const passwordInput = document.getElementById('passwordInput');
+const loginBtn = document.getElementById('loginBtn');
+const chatContainer = document.getElementById('chatContainer');
+
+const input = document.getElementById('messageInput');
+const btn = document.getElementById('sendBtn');
+const status = document.getElementById('status');
+
+loginBtn.addEventListener('click', () => {
+    if(passwordInput.value === correctPassword){
+        passwordInput.style.display = 'none';
+        loginBtn.style.display = 'none';
+        chatContainer.style.display = 'flex';
+        // animasyon için kısa süre sonra opacity ve transform'u değiştiriyoruz
+        setTimeout(() => {
+            chatContainer.style.opacity = '1';
+            chatContainer.style.transform = 'translateY(0)';
+        }, 50);
+    } else {
+        // shake animasyonu
+        passwordInput.classList.add('shake');
+        setTimeout(() => passwordInput.classList.remove('shake'), 300);
+        passwordInput.value = '';
+        passwordInput.focus();
+    }
+});
+
+passwordInput.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') loginBtn.click();
+});
+
+async function sendNotification(message) {
+    const res = await fetch('/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+    });
+    const data = await res.json();
+    status.textContent = data.status === 'sent' ? 'Bildirim gönderildi!' : 'Gönderilemedi!';
+    input.value = '';
+}
+
+input.addEventListener('keypress', (e) => {
+    if(e.key === 'Enter' && input.value.trim() !== '') sendNotification(input.value.trim());
+});
+btn.addEventListener('click', () => {
+    if(input.value.trim() !== '') sendNotification(input.value.trim());
+});
+</script>
