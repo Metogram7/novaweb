@@ -1,13 +1,123 @@
-<input id="message" placeholder="Mesaj yazın">
-<button onclick="sendMail()">Gönder</button>
-<script>
-async function sendMail() {
-    const res = await fetch('/send-mail', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({message: document.getElementById('message').value})
-    });
-    const data = await res.json();
-    alert(data.status);
-}
-</script>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hata Bildirim Formu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Tailwind'i yüklediğimiz için çoğu şeyi kaldırabiliriz, 
+           ancak custom hover ve textarea rengini koruyalım */
+        textarea {
+            background-color: #a3ffc8 !important; /* rgb(163, 255, 224) */
+            resize: vertical;
+            min-height: 100px;
+        }
+        #submit-btn {
+            transition: all 0.5s; /* Geçiş süresini kısaltalım */
+            border-radius: 15px;
+            color: #000;
+            background-color: #ff2929; /* rgb(255, 41, 41) */
+            cursor: pointer;
+            padding: 10px;
+            font-size: 23px;
+            font-weight: bold;
+        }
+        #submit-btn:hover {
+            color: white; /* Hover'da metin rengini beyaza çevirelim */
+            background-color: #000;
+            font-size: 26px; /* 30px yerine 26px daha orantılı */
+            border-radius: 10px;
+        }
+        input, textarea, button {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body class="bg-teal-400 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl max-w-sm w-full">
+        <h2 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">Hata Bildirim Formu</h2>
+
+        <form id="bugReportForm">
+            <!-- Uyarı Notu -->
+            <label for="not" class="text-red-600 font-bold text-lg mb-4 block p-2 border-2 border-red-300 rounded-lg bg-red-50">
+                Dalga Geçenler, burayı boşa dolduranlara ve yanlış bilgi girenler İçin İşlemler Yapılır!
+            </label>
+            
+            <label for="username">Kullanıcı Adı (Zorunlu):</label>
+            <input type="text" id="username" name="username" placeholder="Kullanıcı adınızı girin" required class="text-xl">
+
+            <label for="user_email">Gmail Adresi (Zorunlu):</label>
+            <input type="email" id="user_email" name="user_email" placeholder="Size geri bildirim vermek için girin" required class="text-xl">
+
+            <label for="msg">Hata Mesajı (Zorunlu):</label>
+            <textarea id="msg" name="message" placeholder="Hatanın detaylarını ve nasıl tekrarlandığını açıklayın" required class="text-xl"></textarea>
+            
+            <label for="photo">Ekran Görüntüsü/Fotoğraf (Opsiyonel):</label>
+            <input type="file" id="photo" name="photo" accept="image/*" class="text-xl p-3 bg-gray-100">
+
+            <button type="submit" id="submit-btn" class="mt-4">Hata Bildir</button>
+        </form>
+
+        <p id="status" class="mt-4 text-center text-lg"></p>
+    </div>
+
+    <script>
+        document.getElementById('bugReportForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Varsayılan form gönderimini engelle
+            sendBugReport(); 
+        });
+
+        async function sendBugReport() {
+            const form = document.getElementById('bugReportForm');
+            const statusElement = document.getElementById("status");
+            
+            // FormData ile tüm form alanlarını ve dosyayı topluyoruz
+            const formData = new FormData(form);
+
+            statusElement.innerText = "Hata bildirimi gönderiliyor...";
+            statusElement.style.color = "rgb(255, 140, 0)"; // Turuncu
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+
+            try {
+                // Arka uç sunucu adresini kullanıyoruz
+                const res = await fetch("http://127.0.0.1:5000/send-mail", {
+                    method: "POST",
+                    body: formData 
+                });
+
+                const data = await res.json();
+                
+                if (res.ok) {
+                    statusElement.innerText = "BAŞARILI! " + data.status;
+                    statusElement.style.color = "green";
+                    form.reset(); // Başarılıysa formu temizle
+                } else {
+                    statusElement.innerText = "HATA! " + (data.status || "Bilinmeyen bir hata oluştu.");
+                    statusElement.style.color = "red";
+                }
+
+            } catch (err) {
+                statusElement.innerText = "Sunucuya ulaşılamadı. Sunucu (http://127.0.0.1:5000) çalışıyor mu? Detay: " + err.message;
+                statusElement.style.color = "red";
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+    </script>
+
+</body>
+</html>
