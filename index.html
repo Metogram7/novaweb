@@ -1353,5 +1353,160 @@ window.addEventListener('load', () => {
 });
 
 </script>
+
+<script>
+  // --- 1. <head> bölümündeki mevcut Firebase CDN'lerine eklenmelidir ---
+// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+
+<script> 
+
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+const VAPID_KEY = "BDMDVEtUfabWh6LAnM15zLGcK2R-1kxuSvjwegdx0q-I46l9GnBSSKimwAoIxUhOxh5QtRxAtt0Hj9PBl19qlxU";
+
+let app, db, auth, messaging;
+
+/**
+ * Firebase servislerini başlatır ve oturum açar. (Mevcut kodunuzdaki haliyle)
+ */
+async function initializeFirebase() {
+    if (Object.keys(firebaseConfig).length === 0) {
+        console.error("Firebase config bulunamadı.");
+        return false;
+    }
+    
+    try {
+        if (!firebase.apps.length) {
+            app = firebase.initializeApp(firebaseConfig);
+        } else {
+            app = firebase.app();
+        }
+        
+        db = firebase.firestore();
+        auth = firebase.auth();
+        
+        if (typeof __initial_auth_token !== 'undefined') {
+            await auth.signInWithCustomToken(__initial_auth_token);
+        } else {
+            await auth.signInAnonymously();
+        }
+        
+        console.log("Firebase başarıyla başlatıldı ve oturum açıldı.");
+        return true;
+    } catch (error) {
+        console.error("Firebase başlatılırken veya oturum açılırken hata:", error);
+        return false;
+    }
+}
+
+// === TOAST BİLDİRİM SİSTEMİ (Gerekli, kullanıcıya geri bildirim için) ===
+function showToast(message, duration = 2500) {
+    const toast = document.getElementById("toast");
+    if (!toast) return;
+    toast.textContent = message;
+    toast.style.transform = "translateX(-50%) translateY(0)";
+    toast.style.opacity = "1";
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => {
+        toast.style.transform = "translateX(-50%) translateY(100%)";
+        toast.style.opacity = "0";
+    }, duration);
+}
+
+// 🔥 FİREBASE CLOUD MESSAGING İŞLEVLERİ
+/**
+ * Cihazdan bildirim izni ister ve token alır.
+ */
+function requestNotificationPermissionAndGetToken() {
+    if (VAPID_KEY === "YOUR_FCM_VAPID_KEY_HERE") {
+        console.error("VAPID KEY ayarlanmadı. Bildirimler devre dışı.");
+        showToast("❌ Bildirimler için VAPID KEY gerekli!");
+        return;
+    }
+
+    if (!('Notification' in window)) {
+        console.warn('Bu tarayıcı bildirimleri desteklemiyor.');
+        return;
+    }
+
+    // Kullanıcıya izin penceresini göster
+    Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+            console.log('Bildirim izni verildi.');
+            showToast('✅ Bildirim izni verildi!', 3000);
+            getAndSaveToken();
+        } else {
+            console.warn('Bildirim izni reddedildi.');
+            showToast('⚠️ Bildirim izni verilmedi.', 3000);
+        }
+    }).catch(error => {
+        console.error('Bildirim izni istenirken hata:', error);
+    });
+}
+
+/**
+ * FCM Token'ı alır ve Firestore'a kaydeder.
+ */
+async function getAndSaveToken() {
+    if (!app || !auth.currentUser) {
+        setTimeout(getAndSaveToken, 1000); 
+        return;
+    }
+
+    try {
+        messaging = firebase.messaging();
+        const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+
+        if (token) {
+            console.log('FCM Kayıt Tokenı:', token);
+            
+            // Token'ı Firestore'a kaydet: artifacts/{appId}/public/data/fcm_tokens/{token}
+            const tokenDocRef = db.collection('artifacts').doc(appId)
+                                  .collection('public').doc('data')
+                                  .collection('fcm_tokens').doc(token);
+            
+            await tokenDocRef.set({ 
+                userId: auth.currentUser.uid,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                status: 'active'
+            }, { merge: true }); 
+            
+            console.log('Token başarıyla Firestore/fcm_tokens içine kaydedildi.');
+            
+            // Uygulama açıkken (foreground) bildirim dinle
+            messaging.onMessage((payload) => {
+                console.log('Foreground Bildirimi alındı:', payload);
+                showToast(`🔔 YENİ DUYURU: ${payload.notification.title || 'Duyuru'}`, 5000);
+            });
+
+        } else {
+            console.warn('Bildirim izni verilmedi veya token alınamadı.');
+        }
+    } catch (err) {
+        console.error('Token alımında veya kaydında hata:', err);
+        showToast('❌ Bildirim kayıt hatası!', 3000);
+    }
+}
+
+
+// --- 3. Mevcut window.addEventListener("DOMContentLoaded", async ()=>{ ... }); bloğunu bu şekilde güncelleyin ---
+
+window.addEventListener("DOMContentLoaded", async ()=>{ 
+    // 🔥 1. Firebase başlatılıyor (Mevcut initializeFirebase fonksiyonunuzu çağırır)
+    const firebaseReady = await initializeFirebase();
+
+    if (firebaseReady) {
+        // 🔥 2. Bildirim izni ve Token alımı isteniyor
+        requestNotificationPermissionAndGetToken(); 
+    }
+
+    // 3. Normal sohbet yükleme ve menü oluşturma (Mevcut kodunuzdaki haliyle)
+    loadChat(currentChat); 
+    renderMenu(); 
+});
+</script>
+
+
 </body>
 </html>
