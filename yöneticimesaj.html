@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoVa Push Bildirim Test</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+</head>
+<body>
+<h1>NoVa Push Test</h1>
+
+<input type="text" id="messageInput" placeholder="Mesajınızı yazın..." style="width:300px;">
+<button id="sendBtn">Gönder</button>
+
+<script>
+  // Firebase konfigürasyonu (kendi config'inizi buraya yapıştırın)
+  const firebaseConfig = {
+        apiKey: "AIzaSyDqQAHCB2MizgN5Id5Ezfr3UPE1P3UlSS8",
+        authDomain: "nova-329c7.firebaseapp.com",
+        projectId: "nova-329c7",
+        storageBucket: "nova-329c7.firebasestorage.app",
+        messagingSenderId: "284547967902",
+        appId: "1:284547967902:web:7dd2e64d1a643a30e5c48f"
+    };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const messaging = firebase.messaging();
+
+  // Kullanıcıdan izin isteme ve token alma
+  Notification.requestPermission().then(permission => {
+    if (permission === 'granted') {
+      messaging.getToken({ vapidKey: 'YOUR_PUBLIC_VAPID_KEY' }).then((token) => {
+        console.log('FCM Token:', token);
+        // Token'ı backend'e gönder
+        fetch('/save-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+      });
+    }
+  });
+
+  // Gönder butonu
+  document.getElementById('sendBtn').addEventListener('click', () => {
+    const msg = document.getElementById('messageInput').value;
+    if (!msg) return alert('Mesaj boş olamaz!');
+    
+    fetch('/send-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    }).then(res => res.json()).then(data => {
+      alert(data.status);
+    });
+  });
+</script>
+</body>
+</html>
