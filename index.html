@@ -1507,6 +1507,29 @@ window.addEventListener("DOMContentLoaded", async ()=>{
 });
 </script>
 
+<script>
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+admin.initializeApp();
+
+exports.broadcastMessage = functions.firestore
+    .document('artifacts/{appId}/public/data/broadcasts/latest')
+    .onWrite(async (change) => {
+        const data = change.after.data();
+        if (!data) return null;
+
+        const message = {
+            notification: {
+                title: "Nova Yayını",
+                body: data.message
+            },
+            topic: "allUsers" // Bu topic’e abone herkes mesajı alır
+        };
+        return admin.messaging().send(message);
+    });
+
+
+</script>
 
 </body>
 </html>

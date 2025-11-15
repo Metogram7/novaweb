@@ -1,143 +1,158 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Yönetici Yayın Paneli</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
-    <style>
-        .broadcast-input {
-            width: 100%;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 2px solid #3b82f6;
-            transition: all 0.3s;
-            resize: none;
-            min-height: 150px;
-        }
-        .broadcast-input:focus {
-            border-color: #1d4ed8;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova Yönetici Yayın Paneli</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+<style>
+.broadcast-input {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 2px solid #3b82f6;
+    transition: all 0.3s;
+    resize: none;
+    min-height: 150px;
+}
+.broadcast-input:focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
+}
+</style>
 </head>
 <body class="bg-gray-900 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full">
-        <h1 class="text-3xl font-extrabold text-blue-800 mb-6 text-center border-b pb-3">
-            Nova PWA Yönetici Paneli
-        </h1>
-        
-        <div id="login-panel">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">Özel Alan Girişi</h2>
-            <input type="password" id="admin_password" placeholder="Şifreyi girin..." 
-                    class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 mb-4" onkeydown="if(event.key === 'Enter') checkPassword()">
-            <button onclick="checkPassword()"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200">
-                Giriş Yap
-            </button>
-        </div>
-
-        <div id="broadcast-panel" class="hidden">
-            <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Anlık Bildirim Yayınla 📢</h2>
-            <textarea id="broadcast_message" placeholder="Tüm kullanıcılara göndermek istediğiniz acil mesajı buraya yazın..."
-                    class="broadcast-input"></textarea>
-            
-            <button id="send-btn" onclick="sendBroadcast()"
-                    class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold py-4 mt-4 rounded-xl shadow-lg transition duration-300 transform hover:scale-[1.01]">
-                YAYINI GÖNDER (Tüm Kullanıcılara Gitsin!)
-            </button>
-        </div>
-
-        <p id="status" class="mt-6 text-center text-lg font-medium"></p>
+<div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full">
+    <h1 class="text-3xl font-extrabold text-blue-800 mb-6 text-center border-b pb-3">
+        Nova PWA Yönetici Paneli
+    </h1>
+    
+    <div id="login-panel">
+        <h2 class="text-xl font-semibold mb-4 text-gray-700">Özel Alan Girişi</h2>
+        <input type="password" id="admin_password" placeholder="Şifreyi girin..." 
+                class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 mb-4">
+        <button id="login-btn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200">
+            Giriş Yap
+        </button>
     </div>
 
-    <script>
-        // 🔥 KENDİ FIREBASE AYARLARINIZ
-        const firebaseConfig = {
-            apiKey: "AIzaSyDqQAHCB2MizgN5Id5Ezfr3UPE1P3UlSS8", 
-            authDomain: "nova-329c7.firebaseapp.com",
-            projectId: "nova-329c7",
-            storageBucket: "nova-329c7.firebasestorage.app",
-            messagingSenderId: "284547967902",
-            appId: "1:284547967902:web:7dd2e64d1a643a30e5c48f"
-        };
-        const appId = firebaseConfig.appId;
+    <div id="broadcast-panel" class="hidden">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Anlık Bildirim Yayınla 📢</h2>
+        <textarea id="broadcast_message" placeholder="Tüm kullanıcılara göndermek istediğiniz acil mesajı buraya yazın..."
+                class="broadcast-input"></textarea>
+        
+        <button id="send-btn"
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold py-4 mt-4 rounded-xl shadow-lg transition duration-300 transform hover:scale-[1.01]">
+            YAYINI GÖNDER (Tüm Kullanıcılara Gitsin!)
+        </button>
+    </div>
 
-        // ⚠️ GÜVENLİK UYARISI: BU ŞİFRE TARAYICIDA GÖRÜNÜR! CANLI ORTAMDA KULLANMAYIN.
-        const ADMIN_PASSWORD = "sd157metehanak"; 
+    <p id="status" class="mt-6 text-center text-lg font-medium"></p>
+</div>
 
-        let app, db, auth;
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDqQAHCB2MizgN5Id5Ezfr3UPE1P3UlSS8",
+    authDomain: "nova-329c7.firebaseapp.com",
+    projectId: "nova-329c7",
+    storageBucket: "nova-329c7.appspot.com",
+    messagingSenderId: "284547967902",
+    appId: "1:284547967902:web:7dd2e64d1a643a30e5c48f"
+};
 
-        async function initializeFirebase() {
-            try {
-                if (!firebase.apps.length) {
-                    app = firebase.initializeApp(firebaseConfig);
-                } else {
-                    app = firebase.app();
-                }
-                
-                db = app.firestore();
-                auth = app.auth();
-                await auth.signInAnonymously();
-            } catch (error) {
-                document.getElementById('status').innerHTML = `<span class="text-red-600">Firebase başlatılırken hata: ${error.message}</span>`;
-            }
-        }
+const ADMIN_PASSWORD = "sd157metehanak";
+let app, db, auth, messaging;
 
-        window.checkPassword = function() {
-            const enteredPassword = document.getElementById('admin_password').value;
-            const statusEl = document.getElementById('status');
-            
-            if (enteredPassword === ADMIN_PASSWORD) {
-                document.getElementById('login-panel').classList.add('hidden');
-                document.getElementById('broadcast-panel').classList.remove('hidden');
-                statusEl.innerHTML = '<span class="text-green-600">Giriş Başarılı! Yayınlayabilirsin.</span>';
-                initializeFirebase();
-            } else {
-                statusEl.innerHTML = '<span class="text-red-600">Hata: Şifre Yanlış!</span>';
-            }
-            document.getElementById('admin_password').value = ''; 
-        }
+async function initializeFirebase() {
+    if (!firebase.apps.length) {
+        app = firebase.initializeApp(firebaseConfig);
+    } else {
+        app = firebase.app();
+    }
 
-        window.sendBroadcast = async function() {
-            const message = document.getElementById('broadcast_message').value.trim();
-            const statusEl = document.getElementById('status');
-            
-            if (!message) {
-                statusEl.innerHTML = '<span class="text-yellow-600">Lütfen bir mesaj girin.</span>';
-                return;
-            }
+    db = firebase.firestore();
+    auth = firebase.auth();
+    messaging = firebase.messaging();
 
-            // Cloud Function'ı tetikleyecek Firestore belgesinin yolu
-            const broadcastDocRef = db.collection('artifacts').doc(appId)
-                                     .collection('public').doc('data')
-                                     .collection('broadcasts').doc('latest');
+    await auth.signInAnonymously();
 
-            document.getElementById('send-btn').disabled = true;
-            statusEl.innerHTML = '<span class="text-orange-600">Yayın gönderiliyor...</span>';
+    try {
+        await messaging.requestPermission();
+        const token = await messaging.getToken({ vapidKey: "YOUR_PUBLIC_VAPID_KEY" });
+        console.log("FCM Token:", token);
 
-            try {
-                await broadcastDocRef.set({
-                    message: message,
-                    senderId: auth.currentUser.uid,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    senderName: 'Nova Admin' 
-                });
-                
-                statusEl.innerHTML = '<span class="text-green-600 font-bold">✅ YAYIN BAŞARILI! (Cloud Function tetiklendi)</span>';
-                document.getElementById('broadcast_message').value = ''; 
-            } catch (error) {
-                statusEl.innerHTML = `<span class="text-red-600 font-bold">❌ HATA: Yayınlama başarısız. Detay: ${error.message}</span>`;
-            } finally {
-                document.getElementById('send-btn').disabled = false;
-            }
-        }
-    </script>
+        // Her kullanıcı otomatik olarak "allUsers" topic'e abone olabilir
+        await fetch('/subscribe-topic', { 
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ token, topic: "allUsers" })
+        });
+
+    } catch(e) {
+        console.warn("Push izni alınamadı:", e);
+    }
+}
+
+function checkPassword() {
+    const enteredPassword = document.getElementById('admin_password').value;
+    const statusEl = document.getElementById('status');
+    
+    if (enteredPassword === ADMIN_PASSWORD) {
+        document.getElementById('login-panel').classList.add('hidden');
+        document.getElementById('broadcast-panel').classList.remove('hidden');
+        statusEl.innerHTML = '<span class="text-green-600">Giriş Başarılı! Yayınlayabilirsin.</span>';
+        initializeFirebase();
+    } else {
+        statusEl.innerHTML = '<span class="text-red-600">Hata: Şifre Yanlış!</span>';
+    }
+    document.getElementById('admin_password').value = ''; 
+}
+
+async function sendBroadcast() {
+    const message = document.getElementById('broadcast_message').value.trim();
+    const statusEl = document.getElementById('status');
+    
+    if (!message) {
+        statusEl.innerHTML = '<span class="text-yellow-600">Lütfen bir mesaj girin.</span>';
+        return;
+    }
+
+    const broadcastDocRef = db.collection('artifacts').doc(firebaseConfig.appId)
+                             .collection('public').doc('data')
+                             .collection('broadcasts').doc('latest');
+
+    document.getElementById('send-btn').disabled = true;
+    statusEl.innerHTML = '<span class="text-orange-600">Yayın gönderiliyor...</span>';
+
+    try {
+        await broadcastDocRef.set({
+            message: message,
+            senderId: auth.currentUser.uid,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            senderName: 'Nova Admin'
+        });
+        statusEl.innerHTML = '<span class="text-green-600 font-bold">✅ YAYIN BAŞARILI! (Tüm kullanıcılara gidecek)</span>';
+        document.getElementById('broadcast_message').value = ''; 
+    } catch (error) {
+        statusEl.innerHTML = `<span class="text-red-600 font-bold">❌ HATA: ${error.message}</span>`;
+    } finally {
+        document.getElementById('send-btn').disabled = false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('login-btn').addEventListener('click', checkPassword);
+    document.getElementById('send-btn').addEventListener('click', sendBroadcast);
+    document.getElementById('admin_password').addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') checkPassword();
+    });
+});
+</script>
 </body>
 </html>
