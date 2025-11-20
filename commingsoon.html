@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova</title>
+<style>
+    body {
+        margin: 0;
+        font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #a9e2f0;
+        color: #111;
+        overflow: hidden;
+        scroll-behavior: smooth;
+        text-align: center;
+    }
+
+    h1 {
+        background: linear-gradient(90deg, #ff6ec4, #7873f5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    #content {
+        background: linear-gradient(90deg, #ff6ec4, #7873f5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 18px;
+        line-height: 1.6;
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    /* Dil Seçici */
+    .language-selector {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #ffffffcc;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: hidden;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .language-selector > .selected {
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .language-selector > .selected img {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+    }
+
+    .language-options {
+        display: none;
+        flex-direction: column;
+        background: #fff;
+        border-top: 1px solid #ddd;
+    }
+
+    .language-options div {
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: background 0.2s;
+    }
+
+    .language-options div:hover {
+        background: #f0f0f0;
+    }
+
+    .language-options img {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+    }
+</style>
+</head>
+<body>
+
+<!-- Dil Seçici -->
+<div class="language-selector" id="languageSelector">
+    <div class="selected">
+        <img src="https://flagcdn.com/16x12/tr.png" alt="TR"> Türkçe
+    </div>
+    <div class="language-options">
+        <div data-lang="tr"><img src="https://flagcdn.com/16x12/tr.png"> Türkçe</div>
+        <div data-lang="en"><img src="https://flagcdn.com/16x12/gb.png"> English</div>
+        <div data-lang="es"><img src="https://flagcdn.com/16x12/es.png"> Español</div>
+        <div data-lang="ar"><img src="https://flagcdn.com/16x12/sa.png"> العربية</div>
+        <div data-lang="zh"><img src="https://flagcdn.com/16x12/cn.png"> 中文</div>
+        <div data-lang="ko"><img src="https://flagcdn.com/16x12/kr.png"> 한국어</div>
+        <div data-lang="az"><img src="https://flagcdn.com/16x12/az.png"> Azərbaycan</div>
+    </div>
+</div>
+
+<h1 style="font-size: 70px; background: linear-gradient(90deg, #000000, #605e92); -webkit-background-clip: text; color: transparent;">
+    COMING SOON..
+</h1>
+
+<h1>NOVA-ATLAS (WEB BROWSER)</h1>
+
+<!-- İçerik -->
+<div id="content">
+    <!-- Varsayılan TR içerik -->
+    <h3>
+        Nova-Atlas.<br>
+        %100 Türkiye’de üretildi.<br>
+        Bir tarayıcı olacak.<br>
+        Tarayıcı içinde Nova da bulunacak.<br>
+        Açık olan sekmenizi görebilecek.<br>
+        Sekmeyi gördüğü için o sekmeyle ilgili sorular sorabileceksiniz.<br>
+        Ajan Modu sayesinde bir imleç ile sekmenizi kontrol edebilecek.<br>
+        Siz ne derseniz, o o sekmede onu yapacak.<br>
+        Ve tüm bunları canlı olarak izleyebileceksiniz!
+    </h3>
+    <p>developer = <a href="developer.html"><u>Metehan Akkaya</u></a></p>
+</div>
+
+<script>
+const languageSelector = document.getElementById("languageSelector");
+const selected = languageSelector.querySelector(".selected");
+const options = languageSelector.querySelector(".language-options");
+const content = document.getElementById("content");
+
+/* -------------------------------
+   Nova-Atlas METİN ÇEVİRİLERİ
+--------------------------------*/
+const texts = {
+    tr: `
+        <h3>
+        Nova-Atlas.<br>
+        %100 Türkiye’de üretildi.<br>
+        Bir tarayıcı olacak.<br>
+        Tarayıcı içinde Nova da bulunacak.<br>
+        Açık olan sekmenizi görebilecek.<br>
+        Sekmeyi gördüğü için o sekmeyle ilgili sorular sorabileceksiniz.<br>
+        Ajan Modu sayesinde bir imleç ile sekmenizi kontrol edebilecek.<br>
+        Siz ne derseniz, o o sekmede onu yapacak.<br>
+        Ve tüm bunları canlı olarak izleyebileceksiniz!
+        </h3>
+        <p>developer = <a href="developer.html"><u>Metehan Akkaya</u></a></p>
+    `,
+
+    en: `
+        <h3>
+        Nova-Atlas.<br>
+        100% developed in Turkey.<br>
+        It will be a web browser.<br>
+        Nova will also be inside the browser.<br>
+        It will be able to see your open tab.<br>
+        Since it sees your tab, you can ask questions about it.<br>
+        Thanks to Agent Mode, it will control your tab with a cursor.<br>
+        Whatever you say, it will perform it on that tab.<br>
+        And you will watch all of it live!
+        </h3>
+        <p>developer = <a href="developer.html"><u>Metehan Akkaya</u></a></p>
+    `,
+
+    es: `
+        <h3>
+        Nova-Atlas.<br>
+        Producido 100% en Turquía.<br>
+        Será un navegador web.<br>
+        Nova también estará dentro del navegador.<br>
+        Podrá ver tu pestaña abierta.<br>
+        Como puede verla, podrás hacer preguntas relacionadas.<br>
+        Con el Modo Agente controlará tu pestaña con un cursor.<br>
+        Lo que digas, lo hará en esa pestaña.<br>
+        ¡Y podrás verlo todo en vivo!
+        </h3>
+        <p>developer = <a href="developer.html"><u>Metehan Akkaya</u></a></p>
+    `,
+
+    ar: `
+        <h3 dir="rtl">
+        نوفا-أطلس.<br>
+        صُنع 100٪ في تركيا.<br>
+        سيكون متصفحًا.<br>
+        وستكون نوفا داخل المتصفح أيضًا.<br>
+        سيتمكن من رؤية علامتك المفتوحة.<br>
+        وبما أنه يراها، يمكنك طرح أسئلة حولها.<br>
+        بفضل وضع الوكيل، سيسيطر على علامتك بالمؤشر.<br>
+        ما تقوله سينفذه في تلك العلامة.<br>
+        وستشاهد كل ذلك مباشرة!
+        </h3>
+        <p>developer = <a href="developer.html"><u>Metehan Akkaya</u></a></p>
+    `,
+
+    zh: `
+        <h3>
+        Nova-Atlas。<br>
+        100% 在土耳其制造。<br>
+        它将成为一款浏览器。<br>
+        Nova 也将在浏览器中运行。<br>
+        它可以查看你打开的标签页。<br>
+        因此你可以就该标签页提出问题。<br>
+        借助代理模式，它将使用光标控制你的标签页。<br>
+        你说什么，它就在该页面上执行什么。<br>
+        你可以实时观看整个过程！
+        </h3>
+        <p>developer = <a href="developer.html"><u>Metehan Akkaya</u></a></p>
+    `,
+
+    ko: `
+        <h3>
+        노바-아틀라스.<br>
+        100% 터키에서 제작됨.<br>
+        웹 브라우저가 될 것입니다.<br>
+        브라우저 안에 노바도 탑재됩니다.<br>
+        열려 있는 탭을 볼 수 있습니다.<br>
+        탭을 보기 때문에 해당 탭에 대해 질문할 수 있습니다.<br>
+        에이전트 모드 덕분에 커서로 탭을 제어합니다.<br>
+        당신이 말하는 것은 그 탭에서 그대로 실행됩니다.<br>
+        그리고 그 과정을 실시간으로 볼 수 있습니다!
+        </h3>
+        <p>developer = <a href="developer.html"><u>Metehan Akkaya</u></a></p>
+    `,
+
+    az: `
+        <h3>
+        Nova-Atlas.<br>
+        100% Türkiyədə istehsal edilib.<br>
+        Bu bir brauzer olacaq.<br>
+        Brauzerin içində Nova da olacaq.<br>
+        Açıq olan vərəqinizi görə biləcək.<br>
+        Buna görə o vərəqlə bağlı suallar verə biləcəksiniz.<br>
+        Agent Rejimi sayəsində imleclə vərəqinizi idarə edəcək.<br>
+        Nə desəniz, o həmin vərəqdə onu edəcək.<br>
+        Və bütün bunları canlı izləyə biləcəksiniz!
+        </h3>
+        <p>developer = <a href="developer.html"><u>Metehan Akkaya</u></a></p>
+    `
+};
+
+/* Menü aç/kapa */
+selected.addEventListener("click", () => {
+    options.style.display = options.style.display === "flex" ? "none" : "flex";
+});
+
+/* Dil seçimi */
+options.querySelectorAll("div").forEach(option => {
+    option.addEventListener("click", () => {
+        const lang = option.getAttribute("data-lang");
+        content.innerHTML = texts[lang];
+        selected.innerHTML = option.innerHTML;
+        options.style.display = "none";
+    });
+});
+
+/* Dışarı tıklayınca menünün kapanması */
+document.addEventListener("click", e => {
+    if (!languageSelector.contains(e.target)) {
+        options.style.display = "none";
+    }
+});
+</script>
+
+</body>
+</html>

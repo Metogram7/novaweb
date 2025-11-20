@@ -724,6 +724,44 @@ message-content a {
   border-radius: 4px;
 }
 
+/* KOD BLOKLARI İÇİN YENİ SADE STİL */
+.msg pre {
+    /* Genel kod görünümü */
+    font-family: 'Fira Code', monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    /* Mesaj balonunun içine yayılması için negatif marjin. 
+       Mesajın padding'ini (14px 18px) hesaba katarak ayarladım. */
+    margin: 10px -18px -5px -18px; 
+    padding: 10px 18px; /* Soldan ve sağdan tam olarak mesaj genişliğini kullanır */
+    border-radius: 0 0 8px 8px; /* Sadece alt köşeler yuvarlak */
+    font-size: 0.9em;
+    line-height: 1.4;
+    overflow-x: auto;
+}
+
+.nova pre {
+    /* Nova mesajındaki kod bloğu (açık mesajın koyu kod arka planı) */
+    background: rgba(0, 0, 0, 0.1); /* Hafif koyu */
+    color: var(--text-dark);
+}
+.user pre {
+    /* Kullanıcı mesajındaki kod bloğu (koyu mesajın açık kod arka planı) */
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-light);
+}
+.dark-mode .nova pre {
+    /* Dark mode Nova mesajındaki kod bloğu */
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-light);
+}
+.dark-mode .user pre {
+    /* Dark mode Kullanıcı mesajındaki kod bloğu */
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-light);
+}
+/* Not: .code-window, .copy-btn, .lang-label gibi eski stiller bu versiyonda yer almamalıdır. */
+
 </style>
 </head>
 <body>
@@ -762,7 +800,7 @@ message-content a {
     <div style="display:flex; align-items:center;">
       <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="Nova Logo">
       💬 Nova Chat   
-      <h4 style="color: #d32f2f;"> <a href="güncelleme.html">YENİ GÜNCELLEME!!(V4.2)Tıkla</a>  </h4>
+      <h4 style="color: #d32f2f;"> <a href="güncelleme.html">YENİ GÜNCELLEME!!(V4.2)Tıkla</a> <a href="commingsoon.html">NOVA ATLAS !</a>  </h4>
     </div>
     <span id="novaStatus">Hazır</span>
   </header>
@@ -1068,83 +1106,178 @@ function startNewChat(){ const newId = "chat_"+Date.now()+"_"+Math.floor(Math.ra
 
 newChatBtn.addEventListener("click", e=>{ e.preventDefault(); startNewChat(); });
 
-// Normal mesaj ekleme
+// 💬 MESAJ EKLEME VE KOD BLOKLARINI İŞLEME FONKSİYONU (DÜZELTİLMİŞ)
 function addMessage(text, sender, container = null) {
-  const parent = container || document.getElementById(currentChat);
-  const div = document.createElement("div");
-  div.className = "msg " + sender;
-  div.innerHTML = sanitize(text);
+    const parent = container || document.getElementById(currentChat);
+    if(!parent) return;
 
-  const timestamp = document.createElement("div");
-  timestamp.className = "timestamp";
-  timestamp.textContent = formatDate(new Date());
-  div.appendChild(timestamp);
-  parent.appendChild(div);
-  parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
+    // Mesaj div'i
+    const div = document.createElement("div");
+    div.className = "msg " + sender;
 
-  // Nova mesajlarına sesli okuma butonu ekle
-  if (sender === "nova") addSpeechButton(div, text);
+    // Hoşgeldin ekranını gizle
+    const welcome = document.getElementById("welcome-screen-" + currentChat) || document.getElementById("welcome-screen");
+    if(welcome) { 
+        welcome.style.display = "none"; 
+        welcome.classList.remove("visible"); 
+    }
 
-  return div;
-}
+    // Mesaj metni - normal mesaj gibi
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "message-content";
+    messageDiv.textContent = text; // <-- Sadece normal metin, hiçbir ek özellik yok
+    div.appendChild(messageDiv);
 
-// Yazma efekti (Nova yazarken animasyonlu)
-async function addTypingMessage(text, sender, container = null, delay = 5) {
-  const parent = container || document.getElementById(currentChat);
-  const div = document.createElement("div");
-  div.className = "msg " + sender;
+    // Zaman etiketi
+    const timestamp = document.createElement("div");
+    timestamp.className = "timestamp";
+    timestamp.textContent = formatDate(new Date());
+    div.appendChild(timestamp);
 
-  const timestamp = document.createElement("div");
-  timestamp.className = "timestamp";
-  timestamp.textContent = formatDate(new Date());
-  div.appendChild(timestamp);
-  parent.appendChild(div);
-  parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
-
-  for (let i = 0; i < text.length; i++) {
-    div.innerHTML = sanitize(text.slice(0, i + 1));
+    // Mesajı parent container'a ekle
+    parent.appendChild(div);
     parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
-    await new Promise(r => setTimeout(r, delay));
-  }
 
-  // Nova mesajlarında sesli okuma butonu ekle
-  if (sender === "nova") addSpeechButton(div, text);
-
-  return div;
+    return div;
 }
 
 
-async function sendMessage(msg=null){
-  if(sending) return;
-  sending=true;
-  const text=msg||input.value.trim(); if(!text){sending=false;return;}
-  input.value="";
-  const chatDiv = document.getElementById(currentChat);
-  addMessage(text,"user",chatDiv);
-  const typingDiv=addMessage("Nova yazıyor...","nova",chatDiv);
-  novaStatus.textContent="Nova yazıyor...";
-  try{
-    const resHist=await fetch(`${BACKEND_URL}/history?userId=${userId}`);
-    const historyData=await resHist.json();
-    const chatHistory=historyData[currentChat]||[];
-    const res=await fetch(BACKEND_URL+"/chat",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,currentChat,message:text,userInfo,history:chatHistory}) });
-    const data=await res.json();
-    typingDiv.remove();
-    await addTypingMessage(data.response||"⚠️ Hata","nova",chatDiv);
-    if(data.updatedUserInfo){ userInfo=data.updatedUserInfo; localStorage.setItem("nova_user_info_"+userId,JSON.stringify(userInfo)); }
-  }catch(err){ typingDiv.textContent="Bağlantı hatası 🚫"; console.error(err); }
-  novaStatus.textContent="Hazır"; sending=false;
+/// Harf harf yazma efekti (KOD BLOKLARINI DESTEKLEMEK İÇİN GÜNCELLENDİ)
+async function addTypingMessage(text, sender, container = null, delay = 5) {
+    const parent = container || document.getElementById(currentChat);
+    if(!parent) return;
+
+    const div = document.createElement("div");
+    div.className = "msg " + sender;
+    parent.appendChild(div);
+    parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
+
+    let tempText = '';
+    for(let i=0;i<text.length;i++){
+        tempText += text[i];
+        // KRİTİK DEĞİŞİKLİK: İçerik artık innerHTML ile ayarlanıyor
+        div.innerHTML = `<div class="message-content">${tempText}</div>`; 
+        parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
+        await new Promise(r => setTimeout(r, delay));
+    }
+
+    // Zaman etiketi
+    const timestamp = document.createElement("div");
+    timestamp.className = "timestamp";
+    timestamp.textContent = formatDate(new Date());
+    div.appendChild(timestamp);
+
+    // Nova ise ses ve TXT butonu ekle
+    if(sender === "nova") {
+        addSpeechButton(div, text);
+        addDownloadButton(div);
+    }
+
+    return div;
+}
+// TXT butonu
+function addDownloadButton(div){
+    const downloadBtn = document.createElement("button");
+    downloadBtn.textContent = "💾 TXT indir";
+    downloadBtn.className = "download-btn";
+    downloadBtn.style.marginTop = "5px";
+    downloadBtn.style.fontSize = "12px";
+    downloadBtn.style.padding = "2px 6px";
+    downloadBtn.style.cursor = "pointer";
+
+    downloadBtn.onclick = ()=>{
+        const txt = [...div.querySelectorAll(".message-content")].map(m=>m.textContent).join("\n\n");
+        if(!txt) return;
+        const blob = new Blob([txt], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "nova_message.txt";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    div.appendChild(downloadBtn);
 }
 
+// Mesaj gönderme
+async function sendMessage(msg = null){
+    if(sending) return;
+    sending = true;
+
+    const text = msg || input.value.trim();
+    if(!text){ sending=false; return; }
+    input.value = "";
+
+    const chatDiv = document.getElementById(currentChat);
+    if(!chatDiv){ sending=false; return; }
+
+    // Kullanıcı mesajı
+    addMessage(text,"user",chatDiv);
+
+    // Nova yazıyor...
+    const typingDiv = addMessage("Nova yazıyor...","nova",chatDiv);
+    novaStatus.textContent="Nova yazıyor...";
+
+    try{
+        const resHist = await fetch(`${BACKEND_URL}/history?userId=${userId}`);
+        const historyData = await resHist.json();
+        const chatHistory = historyData[currentChat] || [];
+
+        const res = await fetch(`${BACKEND_URL}/chat`,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({userId,currentChat,message:text,userInfo,history:chatHistory})
+        });
+
+        const data = await res.json();
+        typingDiv.remove();
+
+        // Nova cevabı (her şey düz metin)
+        await addTypingMessage(data.response || "⚠️ Hata","nova",chatDiv);
+
+        if(data.updatedUserInfo){
+            userInfo = data.updatedUserInfo;
+            localStorage.setItem("nova_user_info_"+userId,JSON.stringify(userInfo));
+        }
+
+    } catch(err){
+        typingDiv.textContent="Bağlantı hatası 🚫";
+        console.error(err);
+    }
+
+    novaStatus.textContent="Hazır";
+    sending=false;
+}
+
+
+// Event listener
 input.addEventListener("keydown", e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
 sendBtn.addEventListener("click", e=>{ e.preventDefault(); sendMessage(); });
 stopBtn.addEventListener("click", e=>{ e.preventDefault(); });
 
-emojiPicker.innerHTML=""; "😀😂😍😎🤔😢❤️🤖".split("").forEach(e=>{ const span=document.createElement("span"); span.textContent=e; span.onclick=()=>{ input.value+=e; input.focus(); }; emojiPicker.appendChild(span); });
+// Emoji picker
+emojiPicker.innerHTML="";
+"😀😂😍😎🤔😢❤️🤖".split("").forEach(e=>{
+    const span = document.createElement("span");
+    span.textContent = e;
+    span.onclick = ()=>{ input.value+=e; input.focus(); };
+    emojiPicker.appendChild(span);
+});
 
-quickBtns.querySelectorAll("button").forEach(b=>{ b.addEventListener("click", e=>{ e.preventDefault(); sendMessage(b.textContent); }); });
+// Quick buttons
+quickBtns.querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click", e=>{
+        e.preventDefault();
+        sendMessage(b.textContent);
+    });
+});
 
-window.addEventListener("DOMContentLoaded", ()=>{ loadChat(currentChat); renderMenu(); });
+window.addEventListener("DOMContentLoaded", ()=>{
+    loadChat(currentChat);
+    renderMenu();
+});
+
 
 // 🔴 Nova'dan hata geldiğinde çağrılacak fonksiyon
 function showErrorMessage(errorText, lastUserMessage) {
@@ -1307,58 +1440,51 @@ document.querySelectorAll('.message-content').forEach(el => linkifyElementOpenEx
    linkifyElementOpenExternally(newMessageContentElement);
 */
 </script>
-
 <script>
-  messaging.getToken({ vapidKey: 'YOUR_PUBLIC_VAPID_KEY' }).then((currentToken) => {
-    if (currentToken) {
-        console.log('FCM Token:', currentToken);
-        // Backend’e POST ile gönder
-        fetch('/save-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: currentToken })
-        });
+async function askNotificationPermission() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        alert("Tarayıcınız push bildirimleri desteklemiyor.");
+        return;
     }
-}).catch((err) => {
-    console.error('Token alınamadı:', err);
+
+    // Kullanıcıya izin sor
+    let permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+        alert("Push bildirimleri için izin vermen gerekiyor.");
+        return;
+    }
+
+    // Service Worker kaydı
+    const reg = await navigator.serviceWorker.register('/service-worker.js');
+
+    // Push aboneliği
+    const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(
+            'BNh8G-snBG8cqiGaNxPYbdJXVige6fmIak6qhSM0rBEhhi6wcNjVnysUcJE22rbzUzRLKtvKp66zksv-o4mv27w='
+        )
+    });
+
+    // Aboneliği backend’e kaydet
+    await fetch('/subscribe', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+// Sayfa yüklenince izin sor
+window.addEventListener('load', () => {
+    askNotificationPermission();
 });
 
 </script>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-messaging.js";
-
-  // 🔑 Buraya kendi Firebase projenin bilgilerini koy
-  const firebaseConfig = {
-    apiKey: "AIzaSyDqQAHCB2MizgN5Id5Ezfr3UPE1P3UlSS8",
-    authDomain: "nova-329c7.firebaseapp.com",
-    projectId: "nova-329c7",
-    storageBucket: "nova-329c7.firebasestorage.app",
-    messagingSenderId: "284547967902",
-    appId: "1:284547967902:web:7dd2e64d1a643a30e5c48f"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const messaging = getMessaging(app);
-
-  async function getFCMToken() {
-    try {
-      const token = await getToken(messaging, { vapidKey: "VAPID_KEY" });
-      console.log("FCM Token:", token);
-      return token;
-    } catch (err) {
-      console.error("Token alınamadı:", err);
-    }
-  }
-
-  getFCMToken();
-
-  onMessage(messaging, (payload) => {
-    console.log("Mesaj geldi:", payload);
-  });
-</script>
-
-
 </body>
 </html>
