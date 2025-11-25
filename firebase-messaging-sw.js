@@ -18,7 +18,7 @@ messaging.onBackgroundMessage(function(payload) {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/novaweb/icons/icon-192.png' // İkon yolunun doğruluğundan emin ol
+    icon: '/novaweb/icons/icon-512.png' // İkon yolunun doğruluğundan emin ol
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
