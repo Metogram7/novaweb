@@ -795,6 +795,9 @@ message-content a {
 </div>
 <div id="dragHandle"></div>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
 <div id="mainContent">
   <header>
     <div style="display:flex; align-items:center;">
@@ -1441,50 +1444,58 @@ document.querySelectorAll('.message-content').forEach(el => linkifyElementOpenEx
 */
 </script>
 <script>
-async function askNotificationPermission() {
-    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-        alert("Tarayıcınız push bildirimleri desteklemiyor.");
-        return;
-    }
+// --- NOVA BİLDİRİM İZNİ ---
+const firebaseConfig = {
+    apiKey: "AIzaSyDqQAHCB2MizgN5Id5Ezfr3UPE1P3UlSS8",
+    authDomain: "nova-329c7.firebaseapp.com",
+    projectId: "nova-329c7",
+    storageBucket: "nova-329c7.firebasestorage.app",
+    messagingSenderId: "284547967902",
+    appId: "1:284547967902:web:7dd2e64d1a643a30e5c48f"
+};
 
-    // Kullanıcıya izin sor
-    let permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-        alert("Push bildirimleri için izin vermen gerekiyor.");
-        return;
-    }
-
-    // Service Worker kaydı
-    const reg = await navigator.serviceWorker.register('/service-worker.js');
-
-    // Push aboneliği
-    const subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-            'BNh8G-snBG8cqiGaNxPYbdJXVige6fmIak6qhSM0rBEhhi6wcNjVnysUcJE22rbzUzRLKtvKp66zksv-o4mv27w='
-        )
-    });
-
-    // Aboneliği backend’e kaydet
-    await fetch('/subscribe', {
-        method: 'POST',
-        body: JSON.stringify(subscription),
-        headers: { 'Content-Type': 'application/json' }
-    });
+// Firebase başlat
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
 }
 
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+const messaging = firebase.messaging();
+
+async function initNovaNotifications() {
+    try {
+        // İzin iste
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            console.log('Bildirim izni verildi.');
+            
+            // Service Worker'ı kaydet
+            const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            
+            // Token al (Vapid Key senin yönetici dosyanla uyumlu)
+            const token = await messaging.getToken({ 
+                serviceWorkerRegistration: reg,
+                vapidKey: "BDMDVEtUfabWh6LAnM15zLGcK2R-1kxuSvjwegdx0q-I46l9GnBSSKimwAoIxUhOxh5QtRxAtt0Hj9PBl19qlxU" 
+            });
+
+            if (token) {
+                // Token'ı backend'e gönder
+                await fetch('https://nova-chat-d50f.onrender.com/api/subscribe', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ token: token })
+                });
+                console.log('Nova Token kaydedildi.');
+            }
+        } else {
+            console.log('Bildirim izni reddedildi.');
+        }
+    } catch (error) {
+        console.error('Bildirim hatası:', error);
+    }
 }
 
-// Sayfa yüklenince izin sor
-window.addEventListener('load', () => {
-    askNotificationPermission();
-});
-
+// Sayfa açılınca veya bir butona basınca çağır
+window.addEventListener('load', initNovaNotifications);
 </script>
 </body>
 </html>
