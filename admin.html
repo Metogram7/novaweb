@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nova Yönetici Yayın Paneli</title>
 <style>
-body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+body { flex: auto; font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
 .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 input[type="password"], textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
 textarea { resize: vertical; min-height: 100px; }
@@ -15,92 +15,13 @@ button:disabled { background-color: #aaa; }
 </style>
 </head>
 <body>
+    <h1>
+        ERROR 404
+    </h1>
 
-<div class="container">
-    <h2>Nova Yayın Paneli</h2>
-    
-    <label for="passwordInput">Yönetici Şifresi:</label>
-    <input type="password" id="passwordInput" placeholder="sd157metehanak" required>
-
-    <label for="messageInput">Yayınlanacak Mesaj:</label>
-    <textarea id="messageInput" placeholder="Tüm kullanıcılara gidecek mesajı buraya yazın..." required></textarea>
-
-    <button id="sendBtn">Gönder</button>
-    
-    <div id="status"></div>
-</div>
-
-<script>
-// Backend URL'niz
-const BACKEND_URL = "https://nova-chat-d50f.onrender.com"; 
-
-document.getElementById('sendBtn').addEventListener('click', async () => {
-    // DÜZELTME: Şifreden de boşlukları temizlemek için .trim() eklendi
-    const password = document.getElementById('passwordInput').value.trim(); 
-    const message = document.getElementById('messageInput').value.trim();
-    const statusDiv = document.getElementById('status');
-    const sendBtn = document.getElementById('sendBtn');
-
-    if (message === "") {
-        statusDiv.innerHTML = '<span style="color:red;">Lütfen bir mesaj girin.</span>';
-        return;
-    }
-    if (password === "") {
-        statusDiv.innerHTML = '<span style="color:red;">Lütfen yönetici şifresini girin.</span>';
-        return;
-    }
-
-    sendBtn.disabled = true;
-    statusDiv.innerHTML = '⏳ İşleniyor...';
-    statusDiv.style.color = 'orange';
-
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/admin/broadcast`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                password: password, // Boşluksuz şifre gönderiliyor
-                message: message
-            })
-        });
-
-        // Backend'den gelen yanıtı JSON olarak al
-        const text = await response.text();
-        // JSON parsing'i try-catch içine alıyoruz ki hata durumunda yanıt JSON değilse çökmesin
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            // Yanıt JSON değilse bile hatayı gösterebiliriz
-            data = { error: text || "Sunucu JSON yanıtı göndermedi." };
-        }
-        
-        if (response.ok) {
-            // 200 OK ise başarılı
-            // Arka planda çalıştığı için sent_count ve fail_count yerine target_count bekliyoruz
-            const target = data.target_count || "???";
-            const statusMessage = data.message || "Arka plana başarıyla alındı.";
-            statusDiv.innerHTML = `✅ BAŞARILI! ${target} kullanıcıya gönderim arka plana alındı.`;
-            statusDiv.style.color = 'green';
-            document.getElementById('messageInput').value = ''; // Mesajı temizle
-        } else {
-            // 403, 404, 500 gibi hatalar
-            const errorText = data.error || "Bilinmeyen bir hata oluştu.";
-            statusDiv.innerHTML = `❌ HATA! (${response.status}): ${errorText}`;
-            statusDiv.style.color = 'red';
-        }
-
-    } catch (error) {
-        // Ağ (network) hatası veya sunucuya ulaşılamaması durumu
-        statusDiv.innerHTML = `❌ SUNUCUYA ULAŞILAMADI: Sunucunuz (${BACKEND_URL}) çalışıyor mu? Detay: ${error.message}`;
-        statusDiv.style.color = 'red';
-    } finally {
-        sendBtn.disabled = false;
-    }
-});
-</script>
+    <button onclick="window.location.href=('index.html')">
+        ASK THE NOVA
+    </button>
 
 </body>
 </html>
