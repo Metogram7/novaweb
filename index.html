@@ -6,6 +6,8 @@
 <title>Nova Chat — Tam Sürüm</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <meta name="theme-color" content="#00bfff">
 
 <style>
@@ -761,7 +763,61 @@ message-content a {
     color: var(--text-light);
 }
 /* Not: .code-window, .copy-btn, .lang-label gibi eski stiller bu versiyonda yer almamalıdır. */
+/* === KOD PENCERESİ VE RENKLENDİRME === */
+.code-window {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #282c34; /* Atom One Dark rengi */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  font-family: 'Fira Code', monospace;
+}
 
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #21252b;
+  border-bottom: 1px solid #181a1f;
+  color: #abb2bf;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.code-header span {
+  text-transform: uppercase;
+}
+
+.copy-btn-code {
+  background: #3a3f4b;
+  border: none;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+}
+
+.copy-btn-code:hover {
+  background: #4b5363;
+}
+
+/* Highlight.js kütüphanesi ile uyumlu alan */
+.code-window pre {
+  margin: 0;
+  padding: 0;
+}
+
+.code-window code {
+  display: block;
+  padding: 12px 16px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #abb2bf; /* Varsayılan metin rengi */
+}
 </style>
 </head>
 <body>
@@ -790,7 +846,7 @@ message-content a {
   <h3>💬 Nova Chat</h3>
   <button id="newChatBtn">➕ Yeni Sohbet</button>
   <div id="menu"></div>
-  <button id="themeToggle">🌙 Tema Değiştir</button> <br> <br> 
+  <button id="themeToggle">🌙 Tema Değiştir</button>  <br>   <button id="themeToggle" onclick="window.location.href=('sesli.html')" >🎙️Sesli Mod</button>  <br> <br> 
   <button id="themeToggle" onclick="window.location.href=('notify.html')" >🚩Hata Bildir</button>
 </div>
 <div id="dragHandle"></div>
@@ -1143,9 +1199,46 @@ function addMessage(text, sender, container = null) {
 
     return div;
 }
+// === METİN İÇİNDEKİ KOD BLOKLARINI DÜZENLEYEN FONKSİYON ===
+function formatTextWithCodeBlocks(text) {
+    // ```dil ... ``` yapısını bul ve HTML'e çevir
+    return text.replace(/```(\w*)?([\s\S]*?)```/g, (match, lang, code) => {
+        const language = lang || 'text'; // Dil belirtilmezse düz metin
+        // HTML karakterlerini güvenli hale getir
+        const safeCode = code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        
+        return `
+        <div class="code-window">
+            <div class="code-header">
+                <span>${language}</span>
+                <button class="copy-btn-code" onclick="copyCodeToClipboard(this)">📋 Kopyala</button>
+            </div>
+            <pre><code class="language-${language}">${safeCode}</code></pre>
+        </div>`;
+    });
+}
 
+// === KOD KOPYALAMA FONKSİYONU ===
+function copyCodeToClipboard(btn) {
+    // Butonun bulunduğu penceredeki kod elementini bul
+    const codeElement = btn.parentElement.nextElementSibling.querySelector('code');
+    const codeText = codeElement.innerText; // Sadece metni al
+    
+    navigator.clipboard.writeText(codeText).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = "✅ Kopyalandı";
+        btn.style.background = "#2e7d32";
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = "#3a3f4b"; // Eski rengine dön
+        }, 2000);
+    }).catch(err => {
+        console.error('Kopyalama hatası:', err);
+    });
+}
 
-/// Harf harf yazma efekti (KOD BLOKLARINI DESTEKLEMEK İÇİN GÜNCELLENDİ)
+// === GÜNCELLENMİŞ ADD TYPING MESSAGE (RENKLENDİRME DESTEKLİ) ===
 async function addTypingMessage(text, sender, container = null, delay = 5) {
     const parent = container || document.getElementById(currentChat);
     if(!parent) return;
@@ -1153,29 +1246,54 @@ async function addTypingMessage(text, sender, container = null, delay = 5) {
     const div = document.createElement("div");
     div.className = "msg " + sender;
     parent.appendChild(div);
+
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "message-content";
+    div.appendChild(contentDiv);
+
     parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
 
+    // 1. AŞAMA: Harf harf yazma efekti (Düz metin görünür)
     let tempText = '';
-    for(let i=0;i<text.length;i++){
+    
+    // Eğer metin çok uzunsa yazma hızını artır
+    const dynamicDelay = text.length > 500 ? 1 : delay;
+
+    for(let i=0; i < text.length; i++){
         tempText += text[i];
-        // KRİTİK DEĞİŞİKLİK: İçerik artık innerHTML ile ayarlanıyor
-        div.innerHTML = `<div class="message-content">${tempText}</div>`; 
-        parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
-        await new Promise(r => setTimeout(r, delay));
+        contentDiv.textContent = tempText; 
+        
+        // Performans için her harfte değil, her 5 harfte bir scroll yap
+        if(i % 5 === 0) parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
+        
+        await new Promise(r => setTimeout(r, dynamicDelay));
     }
 
-    // Zaman etiketi
+    // 2. AŞAMA: Yazma bitti, şimdi "Güzelleştirme" zamanı
+    contentDiv.innerHTML = formatTextWithCodeBlocks(text);
+    
+    // Highlight.js kütüphanesini tetikle (Renklendirme burada olur!)
+    contentDiv.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+
+    // Linkleri aktif et
+    if(typeof linkifyElementOpenExternally === "function") {
+        linkifyElementOpenExternally(contentDiv);
+    }
+
+    // Zaman etiketi ve diğer butonlar
     const timestamp = document.createElement("div");
     timestamp.className = "timestamp";
     timestamp.textContent = formatDate(new Date());
     div.appendChild(timestamp);
 
-    // Nova ise ses ve TXT butonu ekle
     if(sender === "nova") {
         addSpeechButton(div, text);
         addDownloadButton(div);
     }
-
+    
+    parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
     return div;
 }
 // TXT butonu

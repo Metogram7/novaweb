@@ -1,199 +1,358 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NoVa — Canlı Yüzlü Mobil Sesli Mod</title>
-<style>
-body { margin:0; background:black; font-family:"Segoe UI",sans-serif; overflow:hidden; height:100vh; }
-#canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
-#terminal {
-  position:absolute; bottom:0; left:0; width:100%;
-  max-height:40%; min-height:100px;
-  background: rgba(10,10,10,0.9); border-top:2px solid #00c8ff;
-  overflow-y:auto; padding:10px; font-size:16px; box-sizing:border-box;
-}
-.message { margin:5px 0; white-space:pre-wrap; word-break:break-word; }
-.user { color:#00ff88; }
-.nova { color:#00c8ff; }
-.system { color:#ffcc00; font-style:italic; }
-#startBtn {
-  position:fixed; bottom:10px; left:50%; transform:translateX(-50%);
-  z-index:2000; padding:12px 20px; background:#00d4ff; color:#000; border:none;
-  border-radius:8px; font-weight:bold; cursor:pointer;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova AI Assistant v2.5 🚀</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+
+    <style>
+        :root {
+            --primary: #00f2ea;
+            --secondary: #ff0050;
+            --bg: #0f0c29;
+            --bg-grad: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-grad);
+            color: #fff;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px;
+            text-align: center;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--primary);
+            z-index: 10;
+        }
+
+        /* --- Chat Area --- */
+        #chatContainer {
+            flex: 1;
+            width: 90%;
+            max-width: 800px; /* Kodlar sığsın diye genişlettik */
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scrollbar-width: thin;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1rem;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        /* Markdown içerik ayarları */
+        .message p { margin: 0 0 10px 0; }
+        .message p:last-child { margin: 0; }
+        
+        /* KOD BLOKLARI İÇİN ÖZEL STİL - BURASI ÖNEMLİ */
+        .message pre {
+            background: #1e1e1e !important; /* Koyu editör rengi */
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto; /* Yan taşarsa kaydırma çubuğu çıkar */
+            margin: 10px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .message code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        /* Satır içi kodlar (tek kelimelik kodlar) */
+        .message :not(pre) > code {
+            background: rgba(255,255,255,0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #ff79c6;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary), #00c6ff);
+            color: #000;
+            border-bottom-right-radius: 2px;
+            box-shadow: 0 4px 15px rgba(0, 242, 234, 0.3);
+        }
+
+        .nova {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-bottom-left-radius: 2px;
+        }
+        
+        /* Nova link verirse linkler belli olsun */
+        .nova a { color: var(--primary); text-decoration: none; border-bottom: 1px dotted; }
+
+        /* --- Visualizer Orb --- */
+        #visualizer {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 10px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .orb {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 30px var(--primary), inset 0 0 20px #fff;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            opacity: 0;
+            z-index: 1;
+        }
+
+        /* States */
+        body.listening .orb { background: var(--secondary); box-shadow: 0 0 40px var(--secondary); animation: pulse-listen 1.5s infinite; }
+        body.speaking .orb { background: #b000ff; box-shadow: 0 0 50px #b000ff; animation: vibrate-speak 0.2s infinite; }
+        body.processing .orb { background: #ffd700; box-shadow: 0 0 30px #ffd700; animation: spin 1s linear infinite; }
+
+        /* --- Controls --- */
+        #controls {
+            width: 100%;
+            padding: 20px;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        button {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        #talkBtn { background: linear-gradient(90deg, var(--secondary), #ff4b1f); color: white; box-shadow: 0 0 20px rgba(255, 0, 80, 0.4); }
+        #talkBtn:hover { transform: scale(1.05); }
+        #stopBtn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+        #stopBtn:hover { background: rgba(255,255,255,0.2); }
+
+        #statusText { margin-bottom: 10px; font-size: 0.8rem; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-listen { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes vibrate-speak { 0% { transform: scale(1); } 50% { transform: scale(0.9); } 100% { transform: scale(1); } }
+        @keyframes spin { 0% { transform: rotate(0deg) scale(0.8); border-radius: 40%; } 100% { transform: rotate(360deg) scale(0.8); border-radius: 50%; } }
+
+    </style>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
 </head>
 <body>
-<canvas id="canvas"></canvas>
-<div id="terminal"></div>
-<audio id="breathSound" src="breath.mp3" preload="auto"></audio>
-<button id="startBtn">Nova ile Konuş</button>
+
+    <header><i class="fas fa-microchip"></i> NOVA v2.5</header>
+
+    <div id="chatContainer">
+        <div class="message nova">
+            <p>Merhaba ben nova sesli modum</p>
+        </div>
+    </div>
+
+    <div id="visualizer">
+        <div class="orb"></div>
+        <div class="ring" style="width: 70px; height: 70px;"></div>
+    </div>
+
+    <div id="statusText">Hazır</div>
+
+    <div id="controls">
+        <button id="talkBtn"><i class="fas fa-microphone"></i> Konuş</button>
+        <button id="stopBtn"><i class="fas fa-stop"></i> Durdur</button>
+    </div>
 
 <script>
-// --- Canvas ve değişkenler ---
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-let width = canvas.width = window.innerWidth;
-let height = canvas.height = window.innerHeight;
-let waves = new Array(128).fill(0);
-let talking = false, novaTalking = false, volumeLevel = 0;
-let particles = [];
+    const BACKEND_URL = 'https://nova-chat-d50f.onrender.com/api/chat';
+    const API_KEY = 'YOUR_API_KEY_HERE'; 
 
-// --- Göz kırpma ---
-let blinkTimer = 0, blinkDuration = 150, eyesClosed = false;
+    const chatContainer = document.getElementById('chatContainer');
+    const talkBtn = document.getElementById('talkBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const statusText = document.getElementById('statusText');
+    const body = document.body;
 
-// --- Particle sınıfı ---
-class Particle{
-  constructor(x,y,color,size,speedX,speedY,life){ this.x=x; this.y=y; this.color=color; this.size=size; this.speedX=speedX; this.speedY=speedY; this.life=life; }
-  update(){ this.x+=this.speedX; this.y+=this.speedY; this.life--; if(this.life>0){ ctx.fillStyle=this.color; ctx.globalAlpha=Math.min(1,this.life/30); ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; } }
-}
+    let recognition;
+    let synth = window.speechSynthesis;
+    let preferredVoice = null;
 
-// --- Renk fonksiyonu ---
-function getColor(f,opacity){ if(f<0.33) return `rgba(128,0,255,${opacity})`; else if(f<0.66) return `rgba(0,200,255,${opacity})`; else return `rgba(150,255,255,${opacity})`; }
+    // --- SES AYARLARI ---
+    function loadVoices() {
+        const voices = synth.getVoices();
+        preferredVoice = voices.find(v => v.name.includes("Google") && v.lang.includes("tr")) ||
+                         voices.find(v => v.lang.includes("tr")) || 
+                         voices[0];
+    }
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    loadVoices();
 
-// --- Canvas çizim ---
-function draw(){
-  ctx.clearRect(0,0,width,height);
-  let bg = ctx.createLinearGradient(0,0,width,height); bg.addColorStop(0,"#000011"); bg.addColorStop(1,"#000033"); ctx.fillStyle=bg; ctx.fillRect(0,0,width,height);
+    // --- STT (KONUŞMA TANIMA) ---
+    function setupRecognition() {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert("Lütfen Chrome kullanın.");
+            return null;
+        }
+        
+        const rec = new webkitSpeechRecognition();
+        rec.lang = 'tr-TR';
+        rec.interimResults = false;
+        rec.maxAlternatives = 1;
 
-  const cx=width/2, cy=height/2, baseRadius=Math.min(width,height)/6;
-
-  // --- Göz kırpma ---
-  if(blinkTimer<=0){ eyesClosed=true; blinkTimer=2000 + Math.random()*3000; }
-  if(eyesClosed){ ctx.beginPath(); ctx.ellipse(cx - baseRadius*0.6, cy - baseRadius*0.4, 10, 2, 0, 0, Math.PI*2); ctx.ellipse(cx + baseRadius*0.6, cy - baseRadius*0.4, 10, 2, 0, 0, Math.PI*2); ctx.fillStyle="#00c8ff"; ctx.fill(); setTimeout(()=>{eyesClosed=false;}, blinkDuration); }
-  else{ ctx.beginPath(); ctx.arc(cx - baseRadius*0.6, cy - baseRadius*0.4, 10, 0, Math.PI*2); ctx.arc(cx + baseRadius*0.6, cy - baseRadius*0.4, 10, 0, Math.PI*2); ctx.fillStyle="#00c8ff"; ctx.fill(); }
-  blinkTimer--;
-
-  // --- Ağız hareketi ---
-  const mouthY = cy + baseRadius*0.4;
-  const mouthWidth = baseRadius*0.6;
-  const mouthHeight = novaTalking ? 8 + Math.sin(Date.now()/60)*10 : 4;
-  ctx.beginPath();
-  ctx.ellipse(cx, mouthY, mouthWidth/2, mouthHeight, 0, 0, Math.PI*2);
-  ctx.fillStyle="rgba(0,200,255,0.7)"; ctx.fill();
-
-  // --- Çevresel halkalar ---
-  for(let i=0;i<waves.length;i++){
-    const angle=(Math.PI*2/waves.length)*i;
-    let len=baseRadius+waves[i];
-    const f=i/waves.length;
-    let opacity=0.4;
-    if(talking) opacity=0.4+Math.min(1,volumeLevel/100);
-    if(novaTalking) opacity=0.4+0.6*Math.sin(Date.now()/300+i/5);
-    const color=getColor(f,opacity);
-    const x1=cx+Math.cos(angle)*baseRadius; const y1=cy+Math.sin(angle)*baseRadius;
-    const x2=cx+Math.cos(angle)*len; const y2=cy+Math.sin(angle)*len;
-    ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-    if(talking) waves[i]+=((Math.random()*volumeLevel*2.5)-waves[i])*0.3;
-    else if(novaTalking) waves[i]+=((Math.random()*20)-waves[i])*0.1;
-    else waves[i]+=(0-waves[i])*0.05;
-  }
-
-  for(let i=particles.length-1;i>=0;i--){ particles[i].update(); if(particles[i].life<=0) particles.splice(i,1); }
-
-  requestAnimationFrame(draw);
-}
-draw();
-window.addEventListener("resize",()=>{ width=canvas.width=window.innerWidth; height=canvas.height=window.innerHeight; });
-
-// --- Terminal ---
-const terminal=document.getElementById("terminal");
-function logMessage(sender,text){ const div=document.createElement("div"); div.classList.add("message",sender); div.textContent=(sender==="user"?"🧑 ":"🤖 ")+text; terminal.appendChild(div); terminal.scrollTop=terminal.scrollHeight; }
-
-// --- Mikrofon ---
-let audioContext, analyser, source;
-async function startMicVisualizer(){
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    audioContext=new AudioContext();
-    source=audioContext.createMediaStreamSource(stream);
-    analyser=audioContext.createAnalyser();
-    analyser.fftSize=256; freqData=new Uint8Array(analyser.frequencyBinCount);
-    source.connect(analyser); talking=true;
-    function updateVolume(){ analyser.getByteFrequencyData(freqData); let sum=0; for(let i=0;i<freqData.length;i++)sum+=freqData[i]; volumeLevel=sum/freqData.length; if(talking)requestAnimationFrame(updateVolume);}
-    updateVolume(); return stream;
-  }catch(err){ logMessage("system","🎙️ Mikrofon erişimi reddedildi veya desteklenmiyor."); }
-}
-
-// --- Speech Recognition ---
-let recognition;
-const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SpeechRecognition){
-  recognition=new SpeechRecognition();
-  recognition.lang="tr-TR";
-  recognition.onstart=()=>logMessage("system","Dinleniyor...");
-  recognition.onend=()=>{ logMessage("system","Dinleme bitti."); talking=false; if(audioContext)audioContext.close(); };
-  recognition.onresult=async(e)=>{ const text=e.results[0][0].transcript; logMessage("user",text); await sendMessage(text); };
-}else logMessage("system","❌ Bu tarayıcıda sesli tanıma yok.");
-
-// --- Backend ---
-const API_URL="https://nova-chat-d50f.onrender.com/api/chat";
-async function sendMessage(message){
-  try{
-    const response=await fetch(API_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({userId:"demoUser",currentChat:"default",message:message,userInfo:{}})
-    });
-    const data=await response.json();
-    await speakAndLog(data.response);
-  }catch(err){ await speakAndLog("❌ Sunucuya bağlanılamıyor."); }
-}
-
-// --- Konuşma ve ağız animasyonu ---
-function speakAndLog(text){
-  return new Promise(resolve=>{
-    novaTalking=true;
-    const sentences = text.split(/([.!?])/).reduce((acc,val,idx,arr)=>{
-      if(/[.!?]/.test(val)) acc[acc.length-1]+=val;
-      else acc.push(val);
-      return acc;
-    }, []);
-
-    const div=document.createElement("div");
-    div.classList.add("message","nova");
-    terminal.appendChild(div);
-    const breathSound=document.getElementById("breathSound");
-
-    let idx=0;
-    function speakNextSentence(){
-      if(idx<sentences.length){
-        let s=sentences[idx].trim();
-        if(s.length===0){ idx++; speakNextSentence(); return; }
-
-        div.textContent += (idx>0?" ":"") + s;
-        terminal.scrollTop=terminal.scrollHeight;
-
-        const utter = new SpeechSynthesisUtterance(s);
-        utter.lang="tr-TR"; 
-        utter.rate=1; 
-        utter.pitch=0.9; // Erkek sesi
-        const voices = window.speechSynthesis.getVoices();
-        utter.voice = voices.find(v=>v.lang.startsWith("tr") && v.name.toLowerCase().includes("male")) 
-                      || voices.find(v=>v.lang.startsWith("tr")) || null;
-
-        utter.onstart = ()=>{ novaTalking=true; };
-        utter.onend = ()=>{
-          setTimeout(()=>{ novaTalking=false; idx++; speakNextSentence(); }, 300);
+        rec.onstart = () => setStatus("Dinliyorum...", "listening");
+        rec.onend = () => { if(body.className === 'listening') setStatus("Hazır", ""); };
+        
+        rec.onresult = async (event) => {
+            const userText = event.results[0][0].transcript;
+            addMessage(userText, 'user');
+            setStatus("İşleniyor...", "processing");
+            
+            const novaReply = await sendMessageToNova(userText);
+            addMessage(novaReply, 'nova');
+            speak(novaReply);
         };
+        
+        return rec;
+    }
+    recognition = setupRecognition();
 
-        if(Math.random()<0.18){ breathSound.currentTime=0; breathSound.play(); }
-        window.speechSynthesis.speak(utter);
-      } else { novaTalking=false; resolve(); }
+    // --- UI GÜNCELLEME (Markdown Destekli) ---
+    function addMessage(text, sender) {
+        const div = document.createElement('div');
+        div.classList.add('message', sender);
+        
+        if (sender === 'nova') {
+            // Nova'dan gelen mesajı Markdown olarak işle
+            div.innerHTML = marked.parse(text);
+            
+            // Kod bloklarını bul ve renklendir
+            div.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        } else {
+            // Kullanıcı mesajı düz metindir
+            div.textContent = text;
+        }
+
+        chatContainer.appendChild(div);
+        
+        chatContainer.scrollTo({
+            top: chatContainer.scrollHeight,
+            behavior: 'smooth'
+        });
     }
 
-    speakNextSentence();
-  });
-}
+    // --- BACKEND ---
+    async function sendMessageToNova(message) {
+        try {
+            const response = await fetch(BACKEND_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
+                body: JSON.stringify({ message: message, userId: "coder-user", currentChat: "default" })
+            });
+            if (!response.ok) return "Hata oluştu.";
+            const data = await response.json();
+            return data.response || "Cevap yok.";
+        } catch (err) {
+            return "Sunucuya bağlanılamadı.";
+        }
+    }
 
-// --- Başlat butonu ---
-document.getElementById("startBtn").addEventListener("click", async()=>{
-  try{
-    await startMicVisualizer();
-    if(recognition) recognition.start();
-  }catch(e){ console.error(e); logMessage("system","Mikrofon erişimi reddedildi."); }
-});
+    // --- TTS (METİN OKUMA) ---
+    function speak(text) {
+        synth.cancel();
+
+        // 1. Kod bloklarını "Kod örneği ekranda" ile değiştir
+        let cleanText = text.replace(/```[\s\S]*?```/g, 'Kod örneği ekranda.');
+
+        // 2. Emojileri temizle (Burayı ekledik)
+        // \p{Emoji_Presentation} ve \p{Extended_Pictographic} modern emojileri kapsar
+        cleanText = cleanText.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
+
+        // 3. Markdown sembollerini ve linkleri temizle
+        cleanText = cleanText.replace(/`([^`]+)`/g, '$1')      // Satır içi kod işaretlerini kaldır
+                             .replace(/[*_~#]/g, '')            // Kalın/italik işaretlerini kaldır
+                             .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Linkleri temizle (sadece başlığı al)
+                             .replace(/\s+/g, ' ')              // Fazla boşlukları teke indir
+                             .trim();
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        
+        // Tercih edilen sesi ayarla
+        if (preferredVoice) utterance.voice = preferredVoice;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        
+        // Olay dinleyicileri
+        utterance.onstart = () => setStatus("Konuşuyor...", "speaking");
+        utterance.onend = () => setStatus("Hazır", "");
+        
+        synth.speak(utterance);
+    }
+    // --- EVENTS ---
+    function setStatus(text, className) {
+        statusText.textContent = text;
+        body.className = className;
+    }
+
+    talkBtn.addEventListener('click', () => { synth.cancel(); recognition.start(); });
+    stopBtn.addEventListener('click', () => { synth.cancel(); recognition.stop(); setStatus("Susturuldu", ""); });
+
 </script>
 </body>
 </html>
