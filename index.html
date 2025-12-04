@@ -82,7 +82,7 @@ body.dark-mode {
 #sideMenu {
   width: 280px;
   min-width: 200px;
-  background: linear-gradient(135deg, #52c7fd 0%, #a9e2f0 100%);
+  background: linear-gradient(135deg, #52c7fd 10%, #4c6586 100%);
   border-right: 2px solid var(--primary-color);
   display: flex;
   flex-direction: column;
@@ -140,7 +140,7 @@ body.dark-mode {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #c5eaff;
+  background: #4c6586;
 }
 
 .dark-mode #mainContent {
@@ -155,7 +155,7 @@ header {
   font-weight: 700;
   color: #240202;
   border-bottom: 2px solid var(--primary-color);
-  background: linear-gradient(135deg, #d7dde0, #e8ecee);
+  background: linear-gradient(135deg, #008cff, #e8ecee);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -260,7 +260,7 @@ header img {
 #inputArea {
   display: flex;
   padding: 15px 20px;
-  background: #696969;
+  background: #4e91e9;
   border-top: 2px solid var(--primary-color);
   gap: 10px;
   flex-wrap: wrap;
@@ -280,7 +280,7 @@ header img {
   border: 2px solid var(--primary-color);
   outline: none;
   font-size: 1rem;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(229, 245, 255, 0.95);
   color: var(--text-dark);
   resize: none;
   transition: all 0.3s ease;
@@ -288,8 +288,8 @@ header img {
 }
 
 #input:focus {
-  border-color: #0077b3;
-  box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.2);
+  border-color: #ff0303;
+  box-shadow: 0 0 0 3px rgba(37, 77, 255, 0.2);
   transform: translateY(-1px);
 }
 
@@ -303,7 +303,7 @@ button.sendBtn {
   padding: 12px 24px;
   border-radius: 25px;
   border: none;
-  background: linear-gradient(135deg, var(--primary-color), #0077b3);
+  background: linear-gradient(135deg, var(--primary-color), #1f48ff);
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -376,7 +376,7 @@ button#stopBtn:hover {
 }
 
 #menuToggle:hover {
-  background: linear-gradient(135deg, #0077b3, #005580);
+  background: linear-gradient(135deg, #1c4df0, #000000);
   transform: translateY(-3px) scale(1.05);
   box-shadow: 0 8px 20px rgba(0, 191, 255, 0.4);
 }
@@ -514,53 +514,6 @@ pre {
   font-size: 14px;
   white-space: pre-wrap;
   word-wrap: break-word;
-}
-
-
-
-.code-window {
-  background: #1e1e1e;
-  color: #dcdcdc;
-  padding: 10px;
-  border-radius: 10px;
-  margin: 8px 0;
-  position: relative;
-  box-shadow: 0 0 8px rgba(0,0,0,0.3);
-}
-.code-window pre {
-  overflow-x: auto;
-  white-space: pre-wrap;
-  margin: 0;
-}
-.copy-btn {
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  background: #333;
-  color: white;
-  border: none;
-  padding: 3px 8px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 12px;
-}
-.copy-btn:hover { background: #555; }
-.lang-label {
-  position: absolute;
-  top: 6px;
-  left: 10px;
-  font-size: 12px;
-  color: #999;
-}
-#welcome-screen {
-  display: none;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  flex-direction: column;
-  color: var(--text-color);
 }
 
 #welcome-screen.visible {
@@ -714,7 +667,7 @@ body[data-nova-pwa-banner="visible"] {
 message-content a {
   text-decoration: underline;
   cursor: pointer;
-  color: #1e88e5;
+  color: #52a9f5;
   /* pointer-events normal olmalı */
   pointer-events: auto;
 }
@@ -818,6 +771,107 @@ message-content a {
   line-height: 1.5;
   color: #abb2bf; /* Varsayılan metin rengi */
 }
+
+/* === GÜNCELLEME MODAL STİLLERİ === */
+.modal-overlay {
+  display: none; /* Varsayılan gizli */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6); /* Arka planı karart */
+  z-index: 9999; /* En üstte durması için */
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(5px); /* Arka planı bulanıklaştır */
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-box {
+  background: #537fa8;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  position: relative;
+  text-align: center;
+  border: 2px solid var(--primary-color);
+  transform: scale(0.9);
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Karanlık Mod Uyumu */
+body.dark-mode .modal-box {
+  background: #2c3e50;
+  color: #e4e4e4;
+  border-color: #34495e;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #0077b3;
+  font-size: 1.5rem;
+}
+
+body.dark-mode .modal-header h2 {
+  color: #8be0ff;
+}
+
+.version-badge {
+  background: linear-gradient(135deg, #ff7a18, #af002d);
+  color: rgb(255, 255, 255);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+
+.modal-body {
+  margin: 20px 0;
+  text-align: left;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.modal-body ul {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.modal-body li {
+  margin-bottom: 10px;
+  line-height: 1.5;
+  list-style-type: '👉';
+  padding-left: 10px;
+}
+
+.modal-close-btn {
+  background: linear-gradient(135deg, var(--primary-color), #0077b3);
+  color: rgb(255, 255, 255);
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+  width: 100%;
+}
+
+.modal-close-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 191, 255, 0.4);
+}
+
+@keyframes popIn {
+  to { transform: scale(1); }
+}
+
 </style>
 </head>
 <body>
@@ -827,6 +881,18 @@ message-content a {
   
 <button id="menuToggle">☰ Menü</button>
 
+<div id="updateModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>🎉 Yenilikler & Güncellemeler</h2>
+      <span class="version-badge" id="modalVersionBadge">v4.2</span>
+    </div>
+    <div class="modal-body" id="updateList">
+      </div>
+      <a href="commingsoon.html">Nova-Explore(NovaX)</a> <a href="hakkında.html">Nova</a>
+    <button class="modal-close-btn" onclick="closeUpdateModal()">Novaya Geç! 🚀</button>
+  </div>
+</div>
 
 <!-- Açılış Ekranı -->
 <div id="splash-screen" style="
@@ -901,6 +967,59 @@ function toggleWelcomeScreen() {
     }, 400);
   }
 }
+
+// === GÜNCELLEME NOTLARI SİSTEMİ ===
+
+// 🛠️ BURAYI HER GÜNCELLEMEDE DEĞİŞTİR:
+const CURRENT_VERSION = "2.6"; 
+
+const UPDATE_NOTES = [
+    "🎨 Arayüz yenilendi, artık daha koyu!",
+    "🗒️ Yeni güncelleme Ekranı.",
+    "🏃‍➡️ Yazma hızı artırıldı.",
+    "🐛 Bazı küçük hatalar giderildi ve performans artırıldı.",
+    "💻 Nova 5 Aralık 2025 ten sonra play storede!",
+    "🚀 Nova Explore entegrasyonu için hazırlıklar tamam . Yakında sizlerle ."
+];
+
+function checkAppUpdate() {
+    const savedVersion = localStorage.getItem('nova_app_version');
+    const modal = document.getElementById('updateModal');
+    const listContainer = document.getElementById('updateList');
+    const badge = document.getElementById('modalVersionBadge');
+
+    // Eğer kayıtlı versiyon yoksa veya eskiyse modalı göster
+    if (savedVersion !== CURRENT_VERSION) {
+        
+        // Versiyon numarasını yaz
+        badge.textContent = "v" + CURRENT_VERSION;
+
+        // Listeyi oluştur
+        let htmlList = "<ul>";
+        UPDATE_NOTES.forEach(note => {
+            htmlList += `<li>${note}</li>`;
+        });
+        htmlList += "</ul>";
+        listContainer.innerHTML = htmlList;
+
+        // Modalı göster
+        modal.style.display = 'flex';
+    }
+}
+
+function closeUpdateModal() {
+    const modal = document.getElementById('updateModal');
+    // Modalı gizle
+    modal.style.display = 'none';
+    // Yeni versiyonu kaydet ki bir daha sormasın
+    localStorage.setItem('nova_app_version', CURRENT_VERSION);
+}
+
+// Sayfa yüklendiğinde kontrol et
+window.addEventListener('DOMContentLoaded', () => {
+    // Mevcut diğer yükleme kodlarının yanına eklenmiş gibi çalışır
+    setTimeout(checkAppUpdate, 1000); // 1 saniye gecikmeli açılması daha şık durur
+});
 
 // Nova aktiflik animasyonu göstermek için
 function showNovaActivePulse() {
