@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaLive 3.0</title>
+
+<style>
+:root{
+ --bg:#0d1a21;
+ --panel:#13242d;
+ --cyan:#4adede;
+ --gray:#9aa7b1;
+ --red:#ff5c5c;
+}
+
+body{
+ margin:0;
+ background:var(--bg);
+ font-family:Segoe UI, sans-serif;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ height:100vh;
+ color:white;
+}
+
+.chat{
+ width:100%;
+ max-width:650px;
+ height:95vh;
+ background:var(--panel);
+ border-radius:16px;
+ display:flex;
+ flex-direction:column;
+ box-shadow:0 0 30px rgba(0,0,0,.7);
+ overflow:hidden;
+ position:relative;
+}
+
+.header{
+ padding:14px;
+ text-align:center;
+ font-weight:bold;
+ color:var(--cyan);
+ border-bottom:1px solid #1e3a44;
+}
+
+.camera{
+ background:black;
+ padding:10px;
+}
+
+video{
+ width:100%;
+ max-height:240px;
+ object-fit:cover;
+ border-radius:10px;
+}
+
+.messages{
+ flex:1;
+ padding:18px;
+ overflow-y:auto;
+ display:flex;
+ flex-direction:column;
+ gap:12px;
+}
+
+.msg{
+ max-width:80%;
+ padding:10px 14px;
+ border-radius:14px;
+ font-size:.95em;
+}
+
+.user{align-self:flex-end;background:#284451}
+.nova{align-self:flex-start;background:#1f3944;border-left:3px solid var(--cyan)}
+
+.status{
+ padding:10px;
+ text-align:center;
+ font-size:.85em;
+ color:var(--gray);
+ border-top:1px solid #1e3a44;
+}
+
+/* OVERLAY */
+.overlay{
+ position:absolute;
+ inset:0;
+ background:rgba(0,0,0,.75);
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ z-index:20;
+}
+
+.box{
+ background:#1b2f38;
+ padding:30px 40px;
+ border-radius:16px;
+ text-align:center;
+}
+
+.box h2{color:var(--cyan)}
+.box p{color:var(--gray)}
+
+button{
+ margin-top:15px;
+ padding:12px 26px;
+ font-size:16px;
+ border:none;
+ border-radius:10px;
+ background:var(--cyan);
+ cursor:pointer;
+}
+
+.block{
+ border:2px solid var(--red);
+}
+</style>
+</head>
+
+<body>
+
+<div class="chat">
+
+<!-- BAŞLAT -->
+<div id="startOverlay" class="overlay">
+ <div class="box">
+  <h2>🟢 NovaLive Başlat</h2>
+  <p>Mikrofon ve kamera izni ver</p>
+  <button onclick="startNova()">Başlat</button>
+ </div>
+</div>
+
+<!-- ENGEL -->
+<div id="blockOverlay" class="overlay" style="display:none">
+ <div class="box block">
+  <h2>🔴 Nova konuşuyor</h2>
+  <p>Nova konuşurken konuşamazsın</p>
+ </div>
+</div>
+
+<div class="header">NovaLive 3.0 🔴</div>
+
+<div class="camera">
+ <video id="video" autoplay playsinline></video>
+ <canvas id="canvas" style="display:none"></canvas>
+</div>
+
+<div id="messages" class="messages">
+ <div class="msg nova"><b>Nova:</b> Hazırım. Seni dinliyorum.</div>
+</div>
+
+<div id="status" class="status">Hazır</div>
+
+</div>
+
+<script>
+/* ======================
+   DOM
+====================== */
+const video=document.getElementById("video");
+const canvas=document.getElementById("canvas");
+const messages=document.getElementById("messages");
+const statusText=document.getElementById("status");
+const startOverlay=document.getElementById("startOverlay");
+const blockOverlay=document.getElementById("blockOverlay");
+
+/* ======================
+   WS
+====================== */
+const WS_URL="wss://nova-chat-d50f.onrender.com/ws/chat";
+const ws=new WebSocket(WS_URL);
+
+/* ======================
+   STATE
+====================== */
+let imgBase64=null;
+let isNovaSpeaking=false;
+
+/* ======================
+   KAMERA
+====================== */
+async function startCamera(){
+ const stream=await navigator.mediaDevices.getUserMedia({video:true});
+ video.srcObject=stream;
+
+ const ctx=canvas.getContext("2d");
+ setInterval(()=>{
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  ctx.drawImage(video,0,0);
+  imgBase64=canvas.toDataURL("image/jpeg",0.5).split(",")[1];
+ },800);
+}
+
+/* ======================
+   EMOJI TEMİZLE
+====================== */
+function removeEmojis(text){
+ return text.replace(
+  /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu,
+  ""
+ );
+}
+
+/* ======================
+   LIVE PARÇALAMA
+====================== */
+function splitLiveText(text, maxLen=120){
+ const sentences=text
+  .replace(/\n+/g," ")
+  .split(/(?<=[.!?])\s+/);
+
+ const parts=[];
+ let current="";
+
+ for(const s of sentences){
+  if((current+s).length>maxLen){
+   parts.push(current.trim());
+   current=s;
+  }else{
+   current+=" "+s;
+  }
+ }
+ if(current.trim()) parts.push(current.trim());
+ return parts;
+}
+
+/* ======================
+   SÜREKLİ DİNLEME
+====================== */
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+const recog=new SpeechRecognition();
+recog.lang="tr-TR";
+recog.continuous=true;
+recog.interimResults=false;
+
+recog.onresult=(e)=>{
+ if(isNovaSpeaking) return;
+
+ const text=e.results[e.results.length-1][0].transcript.trim();
+ if(!text) return;
+
+ addMsg("user","<b>Sen:</b> "+text);
+ statusText.innerText="🧠 Nova analiz ediyor...";
+ blockOverlay.style.display="flex";
+
+ ws.send(JSON.stringify({
+  message:text,
+  image_data:imgBase64
+ }));
+};
+
+recog.onerror=()=>{recog.stop();setTimeout(()=>recog.start(),1000)};
+recog.onend=()=>{if(!isNovaSpeaking)recog.start()};
+
+/* ======================
+   MESAJ
+====================== */
+function addMsg(type,html){
+ const div=document.createElement("div");
+ div.className="msg "+type;
+ div.innerHTML=html;
+ messages.appendChild(div);
+ messages.scrollTop=messages.scrollHeight;
+}
+
+/* ======================
+   NOVA SES (EMOJİ OKUMAZ)
+====================== */
+function speak(text){
+ const cleanText=removeEmojis(text);
+ const parts=splitLiveText(cleanText);
+
+ isNovaSpeaking=true;
+ recog.stop();
+ blockOverlay.style.display="flex";
+
+ let i=0;
+
+ function speakNext(){
+  if(i>=parts.length){
+   isNovaSpeaking=false;
+   blockOverlay.style.display="none";
+   statusText.innerText="🎧 Dinleniyor...";
+   recog.start();
+   return;
+  }
+
+  const u=new SpeechSynthesisUtterance(parts[i]);
+  u.lang="tr-TR";
+  u.rate=1.05;
+
+  u.onend=()=>{
+   i++;
+   setTimeout(speakNext,150);
+  };
+
+  speechSynthesis.speak(u);
+ }
+
+ speakNext();
+}
+
+/* ======================
+   WS MESAJ
+====================== */
+ws.onmessage=(e)=>{
+ addMsg("nova","<b>Nova:</b> "+e.data);
+ speak(e.data);
+};
+
+/* ======================
+   BAŞLAT
+====================== */
+async function startNova(){
+ try{
+  await navigator.mediaDevices.getUserMedia({audio:true});
+  await startCamera();
+  recog.start();
+
+  startOverlay.style.display="none";
+  statusText.innerText="🎧 Nova seni dinliyor";
+ }catch(e){
+  alert("İzin verilmezse Nova çalışmaz");
+ }
+}
+</script>
+
+</body>
+</html>
