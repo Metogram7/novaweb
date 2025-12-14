@@ -3,279 +3,243 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NovaLive 4.0 (Echo Fix)</title>
+<title>NovaLive FULL FIX</title>
 
 <style>
-:root{ --bg:#0d1a21; --panel:#13242d; --cyan:#4adede; --gray:#9aa7b1; --red:#ff5c5c; }
-body{ margin:0; background:var(--bg); font-family:Segoe UI, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; color:white; }
-.chat{ width:100%; max-width:650px; height:95vh; background:var(--panel); border-radius:16px; display:flex; flex-direction:column; box-shadow:0 0 30px rgba(0,0,0,.7); overflow:hidden; position:relative; }
-.header{ padding:14px; text-align:center; font-weight:bold; color:var(--cyan); border-bottom:1px solid #1e3a44; }
-.camera{ background:black; padding:10px; position: relative; }
-video{ width:100%; max-height:240px; object-fit:cover; border-radius:10px; }
-.mic-status { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 20px; font-size: 12px; display: flex; align-items: center; gap: 5px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; background: gray; }
-.dot.active { background: #ff5c5c; box-shadow: 0 0 10px #ff5c5c; animation: pulse 1s infinite; }
-@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-.messages{ flex:1; padding:18px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
-.msg{ max-width:80%; padding:10px 14px; border-radius:14px; font-size:.95em; }
-.user{ align-self:flex-end; background:#284451 }
-.nova{ align-self:flex-start; background:#1f3944; border-left:3px solid var(--cyan) }
-.status{ padding:10px; text-align:center; font-size:.85em; color:var(--gray); border-top:1px solid #1e3a44; }
-.overlay{ position:absolute; inset:0; background:rgba(0,0,0,.75); display:flex; justify-content:center; align-items:center; z-index:20; }
-.box{ background:#1b2f38; padding:30px 40px; border-radius:16px; text-align:center; }
-.box h2{ color:var(--cyan) }
-.box p{ color:var(--gray) }
-button{ margin-top:15px; padding:12px 26px; font-size:16px; border:none; border-radius:10px; background:var(--cyan); cursor:pointer; }
-.block{ border:2px solid var(--red); }
+:root{
+ --bg:#0d1a21;
+ --panel:#13242d;
+ --cyan:#4adede;
+ --gray:#9aa7b1;
+ --red:#ff5c5c;
+}
+body{
+ margin:0;
+ background:var(--bg);
+ font-family:Segoe UI,sans-serif;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ height:100vh;
+ color:white;
+}
+.chat{
+ width:100%;
+ max-width:650px;
+ height:95vh;
+ background:var(--panel);
+ border-radius:16px;
+ display:flex;
+ flex-direction:column;
+ box-shadow:0 0 30px rgba(0,0,0,.7);
+ overflow:hidden;
+ position:relative;
+}
+.header{
+ padding:14px;
+ text-align:center;
+ font-weight:bold;
+ color:var(--cyan);
+ border-bottom:1px solid #1e3a44;
+}
+.camera{background:black;padding:10px}
+video{
+ width:100%;
+ max-height:240px;
+ object-fit:cover;
+ border-radius:10px;
+}
+.messages{
+ flex:1;
+ padding:18px;
+ overflow-y:auto;
+ display:flex;
+ flex-direction:column;
+ gap:12px;
+}
+.msg{
+ max-width:80%;
+ padding:10px 14px;
+ border-radius:14px;
+ font-size:.95em;
+}
+.user{align-self:flex-end;background:#284451}
+.nova{align-self:flex-start;background:#1f3944;border-left:3px solid var(--cyan)}
+.status{
+ padding:10px;
+ text-align:center;
+ font-size:.85em;
+ color:var(--gray);
+ border-top:1px solid #1e3a44;
+}
+.overlay{
+ position:absolute;
+ inset:0;
+ background:rgba(0,0,0,.75);
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ z-index:20;
+}
+.box{
+ background:#1b2f38;
+ padding:30px 40px;
+ border-radius:16px;
+ text-align:center;
+}
+.box h2{color:var(--cyan)}
+.box p{color:var(--gray)}
+button{
+ margin-top:15px;
+ padding:12px 26px;
+ font-size:16px;
+ border:none;
+ border-radius:10px;
+ background:var(--cyan);
+ cursor:pointer;
+}
+.block{border:2px solid var(--red)}
 </style>
 </head>
 
 <body>
 
 <div class="chat">
-    <div id="startOverlay" class="overlay">
-        <div class="box">
-            <h2>🟢 NovaLive 4.0</h2>
-            <p>Mikrofon ve kamera izni ver</p>
-            <button onclick="startNova()">Sistemi Başlat</button>
-            <p id="errorMsg" style="color:var(--red); font-size:12px; margin-top:10px; display:none"></p>
-        </div>
-    </div>
 
-    <div id="blockOverlay" class="overlay" style="display:none">
-        <div class="box block">
-            <h2>🔴 Nova konuşuyor</h2>
-            <p>Mikrofon kapalı...</p>
-        </div>
-    </div>
+<div id="startOverlay" class="overlay">
+ <div class="box">
+  <h2>🟢 NovaLive Başlat</h2>
+  <p>Mikrofon ve kamera izni ver</p>
+  <button onclick="startNova()">Başlat</button>
+ </div>
+</div>
 
-    <div class="header">NovaLive AI 🔴</div>
+<div id="blockOverlay" class="overlay" style="display:none">
+ <div class="box block">
+  <h2>🔴 Nova konuşuyor</h2>
+  <p>Nova konuşurken konuşamazsın</p>
+ </div>
+</div>
 
-    <div class="camera">
-        <video id="video" autoplay playsinline muted></video>
-        <canvas id="canvas" style="display:none"></canvas>
-        <div class="mic-status">
-            <div id="micDot" class="dot"></div>
-            <span id="micText">Pasif</span>
-        </div>
-    </div>
+<div class="header">NovaLive 🔴</div>
 
-    <div id="messages" class="messages">
-        <div class="msg nova"><b>Nova:</b> Merhaba, seni dinliyorum.</div>
-    </div>
+<div class="camera">
+ <video id="video" autoplay playsinline></video>
+ <canvas id="canvas" style="display:none"></canvas>
+</div>
 
-    <div id="status" class="status">Sunucuya bağlanıyor...</div>
+<div id="messages" class="messages">
+ <div class="msg nova"><b>Nova:</b> Hazırım. Seni dinliyorum.</div>
+</div>
+
+<div id="status" class="status">Hazır</div>
 </div>
 
 <script>
-/* ====================== DOM ====================== */
+/* ========= DOM ========= */
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const messages = document.getElementById("messages");
 const statusText = document.getElementById("status");
 const startOverlay = document.getElementById("startOverlay");
 const blockOverlay = document.getElementById("blockOverlay");
-const errorMsg = document.getElementById("errorMsg");
-const micDot = document.getElementById("micDot");
-const micText = document.getElementById("micText");
 
-/* ====================== WS ====================== */
-const WS_URL = "wss://nova-chat-d50f.onrender.com/ws/chat";
-let ws;
-
-function connectWS() {
-    ws = new WebSocket(WS_URL);
-    
-    ws.onopen = () => {
-        statusText.innerText = "Sunucu Bağlandı. Başlat'a bas.";
-        console.log("WS Bağlandı");
-    };
-
-    ws.onmessage = (e) => {
-        addMsg("nova", "<b>Nova:</b> " + e.data);
-        // Cevap geldiğinde Nova konuşmaya başlar
-        speak(e.data);
-    };
-
-    ws.onclose = () => {
-        statusText.innerText = "🔴 Bağlantı koptu. Tekrar deneniyor...";
-        setTimeout(connectWS, 3000);
-    };
-}
-connectWS();
-
-/* ====================== STATE ====================== */
+/* ========= STATE ========= */
 let imgBase64 = null;
-let isNovaSpeaking = false; 
+let isNovaSpeaking = false;
+let ws = null;
 
-/* ====================== KAMERA ====================== */
-async function startCamera() {
-    const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: { ideal: 640 }, height: { ideal: 480 } },
-        audio: { echoCancellation: true, noiseSuppression: true } // Yankı engelleyici
-    });
-    video.srcObject = stream;
+/* ========= WS ========= */
+const WS_URL = "wss://nova-chat-d50f.onrender.com/ws/chat";
 
-    const ctx = canvas.getContext("2d");
-    setInterval(() => {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0);
-            imgBase64 = canvas.toDataURL("image/jpeg", 0.5).split(",")[1];
-        }
-    }, 800);
+function connectWS(){
+ ws = new WebSocket(WS_URL);
+ ws.onopen = () => statusText.innerText = "🟢 Bağlandı";
+ ws.onmessage = e => {
+  addMsg("nova","<b>Nova:</b> "+e.data);
+  speak(e.data);
+ };
 }
 
-/* ====================== LIVE TEXT ====================== */
-function removeEmojis(text) {
-    return text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "");
+/* ========= CAMERA ========= */
+async function startCamera(){
+ const stream = await navigator.mediaDevices.getUserMedia({video:true});
+ video.srcObject = stream;
+
+ const ctx = canvas.getContext("2d");
+ setInterval(()=>{
+  if(video.videoWidth===0) return;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video,0,0);
+  imgBase64 = canvas.toDataURL("image/jpeg",0.5).split(",")[1];
+ },800);
 }
 
-function splitLiveText(text, maxLen = 120) {
-    const sentences = text.replace(/\n+/g, " ").split(/(?<=[.!?])\s+/);
-    const parts = [];
-    let current = "";
-    for (const s of sentences) {
-        if ((current + s).length > maxLen) {
-            parts.push(current.trim());
-            current = s;
-        } else {
-            current += " " + s;
-        }
-    }
-    if (current.trim()) parts.push(current.trim());
-    return parts;
+/* ========= SPEECH INPUT ========= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recog = new SR();
+recog.lang = "tr-TR";
+recog.continuous = true;
+
+recog.onresult = e => {
+ if(isNovaSpeaking || ws?.readyState !== 1) return;
+ const text = e.results[e.results.length-1][0].transcript.trim();
+ if(!text) return;
+
+ addMsg("user","<b>Sen:</b> "+text);
+ statusText.innerText = "🧠 Nova düşünüyor...";
+ blockOverlay.style.display = "flex";
+
+ ws.send(JSON.stringify({message:text,image_data:imgBase64}));
+};
+
+recog.onend = ()=>{ if(!isNovaSpeaking) recog.start(); };
+
+/* ========= TTS (FIXED) ========= */
+function speak(text){
+ isNovaSpeaking = true;
+ recog.stop();
+ blockOverlay.style.display = "flex";
+ statusText.innerText = "🔊 Nova konuşuyor";
+
+ speechSynthesis.cancel(); // 🔴 SADECE BURADA
+
+ const voices = speechSynthesis.getVoices();
+ const tr = voices.find(v=>v.lang==="tr-TR") || voices[0];
+
+ const u = new SpeechSynthesisUtterance(text);
+ u.voice = tr;
+ u.lang = "tr-TR";
+ u.rate = 1.05;
+
+ u.onend = ()=>{
+  isNovaSpeaking = false;
+  blockOverlay.style.display = "none";
+  statusText.innerText = "🎧 Dinleniyor...";
+  recog.start();
+ };
+
+ speechSynthesis.speak(u);
 }
 
-/* ====================== SES TANIMA (KONTROLLÜ) ====================== */
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recog;
-
-if (SpeechRecognition) {
-    recog = new SpeechRecognition();
-    recog.lang = "tr-TR";
-    recog.continuous = true;
-    recog.interimResults = false;
-
-    recog.onstart = () => {
-        // Mikrofon açılınca arayüzü güncelle
-        if(!isNovaSpeaking) {
-            micDot.classList.add("active");
-            micText.innerText = "Dinliyor";
-            statusText.innerText = "🎧 Dinliyor...";
-        }
-    };
-
-    recog.onend = () => {
-        micDot.classList.remove("active");
-        micText.innerText = "Pasif";
-        
-        // Eğer Nova konuşmuyorsa ve sistem durduysa, tekrar başlat (Sürekli dinleme)
-        if (!isNovaSpeaking) {
-            setTimeout(() => {
-                try { recog.start(); } catch(e){}
-            }, 500);
-        }
-    };
-
-    recog.onresult = (e) => {
-        // Ekstra güvenlik: Nova konuşuyorsa sonucu yoksay
-        if (isNovaSpeaking) return;
-
-        const text = e.results[e.results.length - 1][0].transcript.trim();
-        if (!text) return;
-
-        addMsg("user", "<b>Sen:</b> " + text);
-        statusText.innerText = "🧠 Nova düşünüyor...";
-        
-        // Nova düşünürken de mikrofonu kapatabiliriz (isteğe bağlı)
-        // isNovaSpeaking = true; recog.abort(); 
-
-        if(ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ message: text, image_data: imgBase64 }));
-        }
-    };
+/* ========= UI ========= */
+function addMsg(type,html){
+ const d = document.createElement("div");
+ d.className = "msg "+type;
+ d.innerHTML = html;
+ messages.appendChild(d);
+ messages.scrollTop = messages.scrollHeight;
 }
 
-/* ====================== MESAJ EKLE ====================== */
-function addMsg(type, html) {
-    const div = document.createElement("div");
-    div.className = "msg " + type;
-    div.innerHTML = html;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-}
-
-/* ====================== AKILLI KONUŞMA (ECHO FIX) ====================== */
-function speak(text) {
-    const cleanText = removeEmojis(text);
-    const parts = splitLiveText(cleanText);
-
-    // 1. MİKROFONU ÖLDÜR
-    isNovaSpeaking = true;
-    if(recog) recog.abort(); // stop() yerine abort() kullandık, akışı keser.
-    
-    blockOverlay.style.display = "flex";
-    statusText.innerText = "🔴 Nova konuşuyor...";
-
-    let i = 0;
-
-    function speakNext() {
-        if (i >= parts.length) {
-            // KONUŞMA BİTTİ
-            blockOverlay.style.display = "none";
-            
-            // 2. GÜVENLİK GECİKMESİ (Yankı bitene kadar bekle)
-            statusText.innerText = "Hazırlanıyor...";
-            setTimeout(() => {
-                isNovaSpeaking = false;
-                statusText.innerText = "🎧 Dinliyor...";
-                try { recog.start(); } catch(e){ console.log("Mic start error", e); }
-            }, 800); // 0.8 saniye bekle ki hoparlördeki ses tam kesilsin
-            
-            return;
-        }
-
-        const u = new SpeechSynthesisUtterance(parts[i]);
-        u.lang = "tr-TR";
-        u.rate = 1.0; 
-
-        u.onend = () => {
-            i++;
-            // Cümleler arası çok kısa bekleme
-            setTimeout(speakNext, 100);
-        };
-        
-        u.onerror = (e) => { i++; speakNext(); };
-
-        speechSynthesis.speak(u);
-    }
-
-    speakNext();
-}
-
-/* ====================== BAŞLAT ====================== */
-async function startNova() {
-    errorMsg.style.display = "none";
-
-    // HTTPS Kontrolü
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        alert("HTTPS gerekli!");
-        return;
-    }
-
-    try {
-        await startCamera(); // Kamera içinde ses izni de istiyor
-        if(recog) recog.start();
-        
-        startOverlay.style.display = "none";
-    } catch (e) {
-        console.error(e);
-        errorMsg.innerText = "İzin Hatası: " + e.message;
-        errorMsg.style.display = "block";
-    }
+/* ========= START ========= */
+async function startNova(){
+ await navigator.mediaDevices.getUserMedia({audio:true});
+ await startCamera();
+ connectWS();
+ startOverlay.style.display = "none";
+ statusText.innerText = "🎧 Dinleniyor...";
+ recog.start();
 }
 </script>
 
