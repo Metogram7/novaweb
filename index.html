@@ -14,6 +14,7 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             --text-main: #e6f1ff;
             --text-muted: #8892b0;
+            --yt-red: #ff0000;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
@@ -26,7 +27,7 @@
             position: relative;
         }
 
-        /* --- ARKA PLAN ORB EFEKTLERİ --- */
+        /* --- ARKA PLAN EFEKTLERİ --- */
         .ambient-light {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -49,7 +50,7 @@
             100% { transform: translate(40px, 60px) scale(1.1); }
         }
 
-        /* --- LOGO ALANI VE ANİMASYONLARI --- */
+        /* --- LOGO ALANI --- */
         .header-fixed {
             position: fixed;
             top: 25px;
@@ -70,27 +71,20 @@
             backdrop-filter: blur(5px);
             box-shadow: 0 0 30px rgba(0, 191, 255, 0.1);
             animation: floatContainer 6s ease-in-out infinite;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .hero-logo {
-            width: 140px; /* Görsel boyutunu buradan ayarlayabilirsin */
+            width: 140px;
             height: auto;
             display: block;
-            border-radius: 20px; /* Eğer kare ise köşeleri yumuşatır */
+            border-radius: 20px;
             filter: drop-shadow(0 0 15px rgba(0, 191, 255, 0.4));
             animation: glowPulse 4s infinite alternate;
-            transition: transform 0.4s ease, filter 0.4s ease;
         }
 
         .logo-container:hover {
             transform: scale(1.1);
             border-color: var(--accent-primary);
-            box-shadow: 0 0 50px rgba(0, 191, 255, 0.3);
-        }
-
-        .logo-container:hover .hero-logo {
-            filter: drop-shadow(0 0 25px rgba(0, 191, 255, 0.8));
         }
 
         @keyframes floatContainer {
@@ -110,6 +104,7 @@
             scroll-snap-type: y mandatory;
             scroll-behavior: smooth;
             scrollbar-width: none;
+            padding-bottom: 80px; /* Dock için boşluk */
         }
         #landing-wrapper::-webkit-scrollbar { display: none; }
 
@@ -123,7 +118,7 @@
             padding: 20px;
         }
 
-        /* --- CAM PANEL (GLASSMORPHISM) --- */
+        /* --- CAM PANEL --- */
         .content-box {
             background: var(--glass-bg);
             backdrop-filter: blur(30px);
@@ -140,7 +135,6 @@
             overflow: hidden;
         }
 
-        /* Panel üzerine hafif parlama efekti */
         .content-box::before {
             content: '';
             position: absolute;
@@ -152,10 +146,7 @@
             pointer-events: none;
         }
         
-        .content-box:hover::before {
-            left: 100%;
-            transition: 0.7s;
-        }
+        .content-box:hover::before { left: 100%; transition: 0.7s; }
 
         .glow-title {
             font-size: 3.5rem;
@@ -174,7 +165,7 @@
             margin-bottom: 20px;
         }
 
-        /* --- INPUT ALANLARI --- */
+        /* --- INPUT VE BUTONLAR --- */
         .input-group {
             margin-top: 30px;
             display: flex;
@@ -198,7 +189,6 @@
             background: rgba(255,255,255,0.08);
             border-color: var(--accent-primary);
             box-shadow: 0 0 20px rgba(0, 191, 255, 0.15);
-            transform: translateY(-2px);
         }
 
         .action-btn {
@@ -211,23 +201,46 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            letter-spacing: 0.5px;
         }
         .action-btn:hover {
             transform: translateY(-3px) scale(1.02);
             box-shadow: 0 15px 30px rgba(0, 191, 255, 0.3);
         }
-        .action-btn:active {
-            transform: translateY(-1px);
-        }
 
-        /* --- ALT DOCK MENÜ --- */
+        /* --- YOUTUBE BUTONU ÖZEL STİLİ --- */
+        .yt-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 18px 45px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.4s ease;
+            margin-top: 20px;
+        }
+        
+        .yt-btn svg { width: 28px; height: 28px; fill: #fff; transition: 0.3s; }
+
+        .yt-btn:hover {
+            background: var(--yt-red);
+            border-color: var(--yt-red);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+            transform: translateY(-5px);
+        }
+        .yt-btn:hover svg { transform: scale(1.1); }
+
+        /* --- ALT DOCK --- */
         .bottom-dock {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(20px);
             padding: 12px 30px;
             border-radius: 24px;
@@ -239,46 +252,25 @@
             opacity: 0;
             animation: dockSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s forwards;
         }
-
         @keyframes dockSlideUp { from { opacity: 0; bottom: -50px; } to { opacity: 1; bottom: 30px; } }
 
         .dock-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            gap: 6px;
-            transition: 0.3s;
-            position: relative;
-            min-width: 60px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-decoration: none; color: var(--text-muted); font-size: 0.75rem; gap: 6px;
+            transition: 0.3s; position: relative; min-width: 60px;
         }
-
         .dock-btn svg { width: 26px; height: 26px; fill: currentColor; transition: 0.3s; }
-        
         .dock-btn:hover { color: #fff; }
-        .dock-btn:hover svg { fill: var(--accent-primary); transform: translateY(-5px); filter: drop-shadow(0 5px 10px rgba(0,191,255,0.4)); }
+        .dock-btn:hover svg { fill: var(--accent-primary); transform: translateY(-5px); }
 
         .beta-badge {
-            position: absolute;
-            top: -10px;
-            right: -5px;
+            position: absolute; top: -10px; right: -5px;
             background: linear-gradient(45deg, var(--accent-secondary), #9d4edd);
-            color: #fff;
-            font-size: 0.55rem;
-            padding: 3px 8px;
-            border-radius: 8px;
-            font-weight: 700;
-            box-shadow: 0 2px 10px rgba(123, 44, 191, 0.4);
+            color: #fff; font-size: 0.55rem; padding: 3px 8px; border-radius: 8px;
+            font-weight: 700; box-shadow: 0 2px 10px rgba(123, 44, 191, 0.4);
             animation: badgeBounce 2s infinite;
         }
-        
-        @keyframes badgeBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
-        }
+        @keyframes badgeBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
     </style>
 </head>
@@ -296,10 +288,11 @@
     </div>
 
     <div id="landing-wrapper">
+        
         <section class="section">
             <div class="content-box">
                 <h1 class="glow-title">NOVA</h1>
-                <p class="sub-text">Yapay zeka ile etkileşimin estetik zirvesi. <br>Sınırları kaldır, potansiyelini keşfet.</p>
+                <p class="sub-text">Yapay zeka ile etkileşimin estetik zirvesi. <rb>Sınırları kaldır, potansiyelini keşfet. <br> NOVANIN BÜYÜMESİNE DESTEK OLUN!</p>
                 <div style="margin-top:40px; opacity:0.6; font-size:0.9rem; animation: floatArrow 2s infinite;">
                     ▼ Aşağı kaydır
                 </div>
@@ -310,6 +303,19 @@
             <div class="content-box" id="auth-container">
                 </div>
         </section>
+
+        <section class="section">
+            <div class="content-box">
+                <h2 class="glow-title" style="font-size: 2.8rem;">Nova'yı Keşfet</h2>
+                <p class="sub-text">Nova'nın gelişim sürecini, yeteneklerini ve gelecek vizyonunu yakından tanıyın. YouTube kanalımıza katılın.</p>
+                
+                <a href="https://www.youtube.com/@AI_Nova_AI" target="_blank" class="yt-btn">
+                    <svg viewBox="0 0 24 24"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>
+                    Daha Çok Tanı
+                </a>
+            </div>
+        </section>
+
     </div>
 
     <nav class="bottom-dock">
@@ -332,21 +338,17 @@
 
     <script>
     /* =====================================================
-       KULLANICI YÖNETİMİ
+       KULLANICI VE AUTH
     ===================================================== */
     function getNovaUser() { return localStorage.getItem("nova_user"); }
     function setNovaUser(name) { localStorage.setItem("nova_user", name); }
     function clearNovaUser() { localStorage.removeItem("nova_user"); }
 
-    /* =====================================================
-       ARAYÜZ MANTIĞI
-    ===================================================== */
     function updateAuthUI() {
         const user = getNovaUser();
         const box = document.getElementById("auth-container");
 
         if (user) {
-            // Kullanıcı giriş yapmışsa
             box.innerHTML = `
                 <h1 class="glow-title">Tekrar Merhaba,<br>${user}</h1>
                 <p class="sub-text">Nova senin için hazır. Maceraya kaldığın yerden devam et.</p>
@@ -356,7 +358,6 @@
                 </div>
             `;
         } else {
-            // Kullanıcı giriş yapmamışsa
             box.innerHTML = `
                 <h2 class="glow-title" style="font-size:2.8rem">Kimlik Doğrulama</h2>
                 <p class="sub-text">Sana isminle hitap edebilmem için lütfen kendini tanıt.</p>
@@ -372,7 +373,6 @@
         const val = document.getElementById("nameInput").value.trim();
         if (!val) return;
         setNovaUser(val);
-        // Giriş efekti için kısa bir gecikme ve animasyon eklenebilir ama net cevap için direkt güncelliyoruz
         updateAuthUI();
     }
 
@@ -389,7 +389,6 @@
         window.location.href = url;
     }
 
-    // Sayfa yüklendiğinde çalıştır
     window.onload = updateAuthUI;
     </script>
 
