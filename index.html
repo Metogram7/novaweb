@@ -1,1785 +1,397 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova Chat — Tam Sürüm</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <meta name="theme-color" content="#00bfff">
-
-  <style>
-    /* === GENEL İYİLEŞTİRMELER === */
-    :root {
-      --primary-color: #b8e3ff;
-      --secondary-color: #8be0ff;
-      --background-light: #000000;
-      --background-dark: #1b1b1b;
-      --user-msg-bg: #3949db;
-      --nova-msg-bg: #b1e6ff;
-      --success-color: #00ffaa;
-      --error-color: #ff6b6b;
-      --text-light: #ffffff;
-      --text-dark: #111111;
-      --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      --border-radius: 12px;
-    }
-
-    /* === GENEL STİLLER === */
-    body {
-      margin: 0;
-      font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
-      display: flex;
-      flex-direction: row;
-      height: 100vh;
-      background: var(--background-light);
-      color: var(--text-dark);
-      overflow: hidden;
-      transition: all 0.3s ease;
-      scroll-behavior: smooth;
-    }
-
-    body.dark-mode {
-      background: var(--background-dark);
-      color: var(--text-light);
-    }
-
-    /* === HATA MESAJI === */
-    .error-message {
-      background: #ff0026;
-      color: #c62828;
-      border: 1px solid #ffcdd2;
-      border-radius: var(--border-radius);
-      padding: 12px 16px;
-      margin: 8px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      animation: fadeIn 0.3s ease;
-      font-size: 0.9rem;
-    }
-
-    .retry-btn {
-      background: var(--error-color);
-      color: rgb(255, 0, 0);
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      min-width: 60px;
-    }
-
-    .retry-btn:hover {
-      background: #d32f2f;
-      transform: translateY(-1px);
-    }
-
-    /* === YAN MENÜ === */
-    #sideMenu {
-      width: 280px;
-      min-width: 200px;
-      background: linear-gradient(135deg, #52c7fd 10%, #4c6586 100%);
-      border-right: 2px solid var(--primary-color);
-      display: flex;
-      flex-direction: column;
-      padding: 20px 15px;
-      overflow-y: auto;
-      box-shadow: var(--shadow);
-      transition: transform 0.3s ease;
-      z-index: 1000;
-      position: relative;
-    }
-
-    .dark-mode #sideMenu {
-      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    }
-
-    #sideMenu h3 {
-      margin: 0 0 20px 0;
-      color: var(--primary-color);
-      font-size: 1.4rem;
-      text-align: center;
-      border-bottom: 2px solid var(--primary-color);
-      padding-bottom: 12px;
-      font-weight: 700;
-    }
-
-    #sideMenu button,
-    #sideMenu .chatRow button.chatBtn {
-      margin: 6px 0;
-      border: none;
-      border-radius: var(--border-radius);
-      padding: 12px 16px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-      color: #2c3e50;
-      text-align: left;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: var(--shadow);
-      font-size: 0.95rem;
-    }
-
-    #sideMenu button:hover {
-      background: linear-gradient(135deg, var(--primary-color), #0077b3);
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0, 191, 255, 0.3);
-    }
-
-    /* === ANA İÇERİK === */
-    #mainContent {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: #4c6586;
-    }
-
-    .dark-mode #mainContent {
-      background: #2c3e50;
-    }
-
-    /* === HEADER === */
-    header {
-      text-align: center;
-      padding: 15px 20px;
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #240202;
-      border-bottom: 2px solid var(--primary-color);
-      background: linear-gradient(135deg, #008cff, #e8ecee);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .dark-mode header {
-      background: linear-gradient(135deg, #34495e, #2c3e50);
-      color: var(--text-light);
-    }
-
-    header img {
-      height: 40px;
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-      margin-right: 12px;
-    }
-
-    #themeToggle {
-      border: none;
-      background: var(--primary-color);
-      color: rgb(255, 255, 255);
-      font-weight: 600;
-      border-radius: var(--border-radius);
-      padding: 10px 18px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: var(--shadow);
-    }
-
-    #themeToggle:hover {
-      background: #ffffff;
-      transform: translateY(-1px);
-    }
-
-    /* === MESAJLAR ALANI === */
-    #chatsContainer {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      position: relative;
-      padding: 15px;
-      background: transparent;
-    }
-
-    .chatDiv {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 5px;
-      gap: 12px;
-    }
-
-    .msg {
-      max-width: 75%;
-      margin: 4px 0;
-      padding: 14px 18px;
-      border-radius: 18px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      position: relative;
-      word-break: break-word;
-      box-shadow: var(--shadow);
-      animation: fadeIn 0.4s ease;
-      backdrop-filter: blur(10px);
-    }
-
-    .msg .timestamp {
-      font-size: 0.7rem;
-      opacity: 0.7;
-      position: absolute;
-      bottom: -18px;
-      right: 12px;
-      font-weight: 500;
-    }
-
-    .user {
-      background: var(--user-msg-bg);
-      color: var(--text-light);
-      align-self: flex-end;
-      margin-left: auto;
-      border-bottom-right-radius: 6px;
-    }
-
-    .nova {
-      background-color: var(--nova-msg-bg);
-      color: var(--text-dark);
-      margin-right: auto;
-      border-bottom-left-radius: 6px;
-    }
-
-    .dark-mode .nova {
-      background: #34495e;
-      color: var(--text-light);
-    }
-
-    /* === GİRİŞ ALANI === */
-    #inputArea {
-      display: flex;
-      padding: 15px 20px;
-      background: #4e91e9;
-      border-top: 2px solid var(--primary-color);
-      gap: 10px;
-      flex-wrap: wrap;
-      box-shadow: 0 -4px 12px rgba(0, 110, 255, 0.1);
-      align-items: flex-end;
-    }
-
-    .dark-mode #inputArea {
-      background: #2c3e50;
-    }
-
-    #input {
-      flex: 1;
-      min-width: 200px;
-      padding: 14px 18px;
-      border-radius: 25px;
-      border: 2px solid var(--primary-color);
-      outline: none;
-      font-size: 1rem;
-      background: rgba(229, 245, 255, 0.95);
-      color: var(--text-dark);
-      resize: none;
-      transition: all 0.3s ease;
-      font-family: inherit;
-    }
-
-    #input:focus {
-      border-color: #ff0303;
-      box-shadow: 0 0 0 3px rgba(37, 77, 255, 0.2);
-      transform: translateY(-1px);
-    }
-
-    .dark-mode #input {
-      background: #34495e;
-      color: var(--text-light);
-      border-color: var(--secondary-color);
-    }
-
-    button.sendBtn {
-      padding: 12px 24px;
-      border-radius: 25px;
-      border: none;
-      background: linear-gradient(135deg, var(--primary-color), #1f48ff);
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: var(--shadow);
-      min-width: 80px;
-      font-size: 0.95rem;
-    }
-
-    button.sendBtn:hover {
-      background: linear-gradient(135deg, #0077b3, #005580);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0, 191, 255, 0.4);
-    }
-
-    button#stopBtn {
-      background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-      color: white;
-    }
-
-    button#stopBtn:hover {
-      background: linear-gradient(135deg, #ee5a52, #d63031);
-    }
-
-    /* === HIZLI BUTONLAR === */
-    #quickBtns {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-      width: 100%;
-    }
-
-    #quickBtns button {
-      padding: 8px 16px;
-      border-radius: var(--border-radius);
-      border: none;
-      background: linear-gradient(135deg, #91ff00, #76d700);
-      color: #000;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: var(--shadow);
-      transition: all 0.3s ease;
-      font-size: 0.85rem;
-      flex: 1;
-      min-width: 80px;
-    }
-
-    #quickBtns button:hover {
-      background: linear-gradient(135deg, #ffdd00, #ffd000);
-      transform: translateY(-2px);
-    }
-
-    /* === MENÜ TOGGLE === */
-    #menuToggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, var(--primary-color), #0077b3);
-      color: white;
-      padding: 12px 16px;
-      border: none;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      font-size: 1.1rem;
-      z-index: 1100;
-      box-shadow: var(--shadow);
-      transition: all 0.3s ease;
-      font-weight: 600;
-    }
-
-    #menuToggle:hover {
-      background: linear-gradient(135deg, #1c4df0, #000000);
-      transform: translateY(-3px) scale(1.05);
-      box-shadow: 0 8px 20px rgba(0, 191, 255, 0.4);
-    }
-
-    /* === RESPONSIVE TASARIM === */
-    @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-      }
-
-      #sideMenu {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 85%;
-        max-width: 300px;
-        height: 100%;
-        transform: translateX(-100%);
-        z-index: 1000;
-      }
-
-      #sideMenu.active {
-        transform: translateX(0);
-      }
-
-      #mainContent {
-        margin-left: 0;
-        width: 100%;
-      }
-
-      .msg {
-        max-width: 85%;
-        padding: 12px 16px;
-        font-size: 0.9rem;
-      }
-
-      #inputArea {
-        padding: 12px 15px;
-        gap: 8px;
-      }
-
-      #input,
-      button.sendBtn {
-        border-radius: 20px;
-      }
-
-      header {
-        font-size: 1.2rem;
-        padding: 12px 15px;
-      }
-
-      header img {
-        height: 32px;
-      }
-
-      #menuToggle {
-        top: 15px;
-        right: 15px;
-        padding: 10px 14px;
-        font-size: 1rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      header {
-        font-size: 1.1rem;
-        padding: 10px 12px;
-      }
-
-      .msg {
-        max-width: 90%;
-        font-size: 0.85rem;
-        padding: 10px 14px;
-      }
-
-      #inputArea {
-        padding: 10px 12px;
-      }
-
-      #input {
-        padding: 12px 16px;
-        font-size: 0.9rem;
-      }
-
-      button.sendBtn {
-        padding: 10px 20px;
-        font-size: 0.9rem;
-      }
-    }
-
-    /* === ANİMASYONLAR === */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateX(-20px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    @keyframes pulse {
-
-      0%,
-      100% {
-        opacity: 1;
-      }
-
-      50% {
-        opacity: 0.7;
-      }
-    }
-
-    /* Görsel iyileştirmeler */
-    img {
-      border-radius: 12px;
-      object-fit: cover;
-    }
-
-    /* Scrollbar stilleri */
-    #chatsContainer::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    pre {
-      font-family: 'Fira Code', monospace;
-      font-size: 14px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-
-    #welcome-screen.visible {
-      display: flex;
-      opacity: 1;
-    }
-
-    #nova-active-pulse {
-      position: fixed;
-      top: 12px;
-      right: 16px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent-color, #00bfff);
-      opacity: 0;
-      transform: scale(0.5);
-      transition: transform 0.2s ease, opacity 0.2s ease;
-      pointer-events: none;
-    }
-
-    #nova-active-pulse.active {
-      opacity: 1;
-      transform: scale(1.8);
-    }
-
-    #chatsContainer::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 3px;
-    }
-
-    #chatsContainer::-webkit-scrollbar-thumb {
-      background: var(--primary-color);
-      border-radius: 3px;
-    }
-
-    #chatsContainer::-webkit-scrollbar-thumb:hover {
-      background: #0077b3;
-    }
-
-    #splash-screen {
-      transition: opacity 0.8s ease;
-      opacity: 1;
-    }
-
-    #splash-screen.fade-out {
-      opacity: 0;
-    }
-
-    /* === TOAST === */
-    #toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100%);
-      background: rgba(0, 0, 0, 0.75);
-      color: white;
-      padding: 10px 18px;
-      border-radius: 12px;
-      font-size: 14px;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.3s ease;
-      z-index: 9999;
-    }
-
-    #nova-pwa-banner {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 2000;
-      /* üstte görünmesi için */
-      display: none;
-      /* JS ile kontrol edilecek */
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px;
-      border-radius: 0 0 12px 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-      background: linear-gradient(90deg, #ff7a18, #af002d);
-      color: white;
-      font-weight: 700;
-      font-size: 15px;
-      font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
-    }
-
-    #nova-pwa-banner .message {
-      flex: 1;
-      font-weight: 700;
-      font-size: 16px;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-    #nova-pwa-banner .actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    button.nova-pwa-btn {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 18px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 15px;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    button#nova-defer {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-    }
-
-    button#nova-defer:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.4);
-    }
-
-    button#nova-install {
-      background: #fff100;
-      color: #af002d;
-      font-weight: 800;
-    }
-
-    button#nova-install:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 12px rgba(255, 241, 0, 0.6);
-    }
-
-    /* Mobil uyumlu responsive */
-    @media (max-width: 520px) {
-      #nova-pwa-banner {
-        padding: 12px 16px;
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
-      }
-
-      #nova-pwa-banner .message {
-        font-size: 15px;
-      }
-
-      #nova-pwa-banner .actions {
-        justify-content: center;
-        gap: 8px;
-      }
-
-      button.nova-pwa-btn {
-        padding: 8px 14px;
-        font-size: 14px;
-      }
-    }
-
-    /* Body padding banner ile uyumlu */
-    body[data-nova-pwa-banner="visible"] {
-      padding-top: 72px;
-      transition: padding-top 0.3s ease;
-    }
-
-    message-content a {
-      text-decoration: underline;
-      cursor: pointer;
-      color: #52a9f5;
-      /* pointer-events normal olmalı */
-      pointer-events: auto;
-    }
-
-    .message-content a code {
-      font-family: monospace;
-      font-size: 0.95em;
-      background: rgba(0, 0, 0, 0.04);
-      padding: 0 4px;
-      border-radius: 4px;
-    }
-
-    /* KOD BLOKLARI İÇİN YENİ SADE STİL */
-    .msg pre {
-      /* Genel kod görünümü */
-      font-family: 'Fira Code', monospace;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      /* Mesaj balonunun içine yayılması için negatif marjin. 
-       Mesajın padding'ini (14px 18px) hesaba katarak ayarladım. */
-      margin: 10px -18px -5px -18px;
-      padding: 10px 18px;
-      /* Soldan ve sağdan tam olarak mesaj genişliğini kullanır */
-      border-radius: 0 0 8px 8px;
-      /* Sadece alt köşeler yuvarlak */
-      font-size: 0.9em;
-      line-height: 1.4;
-      overflow-x: auto;
-    }
-
-    .nova pre {
-      /* Nova mesajındaki kod bloğu (açık mesajın koyu kod arka planı) */
-      background: rgba(0, 0, 0, 0.1);
-      /* Hafif koyu */
-      color: var(--text-dark);
-    }
-
-    .user pre {
-      /* Kullanıcı mesajındaki kod bloğu (koyu mesajın açık kod arka planı) */
-      background: rgba(255, 255, 255, 0.2);
-      color: var(--text-light);
-    }
-
-    .dark-mode .nova pre {
-      /* Dark mode Nova mesajındaki kod bloğu */
-      background: rgba(255, 255, 255, 0.15);
-      color: var(--text-light);
-    }
-
-    .dark-mode .user pre {
-      /* Dark mode Kullanıcı mesajındaki kod bloğu */
-      background: rgba(0, 0, 0, 0.2);
-      color: var(--text-light);
-    }
-
-    /* Not: .code-window, .copy-btn, .lang-label gibi eski stiller bu versiyonda yer almamalıdır. */
-    /* === KOD PENCERESİ VE RENKLENDİRME === */
-    .code-window {
-      margin: 12px 0;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #282c34;
-      /* Atom One Dark rengi */
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      font-family: 'Fira Code', monospace;
-    }
-
-    .code-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      background: #21252b;
-      border-bottom: 1px solid #181a1f;
-      color: #abb2bf;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .code-header span {
-      text-transform: uppercase;
-    }
-
-    .copy-btn-code {
-      background: #3a3f4b;
-      border: none;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.75rem;
-      transition: all 0.2s;
-    }
-
-    .copy-btn-code:hover {
-      background: #4b5363;
-    }
-
-    /* Highlight.js kütüphanesi ile uyumlu alan */
-    .code-window pre {
-      margin: 0;
-      padding: 0;
-    }
-
-    .code-window code {
-      display: block;
-      padding: 12px 16px;
-      overflow-x: auto;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      color: #abb2bf;
-      /* Varsayılan metin rengi */
-    }
-
-    /* === GÜNCELLEME MODAL STİLLERİ === */
-    .modal-overlay {
-      display: none;
-      /* Varsayılan gizli */
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      /* Arka planı karart */
-      z-index: 9999;
-      /* En üstte durması için */
-      justify-content: center;
-      align-items: center;
-      backdrop-filter: blur(5px);
-      /* Arka planı bulanıklaştır */
-      animation: fadeIn 0.3s ease;
-    }
-
-    .modal-box {
-      background: #a3bacf;
-      width: 90%;
-      max-width: 500px;
-      border-radius: 20px;
-      padding: 25px;
-      box-shadow: 10px 20px 50px rgba(255, 255, 255, 0.3);
-      position: relative;
-      text-align: center;
-      border: 2px solid var(--primary-color);
-      transform: scale(0.9);
-      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-
-    /* Karanlık Mod Uyumu */
-    body.dark-mode .modal-box {
-      background: hsl(210, 30%, 45%);
-      color: #e4e4e4;
-      border-color: #34495e;
-    }
-
-
-  .modal-header h2 {
-   margin: 0;
-    font-size: 1.5rem;
-  
-  /* Beyazdan cyan'a renk geçişi */
-    background: linear-gradient(to right, #00a2ff, #4c00ff); 
-    box-shadow: 15px 20px 50px rgba(0, 162, 255, 0.3);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-fill-color: transparent;
-  }
-
-
-    body.dark-mode .modal-header h2 {
-      color: #8be0ff;
-    }
-
-    .version-badge {
-      background: linear-gradient(135deg, #ff7a18, #af002d);
-      color: rgb(255, 255, 255);
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      position: absolute;
-      top: 15px;
-      right: 15px;
-    }
-
-    .modal-body {
-      margin: 20px 0;
-      text-align: left;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .modal-body ul {
-      padding-left: 20px;
-      margin: 0;
-    }
-
-    .modal-body li {
-      margin-bottom: 10px;
-      line-height: 1.5;
-      list-style-type: '👉';
-      padding-left: 10px;
-    }
-
-    .modal-close-btn {
-      background: linear-gradient(135deg, var(--primary-color), #0077b3);
-      color: rgb(255, 255, 255);
-      border: none;
-      padding: 12px 30px;
-      border-radius: 25px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.2s;
-      width: 100%;
-    }
-
-    .modal-close-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 5px 15px rgba(0, 191, 255, 0.4);
-    }
-
-    @keyframes popIn {
-      to {
-        transform: scale(1);
-      }
-    }
-    
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova AI | Premium Experience</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #020c1b;
+            --accent-primary: #00bfff;
+            --accent-secondary: #7b2cbf;
+            --glass-bg: rgba(10, 25, 47, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #e6f1ff;
+            --text-muted: #8892b0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* --- ARKA PLAN ORB EFEKTLERİ --- */
+        .ambient-light {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.35;
+            animation: moveOrb 15s infinite alternate ease-in-out;
+        }
+        .orb-1 { width: 500px; height: 500px; background: var(--accent-primary); top: -150px; left: -100px; }
+        .orb-2 { width: 400px; height: 400px; background: var(--accent-secondary); bottom: -100px; right: -100px; animation-delay: -5s; }
+
+        @keyframes moveOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, 60px) scale(1.1); }
+        }
+
+        /* --- LOGO ALANI VE ANİMASYONLARI --- */
+        .header-fixed {
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo-container {
+            position: relative;
+            padding: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 30px rgba(0, 191, 255, 0.1);
+            animation: floatContainer 6s ease-in-out infinite;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .hero-logo {
+            width: 140px; /* Görsel boyutunu buradan ayarlayabilirsin */
+            height: auto;
+            display: block;
+            border-radius: 20px; /* Eğer kare ise köşeleri yumuşatır */
+            filter: drop-shadow(0 0 15px rgba(0, 191, 255, 0.4));
+            animation: glowPulse 4s infinite alternate;
+            transition: transform 0.4s ease, filter 0.4s ease;
+        }
+
+        .logo-container:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 50px rgba(0, 191, 255, 0.3);
+        }
+
+        .logo-container:hover .hero-logo {
+            filter: drop-shadow(0 0 25px rgba(0, 191, 255, 0.8));
+        }
+
+        @keyframes floatContainer {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes glowPulse {
+            0% { filter: drop-shadow(0 0 10px rgba(0, 191, 255, 0.3)); }
+            100% { filter: drop-shadow(0 0 25px rgba(0, 191, 255, 0.6)); }
+        }
+
+        /* --- ANA İÇERİK YAPISI --- */
+        #landing-wrapper {
+            height: 100vh;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+        }
+        #landing-wrapper::-webkit-scrollbar { display: none; }
+
+        .section {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            scroll-snap-align: start;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        /* --- CAM PANEL (GLASSMORPHISM) --- */
+        .content-box {
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            padding: 60px 50px;
+            border-radius: 35px;
+            border: 1px solid var(--glass-border);
+            max-width: 650px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Panel üzerine hafif parlama efekti */
+        .content-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -50%;
+            width: 100%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
+            transform: skewX(-25deg);
+            transition: 0.5s;
+            pointer-events: none;
+        }
+        
+        .content-box:hover::before {
+            left: 100%;
+            transition: 0.7s;
+        }
+
+        .glow-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 20%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            letter-spacing: -1.5px;
+        }
+
+        .sub-text {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        /* --- INPUT ALANLARI --- */
+        .input-group {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nova-input {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 18px 25px;
+            border-radius: 16px;
+            width: 280px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .nova-input:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--accent-primary), #0088cc);
+            color: #fff;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            letter-spacing: 0.5px;
+        }
+        .action-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 191, 255, 0.3);
+        }
+        .action-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* --- ALT DOCK MENÜ --- */
+        .bottom-dock {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 12px 30px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            gap: 25px;
+            z-index: 2000;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+            opacity: 0;
+            animation: dockSlideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s forwards;
+        }
+
+        @keyframes dockSlideUp { from { opacity: 0; bottom: -50px; } to { opacity: 1; bottom: 30px; } }
+
+        .dock-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            gap: 6px;
+            transition: 0.3s;
+            position: relative;
+            min-width: 60px;
+        }
+
+        .dock-btn svg { width: 26px; height: 26px; fill: currentColor; transition: 0.3s; }
+        
+        .dock-btn:hover { color: #fff; }
+        .dock-btn:hover svg { fill: var(--accent-primary); transform: translateY(-5px); filter: drop-shadow(0 5px 10px rgba(0,191,255,0.4)); }
+
+        .beta-badge {
+            position: absolute;
+            top: -10px;
+            right: -5px;
+            background: linear-gradient(45deg, var(--accent-secondary), #9d4edd);
+            color: #fff;
+            font-size: 0.55rem;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(123, 44, 191, 0.4);
+            animation: badgeBounce 2s infinite;
+        }
+        
+        @keyframes badgeBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+    </style>
 </head>
-
 <body>
 
-
-
-
-  <button id="menuToggle">☰ Menü</button>
-
-  <div id="updateModal" class="modal-overlay">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h2>🎉 Yenilikler & Güncellemeler</h2> <br> <h3>NOVA 2.7w GÜNCELLEMESİNE HOŞGELDİNİZ!</h3>
-        <span class="version-badge" id="modalVersionBadge">v4.2</span>
-      </div>
-      <div class="modal-body" id="updateList">
-      </div> <a href="hakkında.html">Nova</a>
-      <button class="modal-close-btn" onclick="closeUpdateModal()">Novaya Geç! 🚀</button>
+    <div class="ambient-light">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
     </div>
-  </div>
 
-  <!-- Açılış Ekranı -->
-  <div id="splash-screen" style="
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  background:#a9e2f0; display:flex; align-items:center; justify-content:center;
-  flex-direction:column; z-index:9999;
-">
-    <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" style="width:100px; animation:spin 2s linear infinite;">
-    <h2 style="background: linear-gradient(to right, cyan, navy); color:white; margin-top:20px;">Nova Yükleniyor...</h2>
-  </div>
-
-  <div id="sideMenu">
-    <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="nova"
-      style="width: 80%; max-width: 400px; height: auto; border-radius: 30px; display: block; margin: 0 auto;">
-    <h5> <a href="hakkında.html" style="color: #4f04ff;"> NOVA HAKKINDA
-      </a> </h5>
-    <h3>💬 Nova Chat</h3>
-    <button id="newChatBtn">➕ Yeni Sohbet</button>
-    <div id="menu"></div>
-    <button id="themeToggle">🌙 Tema Değiştir</button> <br> <button id="themeToggle"
-      onclick="window.location.href=('sesli.html')">🎙️Sesli Mod</button> <br> <br>
-    <button id="themeToggle" onclick="window.location.href=('live.html')">🔴NoVa Live</button>
-  </div>
-  <div id="dragHandle"></div>
-
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-
-  <div id="mainContent">
-    <header>
-      <div style="display:flex; align-items:center;">
-        <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="Nova Logo">
-        💬 Nova Chat
-        <h4 style="color: #d32f2f;"> <a
-            href="commingsoon.html">NOVAX !</a> </h4>
-      </div>
-      <span id="novaStatus">Hazır</span>
-    </header>
-    <div id="chatsContainer"></div>
-    <div id="inputArea">
-      <textarea id="input" placeholder="Ask The Nova...🚀" autocomplete="off" rows="1"></textarea>
-      <button type="button" class="sendBtn" id="sendBtn">↑</button>
-      <button type="button" class="sendBtn" id="stopBtn">Durdur</button>
+    <div class="header-fixed">
+        <div class="logo-container">
+            <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" class="hero-logo" alt="Nova AI Logo">
+        </div>
     </div>
-    <div id="quickBtns">
-      <button>Merhaba</button>
-      <button>Nasılsın?</button>
-      <button>Hava durumu</button>
-    </div>
-    <div id="emojiPicker"></div>
-  </div>
 
-  <script>
-    // 🧠 Nova'nın mesaj alanı boş mu kontrol et
-    function toggleWelcomeScreen() {
-      const chat = document.getElementById(currentChat);
-      const welcome = document.getElementById("welcome-screen");
-      if (!chat || !welcome) return;
-
-      const isChatEmpty = chat.children.length === 0;
-      const isVisible = welcome.classList.contains("visible");
-
-      if ((isChatEmpty && isVisible) || (!isChatEmpty && !isVisible)) return;
-
-      if (isChatEmpty) {
-        welcome.style.display = "flex";
-        requestAnimationFrame(() => welcome.classList.add("visible"));
-      } else {
-        welcome.classList.remove("visible");
-        setTimeout(() => {
-          if (!welcome.classList.contains("visible")) {
-            welcome.style.display = "none";
-          }
-        }, 400);
-      }
-    }
-
-    // === GÜNCELLEME NOTLARI SİSTEMİ ===
-
-    // 🛠️ BURAYI HER GÜNCELLEMEDE DEĞİŞTİR:
-    const CURRENT_VERSION = "2.7w";
-
-    const UPDATE_NOTES = [
-      "🚀 Nova artık daha hızlı ve akıcı!",
-      "👨‍🏫 Nova daha çok eğitildi",
-      "🔴Nova Live modu!. (menüden hemen geçin!)",
-      "🏃‍➡️ Yazma hızı artırıldı.",
-      "🐛 hatalar düzeldi .",
-      "💻 Mağlesef nova play store için ertelendi😔 (ocak ayı 5 inden sonra)",
-      "🚀 Nova limit hatasi bidaha yaşanmayacak."
-    ];
-
-    function checkAppUpdate() {
-      const savedVersion = localStorage.getItem('nova_app_version');
-      const modal = document.getElementById('updateModal');
-      const listContainer = document.getElementById('updateList');
-      const badge = document.getElementById('modalVersionBadge');
-
-      // Eğer kayıtlı versiyon yoksa veya eskiyse modalı göster
-      if (savedVersion !== CURRENT_VERSION) {
-
-        // Versiyon numarasını yaz
-        badge.textContent = "V" + CURRENT_VERSION;
-
-        // Listeyi oluştur
-        let htmlList = "<ul>";
-        UPDATE_NOTES.forEach(note => {
-          htmlList += `<li>${note}</li>`;
-        });
-        htmlList += "</ul>";
-        listContainer.innerHTML = htmlList;
-
-        // Modalı göster
-        modal.style.display = 'flex';
-      }
-    }
-
-    function closeUpdateModal() {
-      const modal = document.getElementById('updateModal');
-      // Modalı gizle
-      modal.style.display = 'none';
-      // Yeni versiyonu kaydet ki bir daha sormasın
-      localStorage.setItem('nova_app_version', CURRENT_VERSION);
-    }
-
-    // Sayfa yüklendiğinde kontrol et
-    window.addEventListener('DOMContentLoaded', () => {
-      // Mevcut diğer yükleme kodlarının yanına eklenmiş gibi çalışır
-      setTimeout(checkAppUpdate, 1000); // 1 saniye gecikmeli açılması daha şık durur
-    });
-
-    // Nova aktiflik animasyonu göstermek için
-    function showNovaActivePulse() {
-      const pulse = document.getElementById("nova-active-pulse");
-      if (!pulse) return;
-
-      pulse.classList.add("active");
-      clearTimeout(pulse._timeout);
-      pulse._timeout = setTimeout(() => pulse.classList.remove("active"), 600);
-    }
-
-    // AddMessage fonksiyonunu güvenli şekilde sarmala
-    (function () {
-      const originalAddMessage = window.addMessage;
-      if (typeof originalAddMessage !== "function") return console.warn("addMessage not found!");
-
-      window.addMessage = async function (text, sender, container = null) {
-        const msg = await originalAddMessage(text, sender, container);
-
-        // DOM değişikliğinden hemen sonra kontrol et
-        requestAnimationFrame(() => {
-          toggleWelcomeScreen();
-          showNovaActivePulse();
-        });
-
-        return msg;
-      };
-    })();
-
-    // Sayfa yüklenince ekranı doğru başlat
-    window.addEventListener("DOMContentLoaded", () => {
-      requestAnimationFrame(() => {
-        toggleWelcomeScreen();
-      });
-    });
-
-  </script>
-
-
-  <div id="toast"></div>
-
-  <script>
-    // === SPLASH EKRANI ===
-    window.addEventListener("DOMContentLoaded", () => {
-      const splash = document.getElementById("splash-screen");
-      if (!splash) return;
-
-      setTimeout(() => {
-        splash.classList.add("fade-out");
-        setTimeout(() => (splash.style.display = "none"), 800);
-      }, 1800);
-    });
-
-    // === TOAST BİLDİRİM SİSTEMİ ===
-    function showToast(message, duration = 2500) {
-      const toast = document.getElementById("toast");
-      if (!toast) return;
-      toast.textContent = message;
-      toast.classList.add("visible");
-      clearTimeout(toast._timeout);
-      toast._timeout = setTimeout(() => toast.classList.remove("visible"), duration);
-    }
-
-    // === NOVA SESLİ OKUMA SİSTEMİ ===
-    function speakText(text) {
-      const cleanText = cleanTextForSpeech(text);
-      if (!cleanText) return;
-
-      const synth = window.speechSynthesis;
-      if (synth.speaking) synth.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = "tr-TR";
-      utterance.rate = 1;
-      utterance.pitch = 1;
-
-      // Sesleri yüklemeden önce bekle
-      const speakNow = () => {
-        let voices = synth.getVoices();
-        const trVoice = voices.find(v => v.lang === "tr-TR" || v.lang.startsWith("tr"));
-        if (trVoice) utterance.voice = trVoice;
-        synth.speak(utterance);
-      };
-
-      if (!synth.getVoices().length) {
-        synth.onvoiceschanged = () => speakNow();
-      } else {
-        speakNow();
-      }
-    }
-
-
-    // === NOVA MESAJLARINA SESLİ OKUMA BUTONU ===
-    function addSpeechButton(div, text) {
-      const btn = document.createElement("button");
-      btn.textContent = "🔉";
-      btn.className = "speak-btn";
-      btn.title = "Mesajı sesli oku";
-
-      const synth = window.speechSynthesis;
-      let isSpeaking = false;
-      let utterance = null;
-
-      btn.addEventListener("click", () => {
-        if (isSpeaking) {
-          synth.cancel();
-          isSpeaking = false;
-          btn.textContent = "🔉";
-          showToast("⏸️ Okuma durduruldu");
-          return;
-        }
-
-        const cleanText = cleanTextForSpeech(text);
-        if (!cleanText) return showToast("⚠️ Okunacak metin yok");
-
-        utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = "tr-TR";
-        utterance.rate = 1;
-        utterance.pitch = 1;
-
-        const voices = synth.getVoices();
-        const trVoice = voices.find(v => v.lang === "tr-TR" || v.lang.startsWith("tr"));
-        if (trVoice) utterance.voice = trVoice;
-
-        synth.cancel();
-        synth.speak(utterance);
-
-        btn.textContent = "⏸️";
-        isSpeaking = true;
-        showToast("🔊 Nova konuşuyor...");
-
-        utterance.onend = () => {
-          isSpeaking = false;
-          btn.textContent = "🔉";
-          showToast("✅ Okuma tamamlandı");
-        };
-
-        utterance.onerror = () => {
-          isSpeaking = false;
-          btn.textContent = "🔉";
-          showToast("⚠️ Sesli okuma hatası");
-        };
-      });
-
-      div.appendChild(btn);
-    }
-
-
-    // === METİN TEMİZLEME (Emoji ve özel karakterleri kaldır) ===
-    function cleanTextForSpeech(text) {
-      return text
-        .replace(/[\p{Emoji_Presentation}\p{Emoji}\p{Extended_Pictographic}]/gu, "")
-        .replace(/[^0-9a-zA-ZğüşıöçĞÜŞİÖÇ\s.,!?]/g, "")
-        // Virgülden sonra boşluk ekle ki sayılar düzgün okunsun
-        .replace(/,/g, ", ")
-        // Nokta varsa kısa duraklama sağla
-        .replace(/\./g, ". ")
-        .trim();
-    }
-
-
-  </script>
-
-  </script>
-
-
-  <script>
-    /* --- JavaScript kodu (hiç değiştirilmedi) --- */
-    const sideMenu = document.getElementById("sideMenu");
-    const menuToggle = document.getElementById("menuToggle");
-    const dragHandle = document.getElementById("dragHandle");
-    const chatsContainer = document.getElementById("chatsContainer");
-    const input = document.getElementById("input");
-    const sendBtn = document.getElementById("sendBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const menu = document.getElementById("menu");
-    const novaStatus = document.getElementById("novaStatus");
-    const quickBtns = document.getElementById("quickBtns");
-    const emojiPicker = document.getElementById("emojiPicker");
-    const newChatBtn = document.getElementById("newChatBtn");
-    const themeToggle = document.getElementById("themeToggle");
-    const toast = document.getElementById("toast");
-    const BACKEND_URL = 'https://nova-chat-d50f.onrender.com/api';
-
-    menuToggle.onclick = () => { sideMenu.classList.toggle("active"); };
-
-    // Drag handle
-    let isResizing = false;
-    dragHandle.addEventListener("mousedown", e => { isResizing = true; document.body.style.cursor = "col-resize"; });
-    document.addEventListener("mousemove", e => {
-      if (!isResizing) return;
-      let newWidth = e.clientX;
-      if (newWidth < 150) newWidth = 150;
-      if (newWidth > 500) newWidth = 500;
-      sideMenu.style.width = newWidth + "px";
-    });
-    document.addEventListener("mouseup", e => { if (isResizing) { isResizing = false; document.body.style.cursor = "default"; } });
-
-    // Tema toggle
-    themeToggle.onclick = () => { document.body.classList.toggle("light"); showToast("Tema değiştirildi"); };
-
-    function showToast(msg, duration = 2000) {
-      toast.textContent = msg;
-      toast.style.display = "block";
-      setTimeout(() => { toast.style.display = "none"; }, duration);
-    }
-
-    // User setup
-    let userId = localStorage.getItem("nova_user_id");
-    if (!userId) { userId = "user_" + Date.now() + "_" + Math.floor(Math.random() * 10000); localStorage.setItem("nova_user_id", userId); }
-    let currentChat = localStorage.getItem("nova_last_chat") || "default";
-    let sending = false;
-    let userInfo = JSON.parse(localStorage.getItem("nova_user_info_" + userId) || "{}");
-
-    // Sanitize function (basit)
-    function sanitize(str) {
-      const temp = document.createElement("div");
-      temp.innerHTML = str;
-
-      // Tüm <a> etiketlerini hedef="_blank" ile güvenli hâle getir
-      temp.querySelectorAll('a').forEach(a => {
-        a.setAttribute('target', '_blank');
-        a.setAttribute('rel', 'noopener noreferrer');
-      });
-
-      return temp.innerHTML;
-    }
-
-    // 🔹 Tarih formatı
-    function formatDate(d) {
-      return d.getFullYear() + "-" +
-        String(d.getMonth() + 1).padStart(2, '0') + "-" +
-        String(d.getDate()).padStart(2, '0') + " " +
-        String(d.getHours()).padStart(2, '0') + ":" +
-        String(d.getMinutes()).padStart(2, '0');
-    }
-
-
-    function addChatToMenu(chatId, lastMessage = "Yeni Sohbet", skipSave = false) {
-      if ([...menu.querySelectorAll(".chatBtn")].some(b => b.dataset.id === chatId)) return;
-      const row = document.createElement("div"); row.className = "chatRow";
-      const chatBtn = document.createElement("button"); chatBtn.className = "chatBtn"; chatBtn.dataset.id = chatId; chatBtn.onclick = () => { loadChat(chatId); };
-      const deleteBtn = document.createElement("button"); deleteBtn.className = "deleteBtn"; deleteBtn.textContent = "❌";
-      deleteBtn.onclick = async () => { if (confirm("Bu sohbeti silmek istediğine emin misin?")) { try { const res = await fetch(`${BACKEND_URL}/delete_chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, chatId }) }); const data = await res.json(); if (data.success) { row.remove(); const div = document.getElementById(chatId); if (div) div.remove(); if (currentChat === chatId) startNewChat(); } else showToast("Silme başarısız: " + (data.error || "")); } catch (err) { console.error(err); showToast("Silme sırasında hata!"); } } };
-      row.appendChild(chatBtn); row.appendChild(deleteBtn); menu.appendChild(row); updateChatBtnLabel(chatBtn, lastMessage);
-    }
-
-    function updateChatBtnLabel(button, lastMessage) { if (lastMessage.length > 20) lastMessage = lastMessage.slice(0, 20) + "..."; button.textContent = lastMessage; }
-
-    function loadChat(cid) {
-      currentChat = cid; Array.from(chatsContainer.children).forEach(c => c.style.display = "none");
-      let div = document.getElementById(cid);
-      if (!div) { div = document.createElement("div"); div.className = "chatDiv"; div.id = cid; chatsContainer.appendChild(div); }
-      div.style.display = "flex";
-      fetch(`${BACKEND_URL}/history?userId=${userId}`)
-        .then(r => r.json())
-        .then(data => { const msgs = data[cid] || []; div.innerHTML = ""; msgs.forEach(m => addMessage(m.text, m.sender, div)); });
-      localStorage.setItem("nova_last_chat", cid);
-    }
-
-    function startNewChat() { const newId = "chat_" + Date.now() + "_" + Math.floor(Math.random() * 10000); addChatToMenu(newId, "Yeni Sohbet"); loadChat(newId); }
-
-    newChatBtn.addEventListener("click", e => { e.preventDefault(); startNewChat(); });
-
-    // 💬 MESAJ EKLEME VE KOD BLOKLARINI İŞLEME FONKSİYONU (DÜZELTİLMİŞ)
-    function addMessage(text, sender, container = null) {
-      const parent = container || document.getElementById(currentChat);
-      if (!parent) return;
-
-      // Mesaj div'i
-      const div = document.createElement("div");
-      div.className = "msg " + sender;
-
-      // Hoşgeldin ekranını gizle
-      const welcome = document.getElementById("welcome-screen-" + currentChat) || document.getElementById("welcome-screen");
-      if (welcome) {
-        welcome.style.display = "none";
-        welcome.classList.remove("visible");
-      }
-
-      // Mesaj metni - normal mesaj gibi
-      const messageDiv = document.createElement("div");
-      messageDiv.className = "message-content";
-      messageDiv.textContent = text; // <-- Sadece normal metin, hiçbir ek özellik yok
-      div.appendChild(messageDiv);
-
-      // Zaman etiketi
-      const timestamp = document.createElement("div");
-      timestamp.className = "timestamp";
-      timestamp.textContent = formatDate(new Date());
-      div.appendChild(timestamp);
-
-      // Mesajı parent container'a ekle
-      parent.appendChild(div);
-      parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
-
-      return div;
-    }
-    // === METİN İÇİNDEKİ KOD BLOKLARINI DÜZENLEYEN FONKSİYON ===
-    function formatTextWithCodeBlocks(text) {
-      // ```dil ... ``` yapısını bul ve HTML'e çevir
-      return text.replace(/```(\w*)?([\s\S]*?)```/g, (match, lang, code) => {
-        const language = lang || 'text'; // Dil belirtilmezse düz metin
-        // HTML karakterlerini güvenli hale getir
-        const safeCode = code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-        return `
-        <div class="code-window">
-            <div class="code-header">
-                <span>${language}</span>
-                <button class="copy-btn-code" onclick="copyCodeToClipboard(this)">📋 Kopyala</button>
+    <div id="landing-wrapper">
+        <section class="section">
+            <div class="content-box">
+                <h1 class="glow-title">NOVA</h1>
+                <p class="sub-text">Yapay zeka ile etkileşimin estetik zirvesi. <br>Sınırları kaldır, potansiyelini keşfet.</p>
+                <div style="margin-top:40px; opacity:0.6; font-size:0.9rem; animation: floatArrow 2s infinite;">
+                    ▼ Aşağı kaydır
+                </div>
             </div>
-            <pre><code class="language-${language}">${safeCode}</code></pre>
-        </div>`;
-      });
-    }
-
-    // === KOD KOPYALAMA FONKSİYONU ===
-    function copyCodeToClipboard(btn) {
-      // Butonun bulunduğu penceredeki kod elementini bul
-      const codeElement = btn.parentElement.nextElementSibling.querySelector('code');
-      const codeText = codeElement.innerText; // Sadece metni al
-
-      navigator.clipboard.writeText(codeText).then(() => {
-        const originalText = btn.textContent;
-        btn.textContent = "✅ Kopyalandı";
-        btn.style.background = "#2e7d32";
-
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.style.background = "#3a3f4b"; // Eski rengine dön
-        }, 2000);
-      }).catch(err => {
-        console.error('Kopyalama hatası:', err);
-      });
-    }
-
-    // === GÜNCELLENMİŞ ADD TYPING MESSAGE (RENKLENDİRME DESTEKLİ) ===
-    async function addTypingMessage(text, sender, container = null, delay = 5) {
-      const parent = container || document.getElementById(currentChat);
-      if (!parent) return;
-
-      const div = document.createElement("div");
-      div.className = "msg " + sender;
-      parent.appendChild(div);
-
-      const contentDiv = document.createElement("div");
-      contentDiv.className = "message-content";
-      div.appendChild(contentDiv);
-
-      parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
-
-      // 1. AŞAMA: Harf harf yazma efekti (Düz metin görünür)
-      let tempText = '';
-
-      // Eğer metin çok uzunsa yazma hızını artır
-      const dynamicDelay = text.length > 500 ? 1 : delay;
-
-      for (let i = 0; i < text.length; i++) {
-        tempText += text[i];
-        contentDiv.textContent = tempText;
-
-        // Performans için her harfte değil, her 5 harfte bir scroll yap
-        if (i % 5 === 0) parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
-
-        await new Promise(r => setTimeout(r, dynamicDelay));
-      }
-
-      // 2. AŞAMA: Yazma bitti, şimdi "Güzelleştirme" zamanı
-      contentDiv.innerHTML = formatTextWithCodeBlocks(text);
-
-      // Highlight.js kütüphanesini tetikle (Renklendirme burada olur!)
-      contentDiv.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block);
-      });
-
-      // Linkleri aktif et
-      if (typeof linkifyElementOpenExternally === "function") {
-        linkifyElementOpenExternally(contentDiv);
-      }
-
-      // Zaman etiketi ve diğer butonlar
-      const timestamp = document.createElement("div");
-      timestamp.className = "timestamp";
-      timestamp.textContent = formatDate(new Date());
-      div.appendChild(timestamp);
-
-      if (sender === "nova") {
-        addSpeechButton(div, text);
-        addDownloadButton(div);
-      }
-
-      parent.scroll({ top: parent.scrollHeight, behavior: "smooth" });
-      return div;
-    }
-    // TXT butonu
-    function addDownloadButton(div) {
-      const downloadBtn = document.createElement("button");
-      downloadBtn.textContent = "💾 TXT indir";
-      downloadBtn.className = "download-btn";
-      downloadBtn.style.marginTop = "5px";
-      downloadBtn.style.fontSize = "12px";
-      downloadBtn.style.padding = "2px 6px";
-      downloadBtn.style.cursor = "pointer";
-
-      downloadBtn.onclick = () => {
-        const txt = [...div.querySelectorAll(".message-content")].map(m => m.textContent).join("\n\n");
-        if (!txt) return;
-        const blob = new Blob([txt], { type: "text/plain" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "nova_message.txt";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      };
-
-      div.appendChild(downloadBtn);
-    }
-
-    // Mesaj gönderme
-    async function sendMessage(msg = null) {
-      if (sending) return;
-      sending = true;
-
-      const text = msg || input.value.trim();
-      if (!text) { sending = false; return; }
-      input.value = "";
-
-      const chatDiv = document.getElementById(currentChat);
-      if (!chatDiv) { sending = false; return; }
-
-      // Kullanıcı mesajı
-      addMessage(text, "user", chatDiv);
-
-      // Nova yazıyor...
-      const typingDiv = addMessage("Nova yazıyor...", "nova", chatDiv);
-      novaStatus.textContent = "Nova yazıyor...";
-
-      try {
-        const resHist = await fetch(`${BACKEND_URL}/history?userId=${userId}`);
-        const historyData = await resHist.json();
-        const chatHistory = historyData[currentChat] || [];
-
-        const res = await fetch(`${BACKEND_URL}/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, currentChat, message: text, userInfo, history: chatHistory })
-        });
-
-        const data = await res.json();
-        typingDiv.remove();
-
-        // Nova cevabı (her şey düz metin)
-        await addTypingMessage(data.response || "⚠️ Hata", "nova", chatDiv);
-
-        if (data.updatedUserInfo) {
-          userInfo = data.updatedUserInfo;
-          localStorage.setItem("nova_user_info_" + userId, JSON.stringify(userInfo));
-        }
-
-      } catch (err) {
-        typingDiv.textContent = "Bağlantı hatası 🚫";
-        console.error(err);
-      }
-
-      novaStatus.textContent = "Hazır";
-      sending = false;
-    }
-
-
-    // Event listener
-    input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-    sendBtn.addEventListener("click", e => { e.preventDefault(); sendMessage(); });
-    stopBtn.addEventListener("click", e => { e.preventDefault(); });
-
-    // Emoji picker
-    emojiPicker.innerHTML = "";
-    "😀😂😍😎🤔😢❤️🤖".split("").forEach(e => {
-      const span = document.createElement("span");
-      span.textContent = e;
-      span.onclick = () => { input.value += e; input.focus(); };
-      emojiPicker.appendChild(span);
-    });
-
-    // Quick buttons
-    quickBtns.querySelectorAll("button").forEach(b => {
-      b.addEventListener("click", e => {
-        e.preventDefault();
-        sendMessage(b.textContent);
-      });
-    });
-
-    window.addEventListener("DOMContentLoaded", () => {
-      loadChat(currentChat);
-      renderMenu();
-    });
-
-
-    // 🔴 Nova'dan hata geldiğinde çağrılacak fonksiyon
-    function showErrorMessage(errorText, lastUserMessage) {
-      const chat = document.getElementById("chat");
-
-      if (!chat) {
-        console.error("Chat elementi bulunamadı. HTML'de id='chat' olduğundan emin ol.");
-        return;
-      }
-
-      // Hata mesajı kutusu
-      const errorDiv = document.createElement("div");
-      errorDiv.className = "error-message";
-      errorDiv.innerHTML = `
-    <div class="error-text">⚠️ ${errorText}</div>
-    <button class="retry-btn">🔄 Yeniden Dene</button>
-  `;
-
-      const retryBtn = errorDiv.querySelector(".retry-btn");
-      if (!retryBtn) {
-        console.error("Retry butonu bulunamadı.");
-        return;
-      }
-
-      // Butona tıklanınca son mesaj yeniden gönderilecek
-      retryBtn.addEventListener("click", () => {
-        errorDiv.remove(); // Eski hata mesajını sil
-        if (lastUserMessage) {
-          if (typeof sendMessage === "function") {
-            sendMessage(lastUserMessage); // Kullanıcının son mesajını yeniden gönder
-          } else {
-            console.error("sendMessage fonksiyonu tanımlı değil.");
-          }
-        }
-      });
-
-      chat.appendChild(errorDiv);
-      chat.scrollTop = chat.scrollHeight;
-    }
-  </script>
-
-  <script>
-    /* linkify + external open handler */
-    function linkifyElementOpenExternally(element) {
-      if (!element) return;
-
-      const urlRegex = /(?:(?:https?:\/\/)|(?:www\.))[\w\-\._~:\/?#[\]@!$&'()*+,;=%]+/gi;
-
-      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
-      const textNodes = [];
-      while (walker.nextNode()) textNodes.push(walker.currentNode);
-
-      for (const textNode of textNodes) {
-        const text = textNode.nodeValue;
-        if (!text) continue;
-        if (!urlRegex.test(text)) { urlRegex.lastIndex = 0; continue; }
-        urlRegex.lastIndex = 0;
-
-        const frag = document.createDocumentFragment();
-        let lastIndex = 0;
-        let match;
-        while ((match = urlRegex.exec(text)) !== null) {
-          const urlText = match[0];
-          const start = match.index;
-          const end = urlRegex.lastIndex;
-
-          if (start > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, start)));
-
-          let href = urlText;
-          if (/^www\./i.test(href)) href = 'http://' + href;
-
-          // Trim trailing punctuation from href but keep punctuation in displayed text
-          const trailingPunctMatch = href.match(/([)\]\.,;:!?]+)$/);
-          let trailing = '';
-          if (trailingPunctMatch) {
-            trailing = trailingPunctMatch[1];
-            href = href.slice(0, -trailing.length);
-          }
-
-          const a = document.createElement('a');
-          a.href = href;
-          a.textContent = urlText.replace(/([)\]\.,;:!?]+)$/, '');
-          a.setAttribute('rel', 'noopener noreferrer');
-          // not setting target here — we'll handle opening explicitly
-          a.addEventListener('click', function (ev) {
-            // Allow action if user Ctrl/Cmd/Meta-clicks or middle-clicks (open in new tab intentionally)
-            if (ev.ctrlKey || ev.metaKey || ev.button === 1) return;
-            ev.preventDefault();
-            openExternally(href);
-          }, { passive: false });
-
-          frag.appendChild(a);
-          if (trailing) frag.appendChild(document.createTextNode(trailing));
-
-          lastIndex = end;
-        }
-
-        if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
-        textNode.parentNode.replaceChild(frag, textNode);
-        urlRegex.lastIndex = 0;
-      }
-    }
-
-    /* Açma mantığı: çeşitli ortamlar için fallback'ler */
-    function openExternally(url) {
-      // Quick sanitization: allow only http/https/mailto/tel
-      if (!/^((https?:)|(mailto:)|(tel:))/.test(url)) {
-        // If user pasted "www.example.com" we already normalized to http:// earlier.
-        // If still something else, force https
-        url = 'https://' + url;
-      }
-
-      // 1) Try window.open with _blank (normal browser opens new tab)
-      try {
-        const newWin = window.open(url, '_blank', 'noopener,noreferrer');
-        // If returned window is non-null, assume browser handled it
-        if (newWin) return;
-      } catch (e) {
-        // ignore and fallback
-      }
-
-      // 2) If running as installed PWA or inside some WebView, try location change as fallback
-      // Detect common 'display-mode' for PWAs
-      const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
-        || window.navigator.standalone === true; // iOS
-
-      // If standalone (installed PWA), use location.assign to try open in browser
-      if (isStandalone) {
-        // Force opening in a new top-level context by setting location.href.
-        // Many Android PWAs (TWA) will open external links outside the app if URL is outside scope.
-        // If the URL is same-origin and inside scope, this will still open inside the PWA.
-        window.location.href = url;
-        return;
-      }
-
-      // 3) For WebViews (wrapped APKs) - attempt to open via intent URL (Android Chrome)
-      // This is a reasonable fallback for Android devices; it will open Chrome if available.
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      if (isAndroid) {
-        try {
-          // Build an intent scheme which most Android browsers understand and will open externally
-          const intentUrl = 'intent://' + url.replace(/^https?:\/\//, '') +
-            '#Intent;scheme=https;package=com.android.chrome;end';
-          // try open intent
-          window.location.href = intentUrl;
-          return;
-        } catch (e) {
-          // ignore and continue fallback
-        }
-      }
-
-      // 4) final fallback: try assigning top-level location (best-effort)
-      window.top.location.href = url;
-    }
-
-    /* Örnek kullanım */
-    document.querySelectorAll('.message-content').forEach(el => linkifyElementOpenExternally(el));
-
-    /* Eğer dinamik ekleme varsa, yeni mesaj ekledikten sonra tek satır:
-       linkifyElementOpenExternally(newMessageContentElement);
-    */
-  </script>
-  <script>
-    // --- NOVA BİLDİRİM İZNİ ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyDqQAHCB2MizgN5Id5Ezfr3UPE1P3UlSS8",
-      authDomain: "nova-329c7.firebaseapp.com",
-      projectId: "nova-329c7",
-      storageBucket: "nova-329c7.firebasestorage.app",
-      messagingSenderId: "284547967902",
-      appId: "1:284547967902:web:7dd2e64d1a643a30e5c48f"
-    };
-
-    // Firebase başlat
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-
-    const messaging = firebase.messaging();
-
-    async function initNovaNotifications() {
-      try {
-        // İzin iste
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          console.log('Bildirim izni verildi.');
-
-          // Service Worker'ı kaydet
-          const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-
-          // Token al (Vapid Key senin yönetici dosyanla uyumlu)
-          const token = await messaging.getToken({
-            serviceWorkerRegistration: reg,
-            vapidKey: "BDMDVEtUfabWh6LAnM15zLGcK2R-1kxuSvjwegdx0q-I46l9GnBSSKimwAoIxUhOxh5QtRxAtt0Hj9PBl19qlxU"
-          });
-
-          if (token) {
-            // Token'ı backend'e gönder
-            await fetch('https://nova-chat-d50f.onrender.com/api/subscribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ token: token })
-            });
-            console.log('Nova Token kaydedildi.');
-          }
+        </section>
+
+        <section class="section">
+            <div class="content-box" id="auth-container">
+                </div>
+        </section>
+    </div>
+
+    <nav class="bottom-dock">
+        <a href="chat.html" class="dock-btn">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+            <span>Chat</span>
+        </a>
+        
+        <a href="sesli.html" class="dock-btn">
+            <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.66 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+            <span>Voice</span>
+        </a>
+
+        <a href="live.html" class="dock-btn">
+            <div class="beta-badge">BETA</div>
+            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            <span>Live</span>
+        </a>
+    </nav>
+
+    <script>
+    /* =====================================================
+       KULLANICI YÖNETİMİ
+    ===================================================== */
+    function getNovaUser() { return localStorage.getItem("nova_user"); }
+    function setNovaUser(name) { localStorage.setItem("nova_user", name); }
+    function clearNovaUser() { localStorage.removeItem("nova_user"); }
+
+    /* =====================================================
+       ARAYÜZ MANTIĞI
+    ===================================================== */
+    function updateAuthUI() {
+        const user = getNovaUser();
+        const box = document.getElementById("auth-container");
+
+        if (user) {
+            // Kullanıcı giriş yapmışsa
+            box.innerHTML = `
+                <h1 class="glow-title">Tekrar Merhaba,<br>${user}</h1>
+                <p class="sub-text">Nova senin için hazır. Maceraya kaldığın yerden devam et.</p>
+                <div style="margin-top:30px; display:flex; gap:15px; justify-content:center; flex-wrap:wrap;">
+                    <button class="action-btn" onclick="goLink('chat.html')">Sohbete Başla</button>
+                    <button class="action-btn" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2)" onclick="logout()">Çıkış</button>
+                </div>
+            `;
         } else {
-          console.log('Bildirim izni reddedildi.');
+            // Kullanıcı giriş yapmamışsa
+            box.innerHTML = `
+                <h2 class="glow-title" style="font-size:2.8rem">Kimlik Doğrulama</h2>
+                <p class="sub-text">Sana isminle hitap edebilmem için lütfen kendini tanıt.</p>
+                <div class="input-group">
+                    <input id="nameInput" class="nova-input" placeholder="İsminiz..." autocomplete="off" onkeypress="handleEnter(event)">
+                    <button class="action-btn" onclick="login()">Giriş Yap</button>
+                </div>
+            `;
         }
-      } catch (error) {
-        console.error('Bildirim hatası:', error);
-      }
     }
 
-    // Sayfa açılınca veya bir butona basınca çağır
-    window.addEventListener('load', initNovaNotifications);
-  </script>
-</body>
+    function login() {
+        const val = document.getElementById("nameInput").value.trim();
+        if (!val) return;
+        setNovaUser(val);
+        // Giriş efekti için kısa bir gecikme ve animasyon eklenebilir ama net cevap için direkt güncelliyoruz
+        updateAuthUI();
+    }
 
+    function logout() {
+        clearNovaUser();
+        updateAuthUI();
+    }
+
+    function handleEnter(e) {
+        if(e.key === 'Enter') login();
+    }
+
+    function goLink(url) {
+        window.location.href = url;
+    }
+
+    // Sayfa yüklendiğinde çalıştır
+    window.onload = updateAuthUI;
+    </script>
+
+</body>
 </html>
