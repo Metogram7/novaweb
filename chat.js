@@ -34,16 +34,13 @@ function toggleWelcomeScreen() {
 // === GÜNCELLEME NOTLARI SİSTEMİ ===
 
 // 🛠️ BURAYI HER GÜNCELLEMEDE DEĞİŞTİR:
-const CURRENT_VERSION = "2.7w";
+const CURRENT_VERSION = "2.7ww";
 
 const UPDATE_NOTES = [
-    "🚀 Nova artık daha hızlı ve akıcı!",
+    "😔 Limit sistemi",
     "👨‍🏫 Nova daha çok eğitildi",
-    "🔴Nova Live modu!. (menüden hemen geçin!)",
-    "🏃‍➡️ Yazma hızı artırıldı.",
     "🐛 hatalar düzeldi .",
-    "💻 Mağlesef nova play store için ertelendi😔 (ocak ayı 5 inden sonra)",
-    "🚀 Nova limit hatasi bidaha yaşanmayacak."
+    "🛜yeni domain: https://novawebb.com",
 ];
 
 function checkAppUpdate() {
