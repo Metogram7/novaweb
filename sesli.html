@@ -3,249 +3,375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova AI Assistant v2.5 🚀</title>
+    <title>Nova AI v3.0 Pro 🧠</title>
     
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
 
     <style>
         :root {
             --primary: #00f2ea;
             --secondary: #ff0050;
-            --bg: #0f0c29;
             --bg-grad: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            --glass: rgba(255, 255, 255, 0.1);
+            --panel-bg: rgba(20, 20, 35, 0.85);
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-grad);
             color: #fff;
             margin: 0;
             height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
             overflow: hidden;
         }
 
-        /* --- Header --- */
+        /* --- Header & Settings Toggle --- */
         header {
-            width: 100%;
             padding: 15px;
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             background: rgba(0,0,0,0.3);
             backdrop-filter: blur(10px);
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            font-weight: bold;
-            text-shadow: 0 0 10px var(--primary);
-            z-index: 10;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
+
+        .brand { font-size: 1.2rem; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px var(--primary); }
+        
+        #settingsBtn {
+            background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer;
+            transition: transform 0.3s;
+        }
+        #settingsBtn:hover { transform: rotate(90deg); color: var(--primary); }
+
+        /* --- Settings Panel (Gizli) --- */
+        #settingsPanel {
+            position: absolute;
+            top: 60px; right: 20px;
+            width: 300px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(15px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transform: translateY(-20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        #settingsPanel.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .setting-group { margin-bottom: 15px; }
+        .setting-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #ccc; }
+        
+        select, input[type="range"] {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        
+        select option { background: #1a1a2e; }
 
         /* --- Chat Area --- */
         #chatContainer {
             flex: 1;
-            width: 90%;
-            max-width: 800px; /* Kodlar sığsın diye genişlettik */
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
             overflow-y: auto;
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            scrollbar-width: thin;
+            scroll-behavior: smooth;
         }
 
         .message {
-            max-width: 85%;
-            padding: 15px;
-            border-radius: 15px;
+            max-width: 80%;
+            padding: 15px 20px;
+            border-radius: 18px;
             font-size: 1rem;
             line-height: 1.6;
-            animation: fadeIn 0.3s ease;
+            animation: fadeIn 0.4s ease;
             position: relative;
-            word-wrap: break-word;
         }
 
-        /* Markdown içerik ayarları */
-        .message p { margin: 0 0 10px 0; }
-        .message p:last-child { margin: 0; }
-        
-        /* KOD BLOKLARI İÇİN ÖZEL STİL - BURASI ÖNEMLİ */
-        .message pre {
-            background: #1e1e1e !important; /* Koyu editör rengi */
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto; /* Yan taşarsa kaydırma çubuğu çıkar */
-            margin: 10px 0;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .message code {
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 0.9em;
-        }
-        
-        /* Satır içi kodlar (tek kelimelik kodlar) */
-        .message :not(pre) > code {
-            background: rgba(255,255,255,0.15);
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: #ff79c6;
+        .nova {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.08);
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         .user {
             align-self: flex-end;
             background: linear-gradient(135deg, var(--primary), #00c6ff);
             color: #000;
-            border-bottom-right-radius: 2px;
-            box-shadow: 0 4px 15px rgba(0, 242, 234, 0.3);
+            border-bottom-right-radius: 4px;
+            font-weight: 500;
+            box-shadow: 0 5px 15px rgba(0, 242, 234, 0.2);
         }
 
-        .nova {
-            align-self: flex-start;
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-bottom-left-radius: 2px;
-        }
-        
-        /* Nova link verirse linkler belli olsun */
-        .nova a { color: var(--primary); text-decoration: none; border-bottom: 1px dotted; }
+        /* Markdown Styles */
+        .message pre { background: #1e1e1e !important; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 10px; }
+        .message code { font-family: 'Consolas', monospace; font-size: 0.9em; }
 
-        /* --- Visualizer Orb --- */
-        #visualizer {
-            position: relative;
-            width: 80px;
-            height: 80px;
-            margin: 10px auto;
+        /* --- Visualizer Area --- */
+        #visContainer {
+            height: 140px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            flex-shrink: 0;
+            justify-content: center;
+            position: relative;
         }
 
-        .orb {
-            width: 50px;
-            height: 50px;
-            background: var(--primary);
+        /* Yeni Animasyonlu Orb */
+        .ai-core {
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            box-shadow: 0 0 30px var(--primary), inset 0 0 20px #fff;
-            transition: all 0.3s ease;
+            background: #fff;
+            position: relative;
             z-index: 2;
+            box-shadow: 0 0 20px #fff, 0 0 40px var(--primary);
+            transition: all 0.3s ease;
         }
 
-        .ring {
+        .ai-wave {
             position: absolute;
-            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
             border: 2px solid var(--primary);
+            border-radius: 50%;
             opacity: 0;
             z-index: 1;
         }
 
         /* States */
-        body.listening .orb { background: var(--secondary); box-shadow: 0 0 40px var(--secondary); animation: pulse-listen 1.5s infinite; }
-        body.speaking .orb { background: #b000ff; box-shadow: 0 0 50px #b000ff; animation: vibrate-speak 0.2s infinite; }
-        body.processing .orb { background: #ffd700; box-shadow: 0 0 30px #ffd700; animation: spin 1s linear infinite; }
+        body.listening .ai-core { background: var(--secondary); box-shadow: 0 0 30px var(--secondary); transform: scale(1.1); }
+        body.listening .ai-wave { animation: ripple 1.5s infinite; width: 60px; height: 60px; border-color: var(--secondary); }
+
+        body.processing .ai-core { background: #ffd700; box-shadow: 0 0 30px #ffd700; animation: think-spin 1s infinite linear; }
+        
+        body.speaking .ai-core { background: #b000ff; box-shadow: 0 0 50px #b000ff; animation: pulse-speak 0.3s infinite alternate; }
+
+        #statusText {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+            font-weight: 600;
+        }
 
         /* --- Controls --- */
         #controls {
-            width: 100%;
             padding: 20px;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.5);
             backdrop-filter: blur(10px);
             display: flex;
             justify-content: center;
             gap: 20px;
-            border-top: 1px solid rgba(255,255,255,0.05);
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
 
-        button {
+        .btn {
             border: none;
-            padding: 12px 25px;
+            padding: 15px 30px;
             border-radius: 50px;
             font-size: 16px;
             cursor: pointer;
-            transition: transform 0.2s;
             display: flex;
             align-items: center;
             gap: 10px;
             font-weight: bold;
+            transition: all 0.2s;
         }
 
         #talkBtn { background: linear-gradient(90deg, var(--secondary), #ff4b1f); color: white; box-shadow: 0 0 20px rgba(255, 0, 80, 0.4); }
-        #talkBtn:hover { transform: scale(1.05); }
+        #talkBtn:hover { transform: scale(1.05); filter: brightness(1.1); }
+        
         #stopBtn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
         #stopBtn:hover { background: rgba(255,255,255,0.2); }
 
-        #statusText { margin-bottom: 10px; font-size: 0.8rem; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
-
+        /* Animations */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse-listen { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes vibrate-speak { 0% { transform: scale(1); } 50% { transform: scale(0.9); } 100% { transform: scale(1); } }
-        @keyframes spin { 0% { transform: rotate(0deg) scale(0.8); border-radius: 40%; } 100% { transform: rotate(360deg) scale(0.8); border-radius: 50%; } }
+        @keyframes ripple { 0% { width: 60px; height: 60px; opacity: 0.8; } 100% { width: 150px; height: 150px; opacity: 0; } }
+        @keyframes think-spin { 0% { transform: rotate(0deg) scale(0.8); border-radius: 40%; } 50% { border-radius: 10%; } 100% { transform: rotate(360deg) scale(0.8); border-radius: 40%; } }
+        @keyframes pulse-speak { from { transform: scale(1); box-shadow: 0 0 20px #b000ff; } to { transform: scale(1.1); box-shadow: 0 0 60px #b000ff; } }
 
     </style>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-
 </head>
 <body>
 
-    <header><i class="fas fa-microchip"></i> NOVA v2.5</header>
+    <header>
+        <div class="brand"><i class="fas fa-brain"></i> NOVA v3.0</div>
+        <button id="settingsBtn"><i class="fas fa-cog"></i></button>
+    </header>
+
+    <div id="settingsPanel">
+        <h3 style="margin-top:0"><i class="fas fa-sliders-h"></i> Ses Ayarları</h3>
+        
+        <div class="setting-group">
+            <label>Ses Seçimi</label>
+            <select id="voiceSelect">
+                <option value="">Yükleniyor...</option>
+            </select>
+        </div>
+
+        <div class="setting-group">
+            <label>Konuşma Hızı (Rate): <span id="rateVal">1.0</span></label>
+            <input type="range" id="rateRange" min="0.5" max="1.5" step="0.1" value="1.0">
+        </div>
+
+        <div class="setting-group">
+            <label>Ses Tonu (Pitch): <span id="pitchVal">1.0</span></label>
+            <input type="range" id="pitchRange" min="0.5" max="2" step="0.1" value="1.0">
+        </div>
+        
+        <div style="font-size:0.8rem; color:#aaa;">Not: Google Türkçe sesi genellikle en doğal olanıdır.</div>
+    </div>
 
     <div id="chatContainer">
         <div class="message nova">
-            <p>Merhaba ben nova sesli modum</p>
+            <p>Merhaba! Ses ayarlarını sağ üstteki çarktan yapabilirsin. Dinlemeye hazırım.</p>
         </div>
     </div>
 
-    <div id="visualizer">
-        <div class="orb"></div>
-        <div class="ring" style="width: 70px; height: 70px;"></div>
+    <div id="visContainer">
+        <div class="ai-core"></div>
+        <div class="ai-wave"></div>
+        <div id="statusText">HAZIR</div>
     </div>
 
-    <div id="statusText">Hazır</div>
-
     <div id="controls">
-        <button id="talkBtn"><i class="fas fa-microphone"></i> Konuş</button>
-        <button id="stopBtn"><i class="fas fa-stop"></i> Durdur</button>
+        <button id="talkBtn" class="btn"><i class="fas fa-microphone"></i> Konuş</button>
+        <button id="stopBtn" class="btn"><i class="fas fa-stop"></i> Durdur</button>
     </div>
 
 <script>
+    // --- CONF ---
     const BACKEND_URL = 'https://nova-chat-d50f.onrender.com/api/chat';
     const API_KEY = 'YOUR_API_KEY_HERE'; 
 
-    const chatContainer = document.getElementById('chatContainer');
-    const talkBtn = document.getElementById('talkBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const statusText = document.getElementById('statusText');
+    // --- DOM Elements ---
     const body = document.body;
-
+    const chatContainer = document.getElementById('chatContainer');
+    const statusText = document.getElementById('statusText');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const voiceSelect = document.getElementById('voiceSelect');
+    
+    // --- State ---
     let recognition;
     let synth = window.speechSynthesis;
-    let preferredVoice = null;
+    let voices = [];
+    
+    // Basit Ses Efektleri (Beep sesleri oluşturur)
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type, duration) {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + duration);
+        osc.stop(audioContext.currentTime + duration);
+    }
 
-    // --- SES AYARLARI ---
-    function loadVoices() {
-        const voices = synth.getVoices();
-        preferredVoice = voices.find(v => v.name.includes("Google") && v.lang.includes("tr")) ||
-                         voices.find(v => v.lang.includes("tr")) || 
-                         voices[0];
+    // --- AYARLAR & SES SEÇİMİ ---
+    function populateVoiceList() {
+        voices = synth.getVoices().sort((a, b) => a.name.localeCompare(b.name));
+        voiceSelect.innerHTML = '';
+
+        const bestVoices = [];
+
+    // 1. Önce Google Türkçe sesi (EN KALİTELİ)
+        const googleTurkish = voices.filter(v =>
+            v.lang.includes("tr") && v.name.toLowerCase().includes("google")
+        );
+        bestVoices.push(...googleTurkish);
+
+        // 2. Sonra diğer Türkçe sesler
+        const otherTurkish = voices.filter(v =>
+            v.lang.includes("tr") && !v.name.toLowerCase().includes("google")
+        );
+        bestVoices.push(...otherTurkish);
+
+    // 3. Son olarak Google İngilizce (çok doğal)
+        const googleEnglish = voices.filter(v =>
+            v.lang.includes("en") && v.name.toLowerCase().includes("google")
+        );
+        bestVoices.push(...googleEnglish);
+
+        // 4. Yedek olarak tüm diğer İngilizce sesler
+        const otherEnglish = voices.filter(v =>
+            v.lang.includes("en") && !v.name.toLowerCase().includes("google")
+        );
+        bestVoices.push(...otherEnglish);
+
+    // Dropdown'a ekle
+        bestVoices.forEach((voice, index) => {
+            const option = document.createElement("option");
+            option.textContent = `${voice.name} (${voice.lang})`;
+            option.setAttribute("data-index", voices.indexOf(voice));
+
+        // OTOMATİK BEST MATCH:
+        // Google Türkçe varsa onu seç
+            if (
+                voice.name.toLowerCase().includes("google") &&
+                voice.lang.includes("tr")
+            ) {
+                option.selected = true;
+            }
+
+            voiceSelect.appendChild(option);
+        });
+
+        // Eğer hiç ses yoksa
+        if (voiceSelect.options.length === 0) {
+            const opt = document.createElement("option");
+            opt.textContent = "Ses bulunamadı";
+            voiceSelect.appendChild(opt);
+        }
     }
+
+
     if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = loadVoices;
+        speechSynthesis.onvoiceschanged = populateVoiceList;
     }
-    loadVoices();
+    populateVoiceList();
+
+    // Ayarlar Paneli Aç/Kapa
+    document.getElementById('settingsBtn').addEventListener('click', () => {
+        settingsPanel.classList.toggle('active');
+    });
+
+    // Slider değerlerini güncelle
+    document.getElementById('rateRange').oninput = (e) => document.getElementById('rateVal').textContent = e.target.value;
+    document.getElementById('pitchRange').oninput = (e) => document.getElementById('pitchVal').textContent = e.target.value;
 
     // --- STT (KONUŞMA TANIMA) ---
     function setupRecognition() {
         if (!('webkitSpeechRecognition' in window)) {
-            alert("Lütfen Chrome kullanın.");
+            alert("Lütfen Chrome tarayıcısı kullanın.");
             return null;
         }
         
@@ -254,15 +380,25 @@
         rec.interimResults = false;
         rec.maxAlternatives = 1;
 
-        rec.onstart = () => setStatus("Dinliyorum...", "listening");
-        rec.onend = () => { if(body.className === 'listening') setStatus("Hazır", ""); };
+        rec.onstart = () => {
+            playTone(600, 'sine', 0.1); // Başlangıç bip sesi
+            setStatus("Dinliyorum...", "listening");
+        };
+        
+        rec.onend = () => {
+            if(body.className === 'listening') setStatus("Hazır", "");
+        };
         
         rec.onresult = async (event) => {
+            playTone(400, 'sine', 0.1); // Bitiş bip sesi
             const userText = event.results[0][0].transcript;
+            
             addMessage(userText, 'user');
-            setStatus("İşleniyor...", "processing");
+            setStatus("Nova Düşünüyor...", "processing"); // Düşünme modu
             
             const novaReply = await sendMessageToNova(userText);
+            
+            setStatus("Cevap Yazılıyor...", "processing");
             addMessage(novaReply, 'nova');
             speak(novaReply);
         };
@@ -271,87 +407,78 @@
     }
     recognition = setupRecognition();
 
-    // --- UI GÜNCELLEME (Markdown Destekli) ---
-    function addMessage(text, sender) {
-        const div = document.createElement('div');
-        div.classList.add('message', sender);
-        
-        if (sender === 'nova') {
-            // Nova'dan gelen mesajı Markdown olarak işle
-            div.innerHTML = marked.parse(text);
-            
-            // Kod bloklarını bul ve renklendir
-            div.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block);
-            });
-        } else {
-            // Kullanıcı mesajı düz metindir
-            div.textContent = text;
-        }
-
-        chatContainer.appendChild(div);
-        
-        chatContainer.scrollTo({
-            top: chatContainer.scrollHeight,
-            behavior: 'smooth'
-        });
-    }
-
     // --- BACKEND ---
     async function sendMessageToNova(message) {
         try {
             const response = await fetch(BACKEND_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
-                body: JSON.stringify({ message: message, userId: "coder-user", currentChat: "default" })
+                body: JSON.stringify({ message: message, userId: "pro-user", currentChat: "v3" })
             });
-            if (!response.ok) return "Hata oluştu.";
+            if (!response.ok) throw new Error("API Hatası");
             const data = await response.json();
-            return data.response || "Cevap yok.";
+            return data.response;
         } catch (err) {
-            return "Sunucuya bağlanılamadı.";
+            return "Bağlantı hatası oluştu. Lütfen tekrar deneyin.";
         }
     }
 
-    // --- TTS (METİN OKUMA) ---
+    // --- TTS (PROFESYONEL KONUŞMA) ---
     function speak(text) {
         synth.cancel();
 
-        // 1. Kod bloklarını "Kod örneği ekranda" ile değiştir
-        let cleanText = text.replace(/```[\s\S]*?```/g, 'Kod örneği ekranda.');
-
-        // 2. Emojileri temizle (Burayı ekledik)
-        // \p{Emoji_Presentation} ve \p{Extended_Pictographic} modern emojileri kapsar
-        cleanText = cleanText.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
-
-        // 3. Markdown sembollerini ve linkleri temizle
-        cleanText = cleanText.replace(/`([^`]+)`/g, '$1')      // Satır içi kod işaretlerini kaldır
-                             .replace(/[*_~#]/g, '')            // Kalın/italik işaretlerini kaldır
-                             .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Linkleri temizle (sadece başlığı al)
-                             .replace(/\s+/g, ' ')              // Fazla boşlukları teke indir
-                             .trim();
-
-        const utterance = new SpeechSynthesisUtterance(cleanText);
+        // Metin Temizliği (Daha akıcı okuma için)
+        // Kod bloklarını okumamasını sağla
+        let speakText = text.replace(/```[\s\S]*?```/g, 'Kod örneği ekranda gösterildi.');
         
-        // Tercih edilen sesi ayarla
-        if (preferredVoice) utterance.voice = preferredVoice;
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
+        // Emojileri ve Markdown'ı temizle
+        speakText = speakText.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
+                             .replace(/[*_~#`]/g, '')
+                             .replace(/\[(.*?)\]\(.*?\)/g, '$1');
+
+        const utterance = new SpeechSynthesisUtterance(speakText);
         
-        // Olay dinleyicileri
+        // --- SES AYARLARINI UYGULA ---
+        const selectedOption = voiceSelect.selectedOptions[0];
+        if (selectedOption && selectedOption.getAttribute('data-index')) {
+            utterance.voice = voices[selectedOption.getAttribute('data-index')];
+        }
+        
+        utterance.rate = parseFloat(document.getElementById('rateRange').value);
+        utterance.pitch = parseFloat(document.getElementById('pitchRange').value);
+
         utterance.onstart = () => setStatus("Konuşuyor...", "speaking");
         utterance.onend = () => setStatus("Hazır", "");
-        
+
         synth.speak(utterance);
     }
-    // --- EVENTS ---
+
+    // --- UI YARDIMCILARI ---
     function setStatus(text, className) {
         statusText.textContent = text;
         body.className = className;
     }
 
-    talkBtn.addEventListener('click', () => { synth.cancel(); recognition.start(); });
-    stopBtn.addEventListener('click', () => { synth.cancel(); recognition.stop(); setStatus("Susturuldu", ""); });
+    function addMessage(text, sender) {
+        const div = document.createElement('div');
+        div.classList.add('message', sender);
+        
+        if (sender === 'nova') {
+            div.innerHTML = marked.parse(text);
+            div.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        } else {
+            div.textContent = text;
+        }
+
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Button Events
+    document.getElementById('talkBtn').addEventListener('click', () => { synth.cancel(); recognition.start(); });
+    document.getElementById('stopBtn').addEventListener('click', () => { synth.cancel(); recognition.stop(); setStatus("Susturuldu", ""); });
 
 </script>
 </body>

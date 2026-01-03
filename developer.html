@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who is the developer?</title>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Poppins", sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 10%, transparent 70%);
+            animation: move 10s infinite linear;
+        }
+
+        @keyframes move {
+            0% { transform: translate(-20%, -20%); }
+            100% { transform: translate(20%, 20%); }
+        }
+
+        /* 🔥 BÜYÜTÜLMÜŞ CARD 🔥 */
+        .card {
+            width: 85%;
+            max-width: 1100px;
+            padding: 60px; /* daha büyük */
+            border-radius: 30px;
+            backdrop-filter: blur(14px);
+            background: rgba(255, 255, 255, 0.22);
+            border: 2px solid rgba(255, 255, 255, 0.32);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+            text-align: center;
+            animation: pop 0.8s ease;
+        }
+
+        @keyframes pop {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 3.5rem; /* daha büyük */
+            background: linear-gradient(90deg, #ff6ec4, #7873f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        h2 {
+            margin-top: 25px;
+            font-weight: 300;
+            color: white;
+            font-size: 1.45rem; /* biraz daha büyük */
+            line-height: 1.9;
+        }
+
+        /* 🔥 BÜYÜTÜLMÜŞ DİL SEÇİM MENÜSÜ 🔥 */
+        .language-options {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* daha büyük aralık */
+            padding: 18px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.35);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .language-options div {
+            display: flex;
+            align-items: center;
+            gap: 12px; /* daha büyük */
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            color: white;
+            font-size: 1rem; /* daha büyük */
+            transition: 0.25s ease;
+            opacity: 0.9;
+        }
+
+        .language-options div:hover {
+            background: rgba(255,255,255,0.35);
+            transform: scale(1.11);
+            opacity: 1;
+        }
+
+        .language-options img {
+            width: 26px; /* büyütüldü */
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 🔥 BÜYÜK DİL SEÇİMİ 🔥 -->
+    <div class="language-options">
+        <div data-lang="tr"><img src="https://flagcdn.com/16x12/tr.png" alt="TR"> Türkçe</div>
+        <div data-lang="en"><img src="https://flagcdn.com/16x12/gb.png" alt="EN"> English</div>
+        <div data-lang="es"><img src="https://flagcdn.com/16x12/es.png" alt="ES"> Español</div>
+        <div data-lang="ar"><img src="https://flagcdn.com/16x12/sa.png" alt="AR"> العربية</div>
+        <div data-lang="zh"><img src="https://flagcdn.com/16x12/cn.png" alt="ZH"> 中文</div>
+        <div data-lang="ko"><img src="https://flagcdn.com/16x12/kr.png" alt="KO"> 한국어</div>
+        <div data-lang="az"><img src="https://flagcdn.com/16x12/az.png" alt="AZ"> Azərbaycan</div>
+    </div>
+
+    <div class="card">
+        <h1>METEHAN AKKAYA (developer of nova)</h1>
+
+        <h2 id="dev-info">
+            Metehan Akkaya Ankara’da doğdu, şu an 14 yaşında ve 9. sınıf bilişim bölümünde okuyor. 
+            Sınıfının hatta okulunun en iyi yazılımcısı. Yazılıma 12 yaşında başladı, 
+            her şeyi kendi yaptı ve geleceğe mükemmel bir proje fikri var!
+            Şu anda hem o proje, hem de Nova projesi üzerine çalışıyor.
+        </h2>
+    </div>
+
+    <script>
+        const textData = {
+            tr: "Metehan Akkaya Ankara’da doğdu, şu an 14 yaşında ve 9. sınıf bilişim bölümünde okuyor. Sınıfının hatta okulunun en iyi yazılımcısı. Yazılıma 12 yaşında başladı, her şeyi kendi yaptı ve geleceğe mükemmel bir proje fikri var! Şu anda hem o proje, hem de Nova projesi üzerine çalışıyor.",
+            en: "Metehan Akkaya was born in Ankara, he is currently 14 years old and studying in the 9th grade IT department. He is the best programmer in his class, even in his school. He started coding at age 12, built everything himself, and has an amazing project idea for the future! He is currently working on both that project and the Nova project.",
+            es: "Metehan Akkaya nació en Ankara, actualmente tiene 14 años y estudia en el departamento de informática. Es el mejor programador de su clase e incluso de su escuela. Comenzó a programar a los 12 años, creó todo por sí mismo y tiene una excelente idea de proyecto para el futuro. Actualmente trabaja en ese proyecto y en el proyecto Nova.",
+            ar: "وُلد متيهان أككايا في أنقرة، ويبلغ من العمر 14 عامًا ويدرس في الصف التاسع في قسم المعلوماتية. إنه أفضل مبرمج في صفه بل وفي مدرسته. بدأ البرمجة في سن الثانية عشرة، وطور كل شيء بنفسه ولديه فكرة مشروع رائعة للمستقبل! يعمل حاليًا على ذلك المشروع وعلى مشروع نوفا.",
+            zh: "Metehan Akkaya 出生于安卡拉，今年14岁，就读于信息技术部门的九年级。他是班级甚至整个学校最优秀的程序员。他从12岁开始编程，独自完成所有工作，并拥有一个极具前景的项目构想！他目前正在同时开发该项目和 Nova 项目。",
+            ko: "메테한 아카야는 앙카라에서 태어났으며 현재 14세로 정보기술 9학년에 재학 중입니다. 그는 반에서, 아니 학교 전체에서 가장 뛰어난 프로그래머입니다. 12살에 코딩을 시작해 모든 것을 스스로 만들었고 미래를 위한 놀라운 프로젝트 아이디어를 가지고 있습니다! 현재 그 프로젝트와 Nova 프로젝트 모두에 참여하고 있습니다.",
+            az: "Metehan Akkaya Ankarada doğulub, hazırda 14 yaşındadır və 9-cu sinifdə informasiya texnologiyaları üzrə təhsil alır. O, sinfinin və hətta məktəbin ən yaxşı proqramçısıdır. Proqramlaşdırmaya 12 yaşında başlayıb, hər şeyi özü yaradıb və gələcək üçün möhtəşəm bir layihə ideyası var! Hazırda həm o layihə, həm də Nova layihəsi üzərində çalışır."
+        };
+
+        document.querySelectorAll(".language-options div").forEach(el => {
+            el.addEventListener("click", () => {
+                const lang = el.getAttribute("data-lang");
+                document.getElementById("dev-info").innerText = textData[lang];
+            });
+        });
+    </script>
+
+</body>
+</html>

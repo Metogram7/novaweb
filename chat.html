@@ -11,6 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+  <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="chat.css">
   
   <meta name="theme-color" content="#00bfff">
@@ -133,5 +134,15 @@
   <script src="chat.js"></script>
 
 </body>
+<link rel="manifest" href="/manifest.json">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('Service Worker registered'))
+      .catch(err => console.log('SW registration failed', err));
+  }
+</script>
+
 
 </html>
