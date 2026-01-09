@@ -14,13 +14,7 @@
   },
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/Metogram7/novaweb/93c4222aa0708d6a2e6e145a52a3224d70a1d1e2/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://raw.githubusercontent.com/Metogram7/novaweb/93c4222aa0708d6a2e6e145a52a3224d70a1d1e2/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
