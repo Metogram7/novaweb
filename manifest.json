@@ -1,5 +1,5 @@
 {
-  "name": "Nova Web",
+  "name": "NoVa",
   "short_name": "Nova",
   "id": "/",
   "start_url": "/",
@@ -9,21 +9,24 @@
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "orientation": "portrait",
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  },
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/Metogram7/novaweb/main/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "https://raw.githubusercontent.com/Metogram7/novaweb/main/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
