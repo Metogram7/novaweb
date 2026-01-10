@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.novawebb.app",
+      "sha256_cert_fingerprints": [
+        "BA:41:A0:CB:96:B2:BB:B6:0A:A2:52:AB:0A:DF:54:7E:D0:1D:1F:54:AB:FA:16:BE:63:50:4C:14:64:13:04:FA"
+      ]
+    }
+  }
+]
