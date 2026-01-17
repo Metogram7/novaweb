@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+    <link rel="apple-touch-icon" href="/icon-512.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Sayfa Bulunamadı | Nova AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #020c1b;
+            --accent-primary: #00bfff;
+            --accent-secondary: #7b2cbf;
+            --glass-bg: rgba(10, 25, 47, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #e6f1ff;
+            --text-muted: #8892b0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* --- ARKA PLAN EFEKTLERİ (Index ile aynı) --- */
+        .ambient-light {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.35;
+            animation: moveOrb 15s infinite alternate ease-in-out;
+        }
+        .orb-1 { width: 500px; height: 500px; background: var(--accent-primary); top: -150px; left: -100px; }
+        .orb-2 { width: 400px; height: 400px; background: var(--accent-secondary); bottom: -100px; right: -100px; animation-delay: -5s; }
+
+        @keyframes moveOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, 60px) scale(1.1); }
+        }
+
+        /* --- 404 PANEL --- */
+        .error-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            padding: 60px 40px;
+            border-radius: 35px;
+            border: 1px solid var(--glass-border);
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-code {
+            font-size: 8rem;
+            font-weight: 700;
+            line-height: 1;
+            background: linear-gradient(135deg, #fff 20%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: -5px;
+        }
+
+        .error-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .error-msg {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 35px;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, var(--accent-primary), #0088cc);
+            color: #fff;
+            border: none;
+            padding: 16px 35px;
+            border-radius: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 191, 0.2);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 191, 255, 0.4);
+        }
+
+        .logo-mini {
+            width: 60px;
+            height: auto;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 10px rgba(0, 191, 255, 0.4));
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-light">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <div class="error-container">
+        <img src="/ChatGPT Image 1 Kas 2025 12_57_42.png" class="logo-mini" alt="Nova Logo">
+        <div class="error-code">404</div>
+        <h1 class="error-title">Yolunu mu Kaybettin?</h1>
+        <p class="error-msg">Aradığın sayfa Nova evreninde mevcut değil veya taşınmış olabilir.</p>
+        <a href="index.html" class="back-btn">Güvenli Bölgeye Dön</a>
+    </div>
+
+</body>
+</html>
