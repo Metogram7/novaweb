@@ -34,13 +34,15 @@ function toggleWelcomeScreen() {
 // === GÜNCELLEME NOTLARI SİSTEMİ ===
 
 // 🛠️ BURAYI HER GÜNCELLEMEDE DEĞİŞTİR:
-const CURRENT_VERSION = "2.7ww";
+const CURRENT_VERSION = "2.7.Go";
 
 const UPDATE_NOTES = [
-    "😔 Limit sistemi",
-    "👨‍🏫 Nova daha çok eğitildi",
-    "🐛 hatalar düzeldi .",
-    "🛜yeni domain: https://novawebb.com",
+    "🤓 NoVa daha çok zeki ! ",
+    "👨‍🏫 NoVa daha çok eğitildi",
+    "🪟 Arayüz güncellemesi .",
+    "▶️ Play Store NoVa (son 11 gün ! ) ! ",
+    "⬛ Koyu Tema !" ,
+    "🟥 Nova Youtube : https://www.youtube.com/@AI_Nova_AI (gelişmeler)"    
 ];
 
 function checkAppUpdate() {
@@ -112,6 +114,582 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!splash) return;
 
     setTimeout(() => {
+        splash.classList.add("fade-out");
+        setTimeout(() => (splash.style.display = "none"), 800);
+    }, 1800);
+
+const novaUserName = localStorage.getItem("nova_user");
+let userId = localStorage.getItem("nova_user_id");
+
+if (!userId) {
+    userId = "user_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+    localStorage.setItem("nova_user_id", userId);
+}
+
+// Eğer isim yoksa index'e geri at
+if (!novaUserName) {
+    window.location.href = "index.html";
+}
+
+// 🛠️ SABİTLER VE DEĞİŞKENLER
+const BACKEND_URL = 'https://nova-chat-d50f.onrender.com/api';
+const CURRENT_VERSION = "2.8 Pro"; // Versiyon güncellendi
+
+// Kontrolcü (Durdurma işlemi için)
+let abortController = null;
+let isTyping = false; // Yazma efekti kontrolü
+
+// DOM Elemanları
+const sideMenu = document.getElementById("sideMenu");
+const menuToggle = document.getElementById("menuToggle");
+const dragHandle = document.getElementById("dragHandle");
+const chatsContainer = document.getElementById("chatsContainer");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("sendBtn");
+const stopBtn = document.getElementById("stopBtn");
+const menu = document.getElementById("menu");
+const novaStatus = document.getElementById("novaStatus");
+const quickBtns = document.getElementById("quickBtns");
+const emojiPicker = document.getElementById("emojiPicker");
+const newChatBtn = document.getElementById("newChatBtn");
+const themeToggle = document.getElementById("themeToggle");
+const toast = document.getElementById("toast");
+
+let currentChat = localStorage.getItem("nova_last_chat") || "default";
+let sending = false;
+let userInfo = JSON.parse(localStorage.getItem("nova_user_info_" + userId) || "{}");
+userInfo.name = novaUserName;
+
+// Ayarları tutan nesne (Varsayılanlar)
+let appSettings = JSON.parse(localStorage.getItem("nova_settings")) || {
+    language: "tr",
+    primaryColor: "#00bfff",
+    customInstructions: "",
+    selectedVoiceURI: ""
+};
+
+// === BAŞLANGIÇ AYARLARI ===
+window.addEventListener("DOMContentLoaded", () => {
+    // Temayı Yükle
+    const savedTheme = localStorage.getItem("nova_theme");
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark-mode");
+    } else {
+        document.body.classList.remove("dark-mode");
+    }
+
+    // Rengi Uygula
+    document.documentElement.style.setProperty('--primary-color', appSettings.primaryColor);
+    
+    // Sohbeti Yükle
+    loadChat(currentChat);
+    renderMenu();
+    
+    // Hoşgeldin ekranı kontrolü
+    setTimeout(toggleWelcomeScreen, 500);
+    
+    // Splash ekranını kapat
+    const splash = document.getElementById("splash-screen");
+    if (splash) {
+        setTimeout(() => {
+            splash.classList.add("fade-out");
+            setTimeout(() => (splash.style.display = "none"), 800);
+        }, 1800);
+    }
+});
+
+// === TEMA YÖNETİMİ ===
+themeToggle.onclick = () => { 
+    document.body.classList.toggle("dark-mode"); 
+    const isDark = document.body.classList.contains("dark-mode");
+    localStorage.setItem("nova_theme", isDark ? "dark" : "light");
+    showToast(isDark ? "🌙 Karanlık Mod Açık" : "☀️ Aydınlık Mod Açık"); 
+};
+
+// === MENÜ VE UI İŞLEMLERİ ===
+menuToggle.onclick = () => { sideMenu.classList.toggle("active"); };
+
+// Sürükleme (Drag Handle)
+let isResizing = false;
+dragHandle.addEventListener("mousedown", e => { isResizing = true; document.body.style.cursor = "col-resize"; });
+document.addEventListener("mousemove", e => {
+    if (!isResizing) return;
+    let newWidth = e.clientX;
+    if (newWidth < 150) newWidth = 150;
+    if (newWidth > 500) newWidth = 500;
+    sideMenu.style.width = newWidth + "px";
+});
+document.addEventListener("mouseup", e => { if (isResizing) { isResizing = false; document.body.style.cursor = "default"; } });
+
+// === SOHBET YÖNETİMİ ===
+function renderMenu() {
+    // Burada backend'den tüm sohbet listesini çekip menüyü doldurabilirsin.
+    // Şimdilik mevcut currentChat'i ekleyelim.
+    if (!document.querySelector(`button[data-id="${currentChat}"]`)) {
+        addChatToMenu(currentChat, "Mevcut Sohbet");
+    }
+}
+
+function addChatToMenu(chatId, lastMessage = "Yeni Sohbet") {
+    if ([...menu.querySelectorAll(".chatBtn")].some(b => b.dataset.id === chatId)) return;
+    
+    const row = document.createElement("div"); 
+    row.className = "chatRow";
+    
+    const chatBtn = document.createElement("button"); 
+    chatBtn.className = "chatBtn"; 
+    chatBtn.dataset.id = chatId; 
+    chatBtn.onclick = () => { loadChat(chatId); sideMenu.classList.remove("active"); }; // Mobilde menüyü kapat
+    
+    const deleteBtn = document.createElement("button"); 
+    deleteBtn.className = "deleteBtn"; 
+    deleteBtn.textContent = "❌";
+    
+    deleteBtn.onclick = async () => { 
+        if (confirm("Bu sohbeti silmek istediğine emin misin?")) { 
+            try { 
+                const res = await fetch(`${BACKEND_URL}/delete_chat`, { 
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" }, 
+                    body: JSON.stringify({ userId, chatId }) 
+                }); 
+                const data = await res.json(); 
+                if (data.success || true) { // Backend cevabına güven veya UI'dan sil
+                    row.remove(); 
+                    const div = document.getElementById(chatId); 
+                    if (div) div.remove(); 
+                    if (currentChat === chatId) startNewChat(); 
+                    showToast("Sohbet silindi");
+                } 
+            } catch (err) { 
+                console.error(err); 
+                showToast("Silme hatası (Yerel siliniyor)");
+                row.remove();
+            } 
+        } 
+    };
+    
+    row.appendChild(chatBtn); 
+    row.appendChild(deleteBtn); 
+    menu.appendChild(row); 
+    updateChatBtnLabel(chatBtn, lastMessage);
+}
+
+function updateChatBtnLabel(button, lastMessage) { 
+    if (lastMessage.length > 18) lastMessage = lastMessage.slice(0, 18) + "..."; 
+    button.textContent = lastMessage; 
+}
+
+function loadChat(cid) {
+    currentChat = cid; 
+    localStorage.setItem("nova_last_chat", cid);
+    
+    Array.from(chatsContainer.children).forEach(c => c.style.display = "none");
+    
+    let div = document.getElementById(cid);
+    if (!div) { 
+        div = document.createElement("div"); 
+        div.className = "chatDiv"; 
+        div.id = cid; 
+        chatsContainer.appendChild(div); 
+    }
+    div.style.display = "flex";
+    
+    // Geçmişi yükle
+    fetch(`${BACKEND_URL}/history?userId=${userId}`)
+        .then(r => r.json())
+        .then(data => { 
+            const msgs = data[cid] || []; 
+            if(div.innerHTML === "") { // Sadece boşsa doldur
+                msgs.forEach(m => {
+                    // Geçmiş mesajları hızlıca ekle (animasyonsuz)
+                    const msgDiv = addMessage(m.text, m.sender, div);
+                    // Eğer kod bloğu varsa renklendir
+                    if(msgDiv) {
+                        msgDiv.querySelector(".message-content").innerHTML = formatTextWithCodeBlocks(m.text);
+                        hljs.highlightAll();
+                    }
+                }); 
+            }
+            toggleWelcomeScreen();
+        })
+        .catch(() => {
+            console.log("Geçmiş yüklenemedi veya boş.");
+            toggleWelcomeScreen();
+        });
+}
+
+function startNewChat() { 
+    const newId = "chat_" + Date.now() + "_" + Math.floor(Math.random() * 10000); 
+    addChatToMenu(newId, "Yeni Sohbet"); 
+    loadChat(newId); 
+    showToast("Yeni sohbet başlatıldı 🚀");
+}
+
+newChatBtn.addEventListener("click", e => { e.preventDefault(); startNewChat(); });
+
+// === MESAJ GÖNDERME SİSTEMİ ===
+async function sendMessage(msg = null) {
+    if (sending) return;
+    
+    const text = msg || input.value.trim();
+    if (!text) return;
+    
+    sending = true;
+    input.value = "";
+    input.style.height = "auto"; // Textarea boyutunu sıfırla
+
+    const chatDiv = document.getElementById(currentChat);
+    if (!chatDiv) { sending = false; return; }
+
+    // Kullanıcı mesajı ekle
+    addMessage(text, "user", chatDiv);
+    updateChatBtnLabel(document.querySelector(`button[data-id="${currentChat}"]`), text);
+
+    // Nova yazıyor göstergesi
+    const typingDiv = document.createElement("div");
+    typingDiv.className = "msg nova typing-indicator";
+    typingDiv.innerHTML = '<div class="message-content">Nova düşünüyor... <span class="loader"></span></div>';
+    chatDiv.appendChild(typingDiv);
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+    
+    novaStatus.textContent = "Nova düşünüyor...";
+
+    // AbortController'ı başlat (Durdur butonu için)
+    abortController = new AbortController();
+    const signal = abortController.signal;
+
+    try {
+        // Backend isteği
+        // Not: Ayarları (customInstructions) da gönderiyoruz
+        const payload = {
+            userId,
+            currentChat,
+            message: text,
+            userInfo,
+            systemPrompt: appSettings.customInstructions || "Sen Nova adında yardımcı bir yapay zekasın.",
+            settings: appSettings // Tüm ayarları gönder
+        };
+
+        const res = await fetch(`${BACKEND_URL}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: signal // İptal sinyali
+        });
+
+        const data = await res.json();
+        
+        // Yazıyor göstergesini kaldır
+        typingDiv.remove();
+
+        if (data.response) {
+            // Cevabı animasyonlu yaz
+            await addTypingMessage(data.response, "nova", chatDiv);
+        } else {
+            showErrorMessage("Boş yanıt alındı.", text);
+        }
+
+        // Kullanıcı bilgisini güncelle (varsa)
+        if (data.updatedUserInfo) {
+            userInfo = data.updatedUserInfo;
+            localStorage.setItem("nova_user_info_" + userId, JSON.stringify(userInfo));
+        }
+
+    } catch (err) {
+        typingDiv.remove();
+        if (err.name === 'AbortError') {
+            showToast("⚠️ İşlem kullanıcı tarafından durduruldu.");
+            addMessage("🛑 *İşlem durduruldu.*", "nova", chatDiv);
+        } else {
+            console.error(err);
+            showErrorMessage("Bağlantı hatası: " + err.message, text);
+        }
+    } finally {
+        sending = false;
+        novaStatus.textContent = "Hazır";
+        abortController = null;
+    }
+}
+
+// === DURDUR BUTONU ===
+stopBtn.addEventListener("click", e => {
+    e.preventDefault();
+    if (abortController) {
+        abortController.abort(); // Fetch isteğini iptal et
+        abortController = null;
+    }
+    if (isTyping) {
+        isTyping = false; // Yazma döngüsünü kır
+    }
+    showToast("Durduruluyor...");
+});
+
+// === MESAJ EKLEME FONKSİYONLARI ===
+function addMessage(text, sender, container = null) {
+    const parent = container || document.getElementById(currentChat);
+    if (!parent) return;
+
+    const div = document.createElement("div");
+    div.className = "msg " + sender;
+
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "message-content";
+    contentDiv.textContent = text; // Varsayılan text
+    div.appendChild(contentDiv);
+
+    const timestamp = document.createElement("div");
+    timestamp.className = "timestamp";
+    timestamp.textContent = getFormattedDate();
+    div.appendChild(timestamp);
+    
+    if(sender === "nova") {
+        addActionButtons(div, text);
+    }
+
+    parent.appendChild(div);
+    parent.scrollTop = parent.scrollHeight;
+    
+    toggleWelcomeScreen();
+    return div;
+}
+
+// === YAZMA EFEKTİ (TYPEWRITER) ===
+async function addTypingMessage(text, sender, container = null) {
+    const parent = container || document.getElementById(currentChat);
+    const div = document.createElement("div");
+    div.className = "msg " + sender;
+    parent.appendChild(div);
+
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "message-content";
+    div.appendChild(contentDiv);
+
+    isTyping = true;
+    let currentText = "";
+    
+    // Markdown/Kod bloğu kontrolü için basit mantık
+    // Hız ayarı: Uzun mesajlarda hızlan
+    const speed = text.length > 500 ? 1 : 10;
+
+    // Basit yazma efekti
+    for (let i = 0; i < text.length; i++) {
+        if (!isTyping) break; // Durdur butonu basıldıysa çık
+        
+        currentText += text[i];
+        contentDiv.textContent = currentText; // Ham metin olarak göster (geçici)
+        
+        // Scroll her 10 karakterde bir (performans için)
+        if (i % 10 === 0) parent.scrollTop = parent.scrollHeight;
+        
+        await new Promise(r => setTimeout(r, speed));
+    }
+    
+    // Yazma bitti veya durduruldu, şimdi formatla
+    contentDiv.innerHTML = formatTextWithCodeBlocks(text);
+    
+    // Highlight JS çalıştır
+    contentDiv.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+    });
+    
+    // Linkleri aktifleştir
+    linkifyElementOpenExternally(contentDiv);
+
+    const timestamp = document.createElement("div");
+    timestamp.className = "timestamp";
+    timestamp.textContent = getFormattedDate();
+    div.appendChild(timestamp);
+
+    addActionButtons(div, text);
+    
+    parent.scrollTop = parent.scrollHeight;
+    isTyping = false;
+}
+
+// === YARDIMCI BUTONLAR (SES, KOPYALA, TXT) ===
+function addActionButtons(div, text) {
+    const btnContainer = document.createElement("div");
+    btnContainer.className = "msg-actions";
+    
+    // Sesli Oku
+    const speakBtn = document.createElement("button");
+    speakBtn.innerHTML = "🔉";
+    speakBtn.title = "Sesli Oku";
+    speakBtn.onclick = () => toggleSpeech(text, speakBtn);
+    
+    // Kopyala
+    const copyBtn = document.createElement("button");
+    copyBtn.innerHTML = "📋";
+    copyBtn.title = "Metni Kopyala";
+    copyBtn.onclick = () => {
+        navigator.clipboard.writeText(text);
+        showToast("Kopyalandı ✅");
+    };
+    
+    // TXT İndir (Sadece uzun mesajlarda)
+    if(text.length > 100) {
+        const downloadBtn = document.createElement("button");
+        downloadBtn.innerHTML = "💾";
+        downloadBtn.title = "TXT Olarak İndir";
+        downloadBtn.onclick = () => downloadText(text);
+        btnContainer.appendChild(downloadBtn);
+    }
+
+    btnContainer.appendChild(speakBtn);
+    btnContainer.appendChild(copyBtn);
+    div.appendChild(btnContainer);
+}
+
+// === DİĞER FONKSİYONLAR ===
+function getFormattedDate() {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function formatTextWithCodeBlocks(text) {
+    // Kod bloklarını işle ve HTML'e çevir
+    return text.replace(/```(\w*)?([\s\S]*?)```/g, (match, lang, code) => {
+        lang = lang || 'text';
+        const safeCode = code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return `
+        <div class="code-window">
+            <div class="code-header">
+                <span>${lang}</span>
+                <button class="copy-btn-code" onclick="copyCode(this)">Kopyala</button>
+            </div>
+            <pre><code class="language-${lang}">${safeCode}</code></pre>
+        </div>`;
+    }).replace(/\n/g, "<br>"); // Satır sonlarını <br> yap (kod blokları hariç mantığı eklenebilir ama basit tuttum)
+}
+
+function copyCode(btn) {
+    const code = btn.parentElement.nextElementSibling.innerText;
+    navigator.clipboard.writeText(code);
+    const original = btn.textContent;
+    btn.textContent = "Kopyalandı!";
+    setTimeout(() => btn.textContent = original, 2000);
+}
+
+function toggleSpeech(text, btn) {
+    if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        btn.innerHTML = "🔉";
+        return;
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "tr-TR";
+    
+    // Ayarlardaki sesi bul
+    const voices = window.speechSynthesis.getVoices();
+    const selectedVoice = voices.find(v => v.voiceURI === appSettings.selectedVoiceURI) || voices.find(v => v.lang.includes("tr"));
+    if(selectedVoice) utterance.voice = selectedVoice;
+    
+    utterance.onend = () => { btn.innerHTML = "🔉"; };
+    
+    window.speechSynthesis.speak(utterance);
+    btn.innerHTML = "⏸️";
+}
+
+function downloadText(text) {
+    const blob = new Blob([text], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "nova_chat.txt";
+    link.click();
+}
+
+function toggleWelcomeScreen() {
+    const chat = document.getElementById(currentChat);
+    const welcome = document.getElementById("welcome-screen");
+    if (!chat || !welcome) return;
+    
+    if (chat.children.length === 0) {
+        welcome.style.display = "flex";
+        welcome.classList.add("visible");
+    } else {
+        welcome.style.display = "none";
+        welcome.classList.remove("visible");
+    }
+}
+
+// === AYARLAR MODAL İŞLEMLERİ (SETTINGS) ===
+window.openSettings = function() {
+    document.getElementById("settingsModal").style.display = "flex";
+    document.getElementById("customInstructions").value = appSettings.customInstructions;
+    document.getElementById("primaryColorPicker").value = appSettings.primaryColor;
+    document.getElementById("languageSelect").value = appSettings.language;
+    
+    // Sesleri doldur
+    const vSelect = document.getElementById("voiceSelect");
+    vSelect.innerHTML = "";
+    window.speechSynthesis.getVoices().forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v.voiceURI;
+        opt.textContent = `${v.name} (${v.lang})`;
+        if(v.voiceURI === appSettings.selectedVoiceURI) opt.selected = true;
+        vSelect.appendChild(opt);
+    });
+}
+
+window.closeSettings = function() {
+    document.getElementById("settingsModal").style.display = "none";
+}
+
+window.saveSettings = function() {
+    appSettings.customInstructions = document.getElementById("customInstructions").value;
+    appSettings.primaryColor = document.getElementById("primaryColorPicker").value;
+    appSettings.language = document.getElementById("languageSelect").value;
+    appSettings.selectedVoiceURI = document.getElementById("voiceSelect").value;
+    
+    localStorage.setItem("nova_settings", JSON.stringify(appSettings));
+    
+    // Rengi anında uygula
+    document.documentElement.style.setProperty('--primary-color', appSettings.primaryColor);
+    
+    showToast("Ayarlar kaydedildi ✅");
+    closeSettings();
+}
+
+function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "show";
+    setTimeout(() => t.className = t.className.replace("show", ""), 3000);
+}
+
+function showErrorMessage(msg, retryText) {
+    const chatDiv = document.getElementById(currentChat);
+    const errDiv = document.createElement("div");
+    errDiv.className = "error-message";
+    errDiv.innerHTML = `⚠️ ${msg} <button onclick="this.parentElement.remove(); sendMessage('${retryText.replace(/'/g, "\\'")}')">Tekrar Dene</button>`;
+    chatDiv.appendChild(errDiv);
+    chatDiv.scrollTop = chatDiv.scrollHeight;
+}
+
+// Event Listeners
+input.addEventListener("keydown", e => { 
+    if (e.key === "Enter" && !e.shiftKey) { 
+        e.preventDefault(); 
+        sendMessage(); 
+    } 
+});
+sendBtn.addEventListener("click", e => { e.preventDefault(); sendMessage(); });
+
+// Hızlı butonlar
+quickBtns.querySelectorAll("button").forEach(b => {
+    b.addEventListener("click", () => sendMessage(b.textContent));
+});
+
+// Linkify (Helper)
+function linkifyElementOpenExternally(element) {
+    // Basit link tespiti ve _blank açma
+    element.innerHTML = element.innerHTML.replace(
+        /(https?:\/\/[^\s]+)/g, 
+        '<a href="$1" target="_blank" style="color:#00bfff;text-decoration:underline;">$1</a>'
+    );
+}t(() => {
         splash.classList.add("fade-out");
         setTimeout(() => (splash.style.display = "none"), 800);
     }, 1800);
@@ -870,7 +1448,12 @@ function openSettings() {
         if (typeof loadVoices === "function") loadVoices();
     }
 }
-
+// Firebase Messaging Service Worker içinde veya ana JS'de
+function subscribeUserToTopic(token) {
+    // Normalde bu işlem backend üzerinden yapılır ama basitlik için 
+    // kullanıcıyı 'all' isimli bir konuya kaydediyoruz (Backend'de yönetmek daha güvenlidir)
+    console.log("Kullanıcı bildirim havuzuna dahil edildi.");
+}
 // Ayarlar penceresini kapatır
 function closeSettings() {
     const modal = document.getElementById("settingsModal");

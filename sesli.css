@@ -142,7 +142,7 @@ body.speaking .ai-core { background: #b000ff; animation: pulse 0.5s infinite alt
 #talkBtn { background: var(--primary); color: #000; box-shadow: 0 5px 15px rgba(0,242,234,0.3); }
 #talkBtn:active { transform: scale(0.95); }
 
-#stopBtn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+#stopBtn { background: rgba(255, 0, 0, 0.1); color: rgb(255, 255, 255); border: 1px solid rgba(255,255,255,0.2); }
 
 /* --- MOBİL İYİLEŞTİRMELER --- */
 @media (max-height: 600px) {

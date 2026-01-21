@@ -67,9 +67,9 @@
 
     /* === YAN MENÜ === */
     #sideMenu {
-      width: 280px;
+      width: 270px;
       min-width: 200px;
-      background: linear-gradient(135deg, #52c7fd 10%, #4c6586 100%);
+      background: linear-gradient(135deg, #0583bd 10%, #92b8e9 100%);
       border-right: 2px solid var(--primary-color);
       display: flex;
       flex-direction: column;
@@ -82,7 +82,7 @@
     }
 
     .dark-mode #sideMenu {
-      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+      background: linear-gradient(135deg, #1c2631 50%, #263341 50%);
     }
 
     #sideMenu h3 {
@@ -127,11 +127,11 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      background: #4c6586;
+      background: #2c4a70;
     }
 
     .dark-mode #mainContent {
-      background: #2c3e50;
+      background: #1c2631;
     }
 
     /* === HEADER === */
@@ -150,7 +150,7 @@
     }
 
     .dark-mode header {
-      background: linear-gradient(135deg, #34495e, #2c3e50);
+      background: linear-gradient(135deg, #222020, #363738);
       color: var(--text-light);
     }
 
@@ -179,16 +179,15 @@
     }
 
     /* === MESAJLAR ALANI === */
-    #chatsContainer {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      position: relative;
-      padding: 15px;
-      background: transparent;
-    }
-
+#chatsContainer {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  scroll-behavior: smooth;
+}
     .chatDiv {
       flex: 1;
       display: flex;
@@ -239,7 +238,7 @@
     }
 
     .dark-mode .nova {
-      background: #34495e;
+      background: #2d445a;
       color: var(--text-light);
     }
 
@@ -247,7 +246,7 @@
     #inputArea {
       display: flex;
       padding: 15px 20px;
-      background: #4e91e9;
+      background: #3c70b4;
       border-top: 2px solid var(--primary-color);
       gap: 10px;
       flex-wrap: wrap;
@@ -281,7 +280,7 @@
     }
 
     .dark-mode #input {
-      background: #34495e;
+      background: #384552;
       color: var(--text-light);
       border-color: var(--secondary-color);
     }
@@ -328,7 +327,7 @@
       padding: 8px 16px;
       border-radius: var(--border-radius);
       border: none;
-      background: linear-gradient(135deg, #91ff00, #76d700);
+      background: linear-gradient(135deg, #4400ff, #76d700);
       color: #000;
       cursor: pointer;
       font-weight: 600;
@@ -626,13 +625,7 @@
       transform: scale(1.05);
       box-shadow: 0 4px 8px rgba(255, 255, 255, 0.4);
     }
-
-    button#nova-install {
-      background: #fff100;
-      color: #af002d;
-      font-weight: 800;
-    }
-
+    
     button#nova-install:hover {
       transform: scale(1.1);
       box-shadow: 0 6px 12px rgba(255, 241, 0, 0.6);
@@ -807,12 +800,12 @@
     }
 
     .modal-box {
-      background: #a3bacf;
+      background: #388bd8;
       width: 90%;
       max-width: 500px;
-      border-radius: 20px;
+      border-radius: 30px;
       padding: 25px;
-      box-shadow: 10px 20px 50px rgba(255, 255, 255, 0.3);
+      box-shadow: 10px 20px 50px rgba(2555, 2555, 2555, 0.3);
       position: relative;
       text-align: center;
       border: 2px solid var(--primary-color);
@@ -833,8 +826,8 @@
     font-size: 1.5rem;
   
   /* Beyazdan cyan'a renk geçişi */
-    background: linear-gradient(to right, #00a2ff, #4c00ff); 
-    box-shadow: 15px 20px 50px rgba(0, 162, 255, 0.3);
+    background: linear-gradient(to right, #ffffff, #4c00ff); 
+    box-shadow: 15px 20px 50px  #0d3e6b;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -847,7 +840,7 @@
     }
 
     .version-badge {
-      background: linear-gradient(135deg, #ff7a18, #af002d);
+      background: linear-gradient(135deg, #1100ff, #8a90e9);
       color: rgb(255, 255, 255);
       padding: 4px 10px;
       border-radius: 12px;
@@ -878,7 +871,7 @@
     }
 
     .modal-close-btn {
-      background: linear-gradient(135deg, var(--primary-color), #0077b3);
+      background: linear-gradient(135deg, var(--primary-color), #0c104b);
       color: rgb(255, 255, 255);
       border: none;
       padding: 12px 30px;
@@ -917,11 +910,11 @@
   background: #1e1e1e; /* Koyu gri, tam siyah değil (göz yormaz) */
   width: 90%;
   max-width: 500px;
-  border-radius: 25px;
-  border: 1px solid #333;
-  color: #ffffff; /* Tüm yazıları beyaz yapıyoruz */
+  border-radius: 35px;
+  border: 1px solid #ec0000;
+  color: #ff0000; /* Tüm yazıları beyaz yapıyoruz */
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  box-shadow: 0 20px 50px rgba(255, 255, 255, 0.5);
 }
 
 .settings-header {
@@ -1075,4 +1068,23 @@ input[type="color"] {
     width: 140px; height: 140px;
     background: radial-gradient(circle, rgba(0, 191, 255, 0.2) 0%, transparent 70%);
     z-index: -1;
+}
+
+.plus-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #22c55e;
+    color: #000;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plus-btn:hover {
+    background: #4ade80;
 }

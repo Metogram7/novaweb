@@ -6,12 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nova Chat — Tam Sürüm</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-  <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="chat.css">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
@@ -38,7 +38,6 @@
                     <option value="en">English 🇬🇧</option>
                 </select>
             </div>
-
             <div class="settings-group">
                 <label data-lang="lbl_instructions">🧠 Özel Talimatlar</label>
                 <textarea id="customInstructions" placeholder="Nova'ya rol tanımla (Örn: Bir yazılım uzmanı gibi davran)"></textarea>
@@ -59,6 +58,9 @@
             <div class="settings-group">
                 <label data-lang="lbl_voice_select">🎙️ Ses Seçimi</label>
                 <select id="voiceSelect"></select>
+            </div>
+            <div class="settings-group">
+                <label data-lang="lbl_voice_sel3ect"href="index.html"><h3> <a href="developer.html"> <u>Geliştirici</u></h3></a> </label>
             </div>
         </div>
         
@@ -94,18 +96,15 @@
 </div>
 
   <div id="sideMenu">
-    <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="nova"
-      style="width: 80%; max-width: 400px; height: auto; border-radius: 30px; display: block; margin: 0 auto;">
-    <h5> <a href="hakkında.html" style="color: #4f04ff;"> NOVA HAKKINDA
-      </a> </h5>
-    <h3>💬 Nova Chat</h3>
     <button id="newChatBtn">➕ Yeni Sohbet</button>
     <div id="menu"></div>
-    <button id="themeToggle">🌙 Tema Değiştir</button> <br> <button id="themeToggle"
-      onclick="window.location.href=('sesli.html')">🎙️Sesli Mod</button> <br> <br>
-    <button id="themeToggle" onclick="window.location.href=('live.html')">🔴NoVa Live</button>
-    <button id="themeToggle" onclick="openSettings()">⚙️ Nova Ayarları</button>
-  </div>
+    <p></p>
+    <button id="themeToggle">🌙 Tema Değiştir</button> 
+    <p></p>
+    <button class="menu-nav-btn" onclick="window.location.href='sesli.html'">🎙️ Sesli Mod</button> <br>
+    <button class="menu-nav-btn" onclick="window.location.href='live.html'">🔴 NoVa Live</button> <br>
+    <button class="menu-nav-btn" onclick="openSettings()">⚙️ Nova Ayarları</button> <br>
+</div>
   <div id="dragHandle"></div>
 
   <div id="mainContent">
@@ -113,14 +112,12 @@
       <div style="display:flex; align-items:center;">
         <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="Nova Logo">
         💬 Nova Chat
-        <h4 style="color: #d32f2f;"> <a
-            href="commingsoon.html">NOVAX !</a> </h4>
       </div>
       <span id="novaStatus">Hazır</span>
     </header>
     <div id="chatsContainer"></div>
     <div id="inputArea">
-      <textarea id="input" placeholder="Ask The Nova...🚀" autocomplete="off" rows="1"></textarea>
+      <textarea id="input" placeholder="NoVa'ya Sor ..." autocomplete="off" rows="1"></textarea>
       <button type="button" class="sendBtn" id="sendBtn">↑</button>
       <button type="button" class="sendBtn" id="stopBtn">Durdur</button>
     </div>
@@ -137,8 +134,6 @@
   <script src="chat.js"></script>
 
 </body>
-<link rel="manifest" href="/manifest.json">
-
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
