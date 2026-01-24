@@ -339,61 +339,122 @@
         </a>
     </nav>
 
-    <script>
-    /* =====================================================
-       KULLANICI VE AUTH
-    ===================================================== */
-    function getNovaUser() { return localStorage.getItem("nova_user"); }
-    function setNovaUser(name) { localStorage.setItem("nova_user", name); }
-    function clearNovaUser() { localStorage.removeItem("nova_user"); }
+ <script type="module">
+/* =====================================================
+   AUTH / KULLANICI
+===================================================== */
+function getNovaUser() {
+    return localStorage.getItem("nova_user");
+}
+function setNovaUser(name) {
+    localStorage.setItem("nova_user", name);
+}
+function clearNovaUser() {
+    localStorage.removeItem("nova_user");
+}
 
-    function updateAuthUI() {
-        const user = getNovaUser();
-        const box = document.getElementById("auth-container");
+function updateAuthUI() {
+    const user = getNovaUser();
+    const box = document.getElementById("auth-container");
 
-        if (user) {
-            box.innerHTML = `
-                <h1 class="glow-title">Tekrar Merhaba,<br>${user}</h1>
-                <p class="sub-text">Nova senin için hazır. Maceraya kaldığın yerden devam et.</p>
-                <div style="margin-top:30px; display:flex; gap:15px; justify-content:center; flex-wrap:wrap;">
-                    <button class="action-btn" onclick="goLink('chat.html')">Sohbete Başla</button>
-                    <button class="action-btn" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2)" onclick="logout()">Çıkış</button>
-                </div>
-            `;
-        } else {
-            box.innerHTML = `
-                <h2 class="glow-title" style="font-size:2.8rem">Kimlik Doğrulama</h2>
-                <p class="sub-text">Sana isminle hitap edebilmem için lütfen kendini tanıt.</p>
-                <div class="input-group">
-                    <input id="nameInput" class="nova-input" placeholder="İsminiz..." autocomplete="off" onkeypress="handleEnter(event)">
-                    <button class="action-btn" onclick="login()">Giriş Yap</button>
-                </div>
-            `;
-        }
+    if (!box) return;
+
+    if (user) {
+        box.innerHTML = `
+            <h1 class="glow-title">Tekrar Merhaba,<br>${user}</h1>
+            <p class="sub-text">Nova senin için hazır.</p>
+            <div style="margin-top:30px; display:flex; gap:15px; justify-content:center; flex-wrap:wrap;">
+                <button class="action-btn" onclick="goLink('chat.html')">Sohbete Başla</button>
+                <button class="action-btn" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2)" onclick="logout()">Çıkış</button>
+            </div>
+        `;
+    } else {
+        box.innerHTML = `
+            <h2 class="glow-title" style="font-size:2.8rem">Kimlik Doğrulama</h2>
+            <p class="sub-text">Sana isminle hitap edebilmem için lütfen kendini tanıt.</p>
+            <div class="input-group">
+                <input id="nameInput" class="nova-input" placeholder="İsminiz..." autocomplete="off">
+                <button class="action-btn" onclick="login()">Giriş Yap</button>
+            </div>
+        `;
+    }
+}
+
+window.login = function () {
+    const input = document.getElementById("nameInput");
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) return;
+    setNovaUser(val);
+    updateAuthUI();
+};
+
+window.logout = function () {
+    clearNovaUser();
+    updateAuthUI();
+};
+
+window.goLink = function (url) {
+    window.location.href = url;
+};
+
+/* =====================================================
+   FIREBASE PUSH (ASİL MEVZU 🔥)
+===================================================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDqQAHCB2MizgN5Id5Ezfr3UPE1P3UlSS8",
+    authDomain: "nova-329c7.firebaseapp.com",
+    projectId: "nova-329c7",
+    storageBucket: "nova-329c7.firebasestorage.app",
+    messagingSenderId: "284547967902",
+    appId: "1:284547967902:web:7dd2e64d1a643a30e5c48f"
+};
+
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
+
+async function registerPush() {
+    if (!("serviceWorker" in navigator)) {
+        console.warn("Service Worker yok");
+        return;
     }
 
-    function login() {
-        const val = document.getElementById("nameInput").value.trim();
-        if (!val) return;
-        setNovaUser(val);
-        updateAuthUI();
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+        console.warn("Bildirim izni verilmedi");
+        return;
     }
 
-    function logout() {
-        clearNovaUser();
-        updateAuthUI();
+    const token = await getToken(messaging, {
+        vapidKey: "BDMDVEtUfabWh6LAnM15zLGcK2R-1kxuSvjwegdx0q-I46l9GnBSSKimwAoIxUhOxh5QtRxAtt0Hj9PBl19qlxU"
+    });
+
+    if (!token) {
+        console.warn("FCM token alınamadı");
+        return;
     }
 
-    function handleEnter(e) {
-        if(e.key === 'Enter') login();
-    }
+    console.log("📱 FCM TOKEN:", token);
 
-    function goLink(url) {
-        window.location.href = url;
-    }
+    // Token backend'e gönder
+    await fetch("https://nova-chat-d50f.onrender.com/register-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+    });
+}
 
-    window.onload = updateAuthUI;
-    </script>
+/* =====================================================
+   BAŞLAT
+===================================================== */
+window.addEventListener("load", () => {
+    updateAuthUI();
+    registerPush();
+});
+</script>
 
 </body>
 </html>
