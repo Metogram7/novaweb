@@ -2,7 +2,7 @@
     --primary: #00f2ea;
     --secondary: #ff0050;
     --bg-grad: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    --panel-bg: rgba(20, 20, 35, 0.9);
+    --panel-bg: rgba(20, 20, 35, 0.95);
 }
 
 * { box-sizing: border-box; }
@@ -12,50 +12,43 @@ body {
     background: var(--bg-grad);
     color: #fff;
     margin: 0;
-    /* Mobil tarayıcılar için dinamik yükseklik */
-    height: 100vh;
     height: 100dvh; 
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-/* --- HEADER --- */
 header {
     padding: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(0,0,0,0.2);
-    flex-shrink: 0;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
 .brand { font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; color: var(--primary); }
 #settingsBtn { background: none; border: none; color: white; font-size: 1.4rem; cursor: pointer; }
 
-/* --- AYARLAR --- */
 #settingsPanel {
     position: absolute;
-    top: 60px; right: 10px; left: 10px;
+    top: 70px; right: 10px; left: 10px;
     max-width: 400px;
     margin: 0 auto;
     background: var(--panel-bg);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(15px);
     padding: 20px;
-    border-radius: 15px;
-    transform: translateY(-20px);
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.3s;
+    border-radius: 20px;
+    display: none;
     z-index: 100;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(0, 242, 234, 0.3);
 }
-#settingsPanel.active { transform: translateY(0); opacity: 1; pointer-events: all; }
-.setting-group { margin-bottom: 15px; }
-.setting-group label { display: block; color: #aaa; margin-bottom: 5px; }
-select, input[type=range] { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #222; color: white; }
 
-/* --- CHAT ALANI --- */
+#settingsPanel.active { display: block; }
+.setting-group { margin-bottom: 15px; }
+.setting-group label { display: block; color: #aaa; margin-bottom: 8px; font-size: 0.9rem; }
+select, input[type=range] { width: 100%; padding: 10px; border-radius: 10px; border: none; background: #1a1a2e; color: white; }
+
 #chatContainer {
     flex: 1;
     overflow-y: auto;
@@ -63,90 +56,46 @@ select, input[type=range] { width: 100%; padding: 10px; border-radius: 8px; bord
     display: flex;
     flex-direction: column;
     gap: 15px;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch; /* iOS smooth scroll */
 }
 
 .message {
     max-width: 85%;
-    padding: 15px;
-    border-radius: 20px;
+    padding: 15px 20px;
+    border-radius: 22px;
     line-height: 1.5;
     word-wrap: break-word;
     font-size: 1rem;
-    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: popIn 0.3s ease-out;
 }
 
-@keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* FOSFORLU KALEM EFEKTİ */
+.highlight {
+    background: linear-gradient(120deg, rgba(0, 242, 234, 0.2) 0%, rgba(0, 242, 234, 0.5) 100%);
+    color: #fff;
+    padding: 2px 6px;
+    margin: 0 2px;
+    border-radius: 4px;
+    font-weight: 600;
+    border-bottom: 2px solid var(--primary);
+    text-shadow: 0 0 5px rgba(0, 242, 234, 0.5);
+}
 
-.nova { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 5px; }
+.nova { align-self: flex-start; background: rgba(255,255,255,0.08); border-bottom-left-radius: 5px; }
 .user { align-self: flex-end; background: linear-gradient(135deg, var(--primary), #00c6ff); color: #000; border-bottom-right-radius: 5px; font-weight: 500; }
 
-/* --- GÖRSELLEŞTİRİCİ --- */
-#visContainer {
-    height: 120px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    flex-shrink: 0;
-}
+@keyframes popIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-.ai-core {
-    width: 60px; height: 60px;
-    border-radius: 50%;
-    background: white;
-    box-shadow: 0 0 20px var(--primary);
-    transition: 0.3s;
-    z-index: 2;
-}
+#visContainer { height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ai-core { width: 55px; height: 55px; border-radius: 50%; background: #fff; box-shadow: 0 0 25px var(--primary); transition: 0.4s; }
 
-/* Durum Efektleri */
-body.listening .ai-core { background: var(--secondary); transform: scale(1.1); box-shadow: 0 0 30px var(--secondary); }
-body.processing .ai-core { background: #ffd700; animation: spin 1s infinite linear; }
+body.listening .ai-core { background: var(--secondary); box-shadow: 0 0 35px var(--secondary); transform: scale(1.15); }
 body.speaking .ai-core { background: #b000ff; animation: pulse 0.5s infinite alternate; }
 
-@keyframes spin { 100% { transform: rotate(360deg); } }
-@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.2); box-shadow: 0 0 40px #b000ff; } }
+@keyframes pulse { from { transform: scale(1); box-shadow: 0 0 15px #b000ff; } to { transform: scale(1.25); box-shadow: 0 0 45px #b000ff; } }
 
-#statusText { margin-top: 15px; font-size: 0.8rem; letter-spacing: 2px; color: #888; text-transform: uppercase; }
+#statusText { margin-top: 15px; font-size: 0.75rem; letter-spacing: 2px; color: #777; text-transform: uppercase; font-weight: bold; }
 
-/* --- KONTROLLER --- */
-#controls {
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    background: rgba(0,0,0,0.3);
-    flex-shrink: 0;
-    /* Butonların mobilde sıkışmasını engelle */
-    flex-wrap: wrap; 
-}
-
-.btn {
-    border: none;
-    padding: 15px 30px;
-    border-radius: 50px;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: transform 0.2s;
-    min-width: 140px;
-    justify-content: center;
-}
-
-#talkBtn { background: var(--primary); color: #000; box-shadow: 0 5px 15px rgba(0,242,234,0.3); }
-#talkBtn:active { transform: scale(0.95); }
-
-#stopBtn { background: rgba(255, 0, 0, 0.1); color: rgb(255, 255, 255); border: 1px solid rgba(255,255,255,0.2); }
-
-/* --- MOBİL İYİLEŞTİRMELER --- */
-@media (max-height: 600px) {
-    #visContainer { height: 80px; }
-    .ai-core { width: 40px; height: 40px; }
-    #chatContainer { padding: 10px; }
-}
+#controls { padding: 25px; display: flex; justify-content: center; gap: 15px; background: rgba(0,0,0,0.2); }
+.btn { border: none; padding: 15px 35px; border-radius: 50px; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
+#talkBtn { background: var(--primary); color: #000; box-shadow: 0 10px 20px rgba(0,242,234,0.2); }
+#stopBtn { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
