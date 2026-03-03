@@ -449,7 +449,16 @@ function renderMenu() {
 }
 
 // ------------------------------------
-// MESAJ GÖNDERME
+// SUNUCU UYANDIRMA (Render cold start)
+// ------------------------------------
+async function warmUpServer() {
+    try {
+        await fetch(`${BACKEND_URL.replace('/api', '/')}`, { method: "GET", mode: "no-cors" });
+    } catch (e) { /* sessizce hata al */ }
+}
+
+// ------------------------------------
+// MESAJ GÖNDERME (retry + cold start destekli)
 // ------------------------------------
 async function sendMessage(msg = null) {
     if (sending) return;
@@ -462,51 +471,104 @@ async function sendMessage(msg = null) {
     if (!chatDiv) { sending = false; return; }
     addMessage(text, "user", chatDiv);
     updateChatBtnLabel(document.querySelector(`button[data-id="${currentChat}"]`), text);
+
     const typingDiv = document.createElement("div");
     typingDiv.className = "msg nova typing-indicator";
     typingDiv.innerHTML = '<div class="message-content">Nova düşünüyor... <span class="loader"></span></div>';
     chatDiv.appendChild(typingDiv);
     chatDiv.scrollTop = chatDiv.scrollHeight;
+
     const novaStatus = document.getElementById("novaStatus");
     if (novaStatus) novaStatus.textContent = "Nova düşünüyor...";
+
     abortController = new AbortController();
-    try {
-        const payload = {
-            userId, currentChat, message: text, userInfo,
-            systemPrompt: appSettings.customInstructions || "",
-            settings: appSettings
-        };
-        const res = await fetch(`${BACKEND_URL}/chat`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-            signal: abortController.signal
-        });
-        const data = await res.json();
-        typingDiv.remove();
-        if (data.response) {
-            await addTypingMessage(data.response, "nova", chatDiv);
-        } else {
-            showErrorMessage("Boş yanıt alındı.", text);
+
+    const payload = {
+        userId, currentChat, message: text, userInfo,
+        systemPrompt: appSettings.customInstructions || "",
+        settings: appSettings
+    };
+
+    const MAX_RETRIES = 3;
+    const TIMEOUT_MS = 70000; // Render cold start için 70 saniye
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        // Her denemede yeni bir AbortController + timeout oluştur
+        const timeoutId = setTimeout(() => abortController.abort(), TIMEOUT_MS);
+
+        try {
+            if (attempt === 2) {
+                typingDiv.querySelector(".message-content").textContent = "⏳ Sunucu uyandırılıyor, lütfen bekle...";
+            } else if (attempt === 3) {
+                typingDiv.querySelector(".message-content").textContent = "🔄 Son deneme yapılıyor...";
+            }
+
+            const res = await fetch(`${BACKEND_URL}/chat`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+                signal: abortController.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            typingDiv.remove();
+
+            if (data.response) {
+                await addTypingMessage(data.response, "nova", chatDiv);
+            } else {
+                showErrorMessage("Boş yanıt alındı.", text);
+            }
+
+            if (data.updatedUserInfo) {
+                userInfo = data.updatedUserInfo;
+                localStorage.setItem("nova_user_info_" + userId, JSON.stringify(userInfo));
+            }
+
+            // Başarılı — döngüden çık
+            break;
+
+        } catch (err) {
+            clearTimeout(timeoutId);
+
+            if (err.name === 'AbortError' && attempt < MAX_RETRIES) {
+                abortController = new AbortController();
+                await new Promise(r => setTimeout(r, 1000));
+                continue;
+            }
+
+            typingDiv.remove();
+
+            if (err.name === 'AbortError' && !sending) {
+                showToast("⚠️ İşlem durduruldu.");
+                addMessage("🛑 İşlem durduruldu.", "nova", chatDiv);
+            } else {
+                // Hata tipini teşhis et
+                let diagnosis = "";
+                if (err.message === "Failed to fetch" || err.message === "Load failed" || err.message === "NetworkError when attempting to fetch resource.") {
+                    diagnosis = "🔴 CORS veya ağ hatası — tarayıcı sunucuya bağlanamıyor. F12 → Console'a bak, kırmızı hata satırını paylaş.";
+                } else if (err.name === 'AbortError') {
+                    diagnosis = "⏱️ Sunucu 70 saniyede cevap vermedi (timeout).";
+                } else if (err.message.includes("JSON")) {
+                    diagnosis = "📄 Sunucu cevap verdi ama JSON formatı bozuk.";
+                } else {
+                    diagnosis = `❓ ${err.name}: ${err.message}`;
+                }
+                console.error(`[Nova] Deneme ${attempt}:`, err);
+                showErrorMessage(diagnosis, text);
+            }
+            break;
         }
-        if (data.updatedUserInfo) {
-            userInfo = data.updatedUserInfo;
-            localStorage.setItem("nova_user_info_" + userId, JSON.stringify(userInfo));
-        }
-    } catch (err) {
-        typingDiv.remove();
-        if (err.name === 'AbortError') {
-            showToast("⚠️ İşlem durduruldu.");
-            addMessage("🛑 *İşlem durduruldu.*", "nova", chatDiv);
-        } else {
-            console.error(err);
-            showErrorMessage("Bağlantı hatası: " + err.message, text);
-        }
-    } finally {
-        sending = false;
-        if (novaStatus) novaStatus.textContent = "Hazır";
-        abortController = null;
     }
+
+    sending = false;
+    if (novaStatus) novaStatus.textContent = "Hazır";
+    abortController = null;
 }
 
 // ------------------------------------
@@ -631,6 +693,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // Bildirim izni
     window.addEventListener('load', initNovaNotifications);
+
+    // Render sunucusunu önceden uyandır (cold start önleme)
+    warmUpServer();
 
     // --- DOM Elemanları ---
     const sideMenu = document.getElementById("sideMenu");
