@@ -817,7 +817,7 @@ const emojiPicker = document.getElementById("emojiPicker");
 const newChatBtn = document.getElementById("newChatBtn");
 const themeToggle = document.getElementById("themeToggle");
 const toast = document.getElementById("toast");
-const BACKEND_URL = 'https://nova-chat-d50f.onrender.com/api';
+// BACKEND_URL yukarıda tanımlandı (satır ~135)
 
 menuToggle.onclick = () => { sideMenu.classList.toggle("active"); };
 
@@ -1059,56 +1059,6 @@ function addDownloadButton(div) {
 }
 
 // Mesaj gönderme
-async function sendMessage(msg = null) {
-    if (sending) return;
-    sending = true;
-
-    const text = msg || input.value.trim();
-    if (!text) { sending = false; return; }
-    input.value = "";
-
-    const chatDiv = document.getElementById(currentChat);
-    if (!chatDiv) { sending = false; return; }
-
-    // Kullanıcı mesajı
-    addMessage(text, "user", chatDiv);
-
-    // Nova yazıyor...
-    const typingDiv = addMessage("Nova yazıyor...", "nova", chatDiv);
-    novaStatus.textContent = "Nova yazıyor...";
-
-    try {
-        const resHist = await fetch(`${BACKEND_URL}/history?userId=${userId}`);
-        const historyData = await resHist.json();
-        const chatHistory = historyData[currentChat] || [];
-
-        const res = await fetch(`${BACKEND_URL}/chat`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, currentChat, message: text, userInfo, history: chatHistory })
-        });
-
-        const data = await res.json();
-        typingDiv.remove();
-
-        // Nova cevabı (her şey düz metin)
-        await addTypingMessage(data.response || "⚠️ Hata", "nova", chatDiv);
-
-        if (data.updatedUserInfo) {
-            userInfo = data.updatedUserInfo;
-            localStorage.setItem("nova_user_info_" + userId, JSON.stringify(userInfo));
-        }
-
-    } catch (err) {
-        typingDiv.textContent = "Bağlantı hatası 🚫";
-        console.error(err);
-    }
-
-    novaStatus.textContent = "Hazır";
-    sending = false;
-}
-
-
 // Event listener
 input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 sendBtn.addEventListener("click", e => { e.preventDefault(); sendMessage(); });
