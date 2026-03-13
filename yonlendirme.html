@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --c1: #0a0014;
+    --c2: #0d001f;
+    --neon: #b94cff;
+    --cyan: #00f0ff;
+    --gold: #ffd166;
+    --glow: 0 0 20px #b94cff88, 0 0 60px #b94cff33;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--c1);
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CUSTOM CURSOR */
+  .cursor {
+    position: fixed; top: 0; left: 0; z-index: 9999;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #b94cff, #00f0ff);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: transform .1s;
+    box-shadow: 0 0 16px #b94cffaa;
+    mix-blend-mode: screen;
+  }
+  .cursor-ring {
+    position: fixed; top: 0; left: 0; z-index: 9998;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1.5px solid #b94cff66;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: transform .18s ease, width .2s, height .2s;
+  }
+
+  /* CANVAS STARS */
+  #stars { position: fixed; inset: 0; z-index: 0; }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; opacity: .35;
+  }
+
+  /* GRADIENT MESH BG */
+  .mesh {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, #3b006944 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, #00ccff22 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 50% 50%, #1a003366 0%, transparent 80%);
+    animation: meshPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes meshPulse {
+    from { opacity: 1; }
+    to { opacity: .7; }
+  }
+
+  /* HEADER */
+  header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    padding: 48px 20px 0;
+    flex-direction: column;
+    animation: fadeDown .9s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-40px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo-wrap {
+    position: relative;
+    width: 110px; height: 110px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-wrap::before {
+    content: '';
+    position: absolute; inset: -10px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #b94cff, #00f0ff, #ffd166, #b94cff);
+    animation: spin 4s linear infinite;
+    opacity: .7;
+    filter: blur(4px);
+  }
+  .logo-wrap::after {
+    content: '';
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    background: var(--c1);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .logo-img {
+    position: relative; z-index: 2;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .logo-fallback {
+    position: relative; z-index: 2;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #b94cff, #00f0ff);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px; font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 20px #fff;
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2.8rem, 8vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: .15em;
+    margin-top: 24px;
+    background: linear-gradient(90deg, #b94cff, #00f0ff, #ffd166, #b94cff);
+    background-size: 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 4s linear infinite;
+    text-shadow: none;
+  }
+  @keyframes shimmer { to { background-position: 300% center; } }
+
+  .tagline {
+    font-size: clamp(.9rem, 2.5vw, 1.3rem);
+    letter-spacing: .4em;
+    color: #7fd4e8;
+    margin-top: 8px;
+    text-transform: uppercase;
+    opacity: .85;
+    animation: fadeDown .9s .3s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  /* DIVIDER */
+  .divider {
+    position: relative; z-index: 10;
+    width: min(500px, 90%);
+    height: 1px;
+    margin: 36px auto;
+    background: linear-gradient(90deg, transparent, #b94cff88, #00f0ff88, transparent);
+    animation: fadeIn 1s .5s both;
+  }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+  /* MAIN SECTION */
+  main {
+    position: relative; z-index: 10;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* LINK CARDS */
+  .link-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px 28px;
+    border-radius: 16px;
+    text-decoration: none;
+    color: #fff;
+    overflow: hidden;
+    transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s;
+    animation: slideUp .7s cubic-bezier(.22,1,.36,1) both;
+    border: 1px solid transparent;
+  }
+  .link-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--card-bg, rgba(185,76,255,.08));
+    border-radius: 16px;
+    transition: opacity .3s;
+    z-index: 0;
+  }
+  .link-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 16px;
+    border: 1px solid var(--card-border, rgba(185,76,255,.3));
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .link-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: var(--card-glow, 0 8px 40px #b94cff44);
+  }
+  .link-card:hover::after {
+    border-color: var(--card-border-h, #b94cff);
+    box-shadow: inset 0 0 20px var(--card-inner, #b94cff22);
+  }
+
+  /* SHINE SWEEP */
+  .link-card .shine {
+    position: absolute; top: 0; left: -100%; width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+    transform: skewX(-20deg);
+    transition: left .5s;
+    z-index: 1;
+  }
+  .link-card:hover .shine { left: 160%; }
+
+  .card-icon {
+    position: relative; z-index: 2;
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+    background: var(--icon-bg, rgba(185,76,255,.15));
+    box-shadow: 0 0 16px var(--icon-glow, #b94cff44);
+    transition: box-shadow .3s;
+  }
+  .link-card:hover .card-icon {
+    box-shadow: 0 0 30px var(--icon-glow, #b94cff88);
+  }
+
+  .card-icon img { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; }
+  .card-icon svg { width: 28px; height: 28px; }
+
+  .card-text { position: relative; z-index: 2; flex: 1; }
+  .card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    line-height: 1.2;
+  }
+  .card-sub {
+    font-size: .85rem;
+    color: #9ecfdf;
+    letter-spacing: .04em;
+    margin-top: 2px;
+  }
+
+  .card-arrow {
+    position: relative; z-index: 2;
+    font-size: 1.3rem;
+    opacity: .5;
+    transition: opacity .3s, transform .3s;
+  }
+  .link-card:hover .card-arrow { opacity: 1; transform: translateX(6px); }
+
+  /* CARD DELAYS */
+  .link-card:nth-child(1) { animation-delay: .4s; }
+  .link-card:nth-child(2) { animation-delay: .5s; }
+  .link-card:nth-child(3) { animation-delay: .6s; }
+  .link-card:nth-child(4) { animation-delay: .7s; }
+  .link-card:nth-child(5) { animation-delay: .8s; }
+  .link-card:nth-child(6) { animation-delay: .9s; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* INDIVIDUAL CARD THEMES */
+  .card-playstore {
+    --card-bg: rgba(1,135,75,.1);
+    --card-border: rgba(1,200,100,.25);
+    --card-border-h: #01de78;
+    --card-inner: rgba(1,200,100,.1);
+    --card-glow: 0 8px 40px rgba(1,200,100,.25);
+    --icon-bg: rgba(1,200,100,.15);
+    --icon-glow: rgba(1,200,100,.6);
+  }
+  .card-youtube {
+    --card-bg: rgba(255,0,0,.08);
+    --card-border: rgba(255,60,60,.25);
+    --card-border-h: #ff3c3c;
+    --card-inner: rgba(255,0,0,.1);
+    --card-glow: 0 8px 40px rgba(255,0,0,.25);
+    --icon-bg: rgba(255,30,30,.15);
+    --icon-glow: rgba(255,50,50,.6);
+  }
+  .card-website {
+    --card-bg: rgba(0,180,255,.08);
+    --card-border: rgba(0,200,255,.25);
+    --card-border-h: #00e0ff;
+    --card-inner: rgba(0,200,255,.1);
+    --card-glow: 0 8px 40px rgba(0,200,255,.25);
+    --icon-bg: rgba(0,200,255,.15);
+    --icon-glow: rgba(0,220,255,.6);
+  }
+  .card-instagram {
+    --card-bg: rgba(200,50,150,.08);
+    --card-border: rgba(230,80,180,.25);
+    --card-border-h: #e950c8;
+    --card-inner: rgba(200,50,150,.1);
+    --card-glow: 0 8px 40px rgba(200,50,150,.3);
+    --icon-bg: rgba(200,50,150,.15);
+    --icon-glow: rgba(230,80,180,.6);
+  }
+  .card-tiktok {
+    --card-bg: rgba(0,240,180,.06);
+    --card-border: rgba(0,240,180,.2);
+    --card-border-h: #00f0b4;
+    --card-inner: rgba(0,240,180,.08);
+    --card-glow: 0 8px 40px rgba(0,240,180,.2);
+    --icon-bg: rgba(0,240,180,.12);
+    --icon-glow: rgba(0,240,180,.6);
+  }
+  .card-telegram {
+    --card-bg: rgba(34,158,217,.08);
+    --card-border: rgba(34,158,217,.25);
+    --card-border-h: #29b6f6;
+    --card-inner: rgba(34,158,217,.1);
+    --card-glow: 0 8px 40px rgba(34,158,217,.3);
+    --icon-bg: rgba(34,158,217,.15);
+    --icon-glow: rgba(34,158,217,.6);
+  }
+  .card-x {
+    --card-bg: rgba(185,76,255,.08);
+    --card-border: rgba(185,76,255,.25);
+    --card-border-h: #b94cff;
+    --card-inner: rgba(185,76,255,.1);
+    --card-glow: 0 8px 40px rgba(185,76,255,.3);
+    --icon-bg: rgba(185,76,255,.15);
+    --icon-glow: rgba(185,76,255,.6);
+  }
+
+  /* FOOTER */
+  footer {
+    position: relative; z-index: 10;
+    text-align: center;
+    padding: 24px 0 40px;
+    font-size: .78rem;
+    letter-spacing: .2em;
+    color: #ffffff33;
+    text-transform: uppercase;
+  }
+
+  /* FLOATING PARTICLES */
+  .particle {
+    position: fixed;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    animation: floatUp linear infinite;
+    opacity: 0;
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+    10%  { opacity: .6; }
+    90%  { opacity: .3; }
+    100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+  }
+
+  /* RIPPLE */
+  .ripple {
+    position: fixed; pointer-events: none; z-index: 9997;
+    border-radius: 50%;
+    background: radial-gradient(circle, #b94cff44, transparent 70%);
+    animation: rippleOut .6s ease-out forwards;
+  }
+  @keyframes rippleOut {
+    from { width: 0; height: 0; opacity: 1; transform: translate(-50%,-50%); }
+    to   { width: 120px; height: 120px; opacity: 0; transform: translate(-50%,-50%); }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="ring"></div>
+
+<canvas id="stars"></canvas>
+<div class="mesh"></div>
+
+<!-- Floating particles -->
+<div id="particles"></div>
+
+<header>
+  <div class="logo-wrap">
+    <div class="logo-fallback" id="logoFallback">N</div>
+  </div>
+  <h1>NOVA AI</h1>
+  <p class="tagline">Yapay Zeka · Yaratıcılık · Gelecek</p>
+</header>
+
+<div class="divider"></div>
+
+<main>
+
+  <!-- Play Store -->
+  <a href="https://play.google.com/store/apps/details?id=com.novawebb.app" target="_blank" class="link-card card-playstore">
+    <div class="shine"></div>
+    <div class="card-icon">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M3 20.5v-17c0-.9 1-1.4 1.7-.8l14 8.5c.7.4.7 1.4 0 1.8l-14 8.5C3.9 21.9 3 21.4 3 20.5z" fill="#01de78"/>
+      </svg>
+    </div>
+    <div class="card-text">
+      <div class="card-title">Google Play Store</div>
+      <div class="card-sub">Nova AI Uygulamasını İndir</div>
+    </div>
+    <span class="card-arrow">›</span>
+  </a>
+
+  <!-- YouTube -->
+  <a href="https://www.youtube.com/@AI_Nova_AI" target="_blank" class="link-card card-youtube">
+    <div class="shine"></div>
+    <div class="card-icon">
+      <svg viewBox="0 0 24 24" fill="#ff3c3c">
+        <path d="M22.5 6.5a2.8 2.8 0 00-1.97-1.97C18.76 4 12 4 12 4s-6.76 0-8.53.53A2.8 2.8 0 001.5 6.5C1 8.27 1 12 1 12s0 3.73.5 5.5a2.8 2.8 0 001.97 1.97C5.24 20 12 20 12 20s6.76 0 8.53-.53a2.8 2.8 0 001.97-1.97C23 15.73 23 12 23 12s0-3.73-.5-5.5z"/>
+        <path d="M9.75 15.02V8.98L15.5 12l-5.75 3.02z" fill="#fff"/>
+      </svg>
+    </div>
+    <div class="card-text">
+      <div class="card-title">YouTube</div>
+      <div class="card-sub">@AI_Nova_AI · Video İçerikler</div>
+    </div>
+    <span class="card-arrow">›</span>
+  </a>
+
+  <!-- Website -->
+  <a href="https://novawebb.com" target="_blank" class="link-card card-website">
+    <div class="shine"></div>
+    <div class="card-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#00e0ff" stroke-width="1.8">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
+      </svg>
+    </div>
+    <div class="card-text">
+      <div class="card-title">NovaWebb</div>
+      <div class="card-sub">novawebb.com · Resmi Web Sitesi</div>
+    </div>
+    <span class="card-arrow">›</span>
+  </a>
+
+  <!-- Instagram -->
+  <a href="https://www.instagram.com/nova_ai9/" target="_blank" class="link-card card-instagram">
+    <div class="shine"></div>
+    <div class="card-icon">
+      <svg viewBox="0 0 24 24" fill="none">
+        <defs>
+          <linearGradient id="ig" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#f09433"/>
+            <stop offset=".25" stop-color="#e6683c"/>
+            <stop offset=".5" stop-color="#dc2743"/>
+            <stop offset=".75" stop-color="#cc2366"/>
+            <stop offset="1" stop-color="#bc1888"/>
+          </linearGradient>
+        </defs>
+        <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#ig)"/>
+        <circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.8"/>
+        <circle cx="17.5" cy="6.5" r="1" fill="#fff"/>
+      </svg>
+    </div>
+    <div class="card-text">
+      <div class="card-title">Instagram</div>
+      <div class="card-sub">@nova_ai9 · Takip Et</div>
+    </div>
+    <span class="card-arrow">›</span>
+  </a>
+
+  <!-- TikTok -->
+  <a href="https://www.tiktok.com/@nova_ai81" target="_blank" class="link-card card-tiktok">
+    <div class="shine"></div>
+    <div class="card-icon">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.79 1.54V6.79a4.85 4.85 0 01-1.02-.1z" fill="#00f0b4"/>
+      </svg>
+    </div>
+    <div class="card-text">
+      <div class="card-title">TikTok</div>
+      <div class="card-sub">@nova_ai81 · Kısa Videolar</div>
+    </div>
+    <span class="card-arrow">›</span>
+  </a>
+
+  <!-- Telegram -->
+  <a href="https://web.telegram.org/a/#8252784018" target="_blank" class="link-card card-telegram">
+    <div class="shine"></div>
+    <div class="card-icon">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#229ED9"/>
+        <path d="M17.5 7.5l-2.5 11-3.5-3.5-2 2-1-4.5L17.5 7.5z" fill="#fff" opacity=".3"/>
+        <path d="M5.5 11.5l11-4.5-1.5 10-3.5-3-2.5 2.5 1-4.5-4.5-.5z" fill="#fff"/>
+        <path d="M10.5 13.5l-.5 3.5 1.5-1.5" fill="#d6e8f5"/>
+      </svg>
+    </div>
+    <div class="card-text">
+      <div class="card-title">Telegram Bot</div>
+      <div class="card-sub">Nova AI Bot · Hemen Başla</div>
+    </div>
+    <span class="card-arrow">›</span>
+  </a>
+
+  <!-- X (Twitter) -->
+  <a href="https://x.com/NoVaAI182147" target="_blank" class="link-card card-x">
+    <div class="shine"></div>
+    <div class="card-icon">
+      <svg viewBox="0 0 24 24" fill="#b94cff">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+      </svg>
+    </div>
+    <div class="card-text">
+      <div class="card-title">X (Twitter)</div>
+      <div class="card-sub">@NoVaAI182147 · Son Güncellemeler</div>
+    </div>
+    <span class="card-arrow">›</span>
+  </a>
+
+</main>
+
+<footer>© 2025 Nova AI &nbsp;·&nbsp; All Rights Reserved</footer>
+
+<script>
+// ── CURSOR ──────────────────────────────────────────
+const cur = document.getElementById('cur');
+const ring = document.getElementById('ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+(function animCursor() {
+  cur.style.left = mx + 'px'; cur.style.top = my + 'px';
+  rx += (mx - rx) * .12; ry += (my - ry) * .12;
+  ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+  requestAnimationFrame(animCursor);
+})();
+
+// ripple on click
+document.addEventListener('click', e => {
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  r.style.left = e.clientX + 'px'; r.style.top = e.clientY + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 700);
+});
+
+// ── CANVAS STARS ────────────────────────────────────
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+let stars = [];
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', () => { resize(); initStars(); });
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 200; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.4 + .2,
+      a: Math.random(),
+      speed: Math.random() * .004 + .001,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+}
+initStars();
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    const alpha = s.a * (.5 + .5 * Math.sin(t * s.speed * 1000 + s.phase));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(180,200,255,${alpha})`;
+    ctx.fill();
+  });
+}
+
+let last = 0;
+(function animStars(t) {
+  if (t - last > 16) { drawStars(t); last = t; }
+  requestAnimationFrame(animStars);
+})();
+
+// ── FLOATING PARTICLES ──────────────────────────────
+const pColors = ['#b94cff','#00f0ff','#ffd166','#ff70d0','#00ff99'];
+const pCont = document.getElementById('particles');
+function makeParticle() {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = Math.random() * 3 + 1.5;
+  p.style.cssText = `
+    left: ${Math.random() * 100}vw;
+    width: ${size}px; height: ${size}px;
+    background: ${pColors[Math.floor(Math.random() * pColors.length)]};
+    box-shadow: 0 0 8px currentColor;
+    animation-duration: ${Math.random() * 12 + 8}s;
+    animation-delay: ${Math.random() * 10}s;
+  `;
+  pCont.appendChild(p);
+  setTimeout(() => p.remove(), 22000);
+}
+for (let i = 0; i < 25; i++) setTimeout(makeParticle, i * 400);
+setInterval(makeParticle, 800);
+
+// ── LOGO IMAGE TRY-LOAD ─────────────────────────────
+// Attempt to load logo from known path
+const imgEl = new Image();
+imgEl.onload = () => {
+  const fb = document.getElementById('logoFallback');
+  const img = document.createElement('img');
+  img.src = 'icons/icon-512.png';
+  img.className = 'logo-img';
+  fb.replaceWith(img);
+};
+imgEl.src = 'icons/icon-512.png';
+
+// ── CARD HOVER SOUND (optional) ──────────────────────
+// Just visual polish: scale cursor on hover
+document.querySelectorAll('.link-card').forEach(c => {
+  c.addEventListener('mouseenter', () => {
+    cur.style.transform = 'translate(-50%,-50%) scale(2)';
+    ring.style.width = '60px'; ring.style.height = '60px';
+  });
+  c.addEventListener('mouseleave', () => {
+    cur.style.transform = 'translate(-50%,-50%) scale(1)';
+    ring.style.width = '40px'; ring.style.height = '40px';
+  });
+});
+</script>
+</body>
+</html>
