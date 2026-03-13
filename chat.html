@@ -1,146 +1,697 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova Chat — Tam Sürüm</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <title>Nova AI Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-  <link rel="stylesheet" href="chat.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-
   <link rel="apple-touch-icon" href="icon-512.png">
-  
-  <meta name="theme-color" content="#00bfff">
-</head>
+  <link rel="stylesheet" href="chat.css">
 
+  <!-- Firebase Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+  <style>
+    /* ── Thinking Overlay ── */
+    #thinkingOverlay {
+      display: none;
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15,23,42,0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(56,189,248,0.25);
+      border-radius: 999px;
+      padding: 10px 22px;
+      color: #e2e8f0;
+      font-size: 0.85rem;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      z-index: 800;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      pointer-events: none;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #thinkingOverlay.visible {
+      display: flex;
+      opacity: 1;
+    }
+    #thinkingOverlay .th-dots {
+      display: flex;
+      gap: 4px;
+    }
+    #thinkingOverlay .th-dots span {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #38bdf8;
+      animation: thDot 1.4s infinite ease-in-out both;
+    }
+    #thinkingOverlay .th-dots span:nth-child(2) { animation-delay: 0.16s; }
+    #thinkingOverlay .th-dots span:nth-child(3) { animation-delay: 0.32s; }
+    @keyframes thDot {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1.2); opacity: 1; }
+    }
+
+    /* ── Login Modal ── */
+    #loginModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(10px);
+      z-index: 2000;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    #loginModal.open { display: flex; }
+    .login-sheet {
+      background: var(--bg-2, #1e293b);
+      border-radius: 24px 24px 0 0;
+      padding: 28px 24px 40px;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      animation: slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .login-handle {
+      width: 40px; height: 4px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+    .login-sheet h2 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--text-1, #e2e8f0);
+      margin: 0 0 6px;
+    }
+    .login-sheet p {
+      font-size: 0.84rem;
+      color: var(--text-3, #64748b);
+      margin: 0 0 18px;
+    }
+    .login-benefits {
+      background: rgba(56,189,248,0.07);
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .benefit-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: var(--text-2, #94a3b8);
+    }
+    .benefit-row strong { color: #38bdf8; }
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-bottom: 10px;
+    }
+    .login-btn:active { transform: scale(0.98); }
+    .google-btn {
+      background: #fff;
+      color: #111;
+    }
+    .google-btn img { width: 20px; }
+    .login-divider {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-3, #64748b);
+      margin: 4px 0 10px;
+      position: relative;
+    }
+    .login-divider::before, .login-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 42%;
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+    }
+    .login-divider::before { left: 0; }
+    .login-divider::after  { right: 0; }
+    .login-input {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: var(--text-1, #e2e8f0);
+      font-size: 0.88rem;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    .login-input:focus { border-color: rgba(56,189,248,0.5); }
+    .email-btn {
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      color: #fff;
+    }
+    #loginError {
+      font-size: 0.78rem;
+      color: #ef4444;
+      text-align: center;
+      margin-top: 6px;
+      min-height: 18px;
+    }
+    .login-close-wrap {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 6px;
+    }
+    .login-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-3, #64748b);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    /* ── Auth User Info (sidebar) ── */
+    .sidebar-user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(56,189,248,0.07);
+      border-radius: 12px;
+      margin: 0 8px 8px;
+      border: 1px solid rgba(56,189,248,0.15);
+    }
+    .sidebar-user-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: rgba(56,189,248,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .sidebar-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .sidebar-user-info { flex: 1; min-width: 0; }
+    .sidebar-user-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-1, #e2e8f0);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sidebar-user-badge {
+      font-size: 0.68rem;
+      color: #38bdf8;
+      background: rgba(56,189,248,0.12);
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-top: 2px;
+      display: inline-block;
+    }
+    .sidebar-logout-btn {
+      background: none;
+      border: none;
+      color: var(--text-3, #64748b);
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+      padding: 4px;
+    }
+    .sidebar-logout-btn:hover { color: #ef4444; }
+    .sidebar-login-btn {
+      width: calc(100% - 16px);
+      margin: 0 8px 8px;
+      padding: 11px;
+      background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(99,102,241,0.15));
+      border: 1px solid rgba(56,189,248,0.3);
+      border-radius: 12px;
+      color: #38bdf8;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .sidebar-login-btn:hover {
+      background: linear-gradient(135deg, rgba(56,189,248,0.25), rgba(99,102,241,0.25));
+    }
+
+    /* ── Guest warning banner ── */
+    #guestBanner {
+      display: none;
+      background: linear-gradient(90deg, rgba(245,158,11,0.12), rgba(239,68,68,0.08));
+      border-bottom: 1px solid rgba(245,158,11,0.2);
+      padding: 8px 16px;
+      font-size: 0.78rem;
+      color: #f59e0b;
+      text-align: center;
+      cursor: pointer;
+    }
+    #guestBanner span { text-decoration: underline; margin-left: 4px; }
+
+    /* ── Custom Confirm Dialog ── */
+    #confirmOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      z-index: 3000;
+      justify-content: center;
+      align-items: center;
+    }
+    #confirmOverlay.open { display: flex; }
+    .confirm-box {
+      background: var(--bg-2, #1e293b);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px 28px;
+      max-width: 300px;
+      width: 90%;
+      text-align: center;
+    }
+    .confirm-box p {
+      color: var(--text-1, #e2e8f0);
+      font-size: 0.92rem;
+      margin: 0 0 20px;
+    }
+    .confirm-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .confirm-btns button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .confirm-cancel-btn {
+      background: rgba(255,255,255,0.08);
+      color: var(--text-2, #94a3b8);
+    }
+    .confirm-ok-btn {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    /* ── Typewriter speed label ── */
+    #twSpeedLabel { color: var(--seed, #38bdf8); }
+
+    /* ── Social redirect button in sidebar ── */
+    .sidebar-social-btn {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .sidebar-social-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(185,76,255,0.15), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.5s;
+    }
+    .sidebar-social-btn:hover::before {
+      transform: translateX(100%);
+    }
+    .sidebar-social-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(185,76,255,0.3);
+    }
+  </style>
+</head>
 <body>
 
-
-  <div id="settingsModal">
-    <div class="settings-box">
-        <div class="settings-header">
-            <h3 data-lang="settings_title">⚙️ Nova Ayarları</h3>
-            <button onclick="closeSettings()" class="close-btn">&times;</button>
-        </div>
-        
-        <div class="settings-content">
-            <div class="settings-group">
-                <label data-lang="lbl_language">🌍 Uygulama Dili</label>
-                <select id="languageSelect" onchange="changeLanguage(this.value)">
-                    <option value="tr">Türkçe 🇹🇷</option>
-                    <option value="en">English 🇬🇧</option>
-                </select>
-            </div>
-            <div class="settings-group">
-                <label data-lang="lbl_instructions">🧠 Özel Talimatlar</label>
-                <textarea id="customInstructions" placeholder="Nova'ya rol tanımla (Örn: Bir yazılım uzmanı gibi davran)"></textarea>
-                <small>Nova bu talimatlara göre cevap verir.</small>
-            </div>
-
-            <div class="settings-group">
-                <label data-lang="lbl_memory">💾 Bellek Yönetimi (Hafıza)</label>
-                <textarea id="memoryViewer" style="height: 100px; font-family: 'Courier New', monospace;"></textarea>
-                <small>Nova'nın senin hakkındaki bildiklerini buradan düzenle.</small>
-            </div>
-
-            <div class="settings-group">
-                <label data-lang="lbl_theme_color">🎨 Tema Rengi</label>
-                <input type="color" id="primaryColorPicker">
-            </div>
-
-            <div class="settings-group">
-                <label data-lang="lbl_voice_select">🎙️ Ses Seçimi</label>
-                <select id="voiceSelect"></select>
-            </div>
-            <div class="settings-group">
-                <label data-lang="lbl_voice_sel3ect"href="index.html"><h3> <a href="developer.html"> <u>Geliştirici</u></h3></a> </label>
-            </div>
-        </div>
-        
-        <button onclick="saveSettings()" class="settings-save-btn" data-lang="btn_save">💾 DEĞİŞİKLİKLERİ KAYDET</button>
-    </div>
+<!-- ── Splash ── -->
+<div id="splash-screen">
+  <div class="splash-logo-wrap">
+    <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="Nova" class="spinning-logo">
+  </div>
+  <div class="splash-title">NOVA</div>
+  <div class="splash-sub">INTELLIGENCE</div>
+  <div class="loader-bar-container"><div class="loader-bar-fill"></div></div>
+  <p id="loading-status">Modüller yükleniyor...</p>
 </div>
-  <button id="menuToggle">☰ Menü</button>
 
-  <div id="updateModal" class="modal-overlay">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h2>🎉 Yenilikler & Güncellemeler</h2> <br> <h3>NOVA 2.7w GÜNCELLEMESİNE HOŞGELDİNİZ!</h3>
-        <span class="version-badge" id="modalVersionBadge">v4.2</span>
+<!-- ── Update Modal ── -->
+<div id="updateModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Yenilikler</h2>
+      <h3>Nova v3.2 Güncellemesine Hoşgeldiniz!</h3>
+    </div>
+    <span class="version-badge" id="modalVersionBadge">v3.2</span>
+    <div class="modal-body" id="updateList"></div>
+    <a href="hakkinda.html" style="display:block;text-align:center;margin:10px 0;font-size:0.78rem;color:var(--seed);text-decoration:none;">Nova Hakkında →</a>
+    <button class="modal-close-btn" onclick="closeUpdateModal()">Nova'ya Geç! 🚀</button>
+  </div>
+</div>
+
+<!-- ── Limit Block Overlay ── -->
+<div id="limitBlockOverlay">
+  <div class="limit-block-card">
+    <span class="limit-block-icon">🚦</span>
+    <h2>Günlük Limit Doldu</h2>
+    <p>Bugün için tüm mesaj hakkını kullandın.<br>Gece yarısında otomatik olarak yenilenir.</p>
+    <span id="limitCountdown">00:00:00</span>
+    <p class="limit-block-note">Nova yarın sabah seni bekliyor ✨</p>
+    <button onclick="document.getElementById('limitBlockOverlay').classList.remove('visible');openLoginModal()" style="margin-top:12px;padding:10px 20px;background:linear-gradient(135deg,#38bdf8,#6366f1);border:none;border-radius:10px;color:#fff;font-weight:600;font-size:0.85rem;cursor:pointer;">🔐 Giriş Yap → 35 Hak Al</button>
+  </div>
+</div>
+
+<!-- ── Login Modal ── -->
+<div id="loginModal">
+  <div class="login-sheet">
+    <div class="login-handle"></div>
+    <div class="login-close-wrap">
+      <button class="login-close-btn" onclick="closeLoginModal()">✕</button>
+    </div>
+    <h2>🔐 Giriş Yap</h2>
+    <p>Hesabına giriş yaparak tüm özelliklerin kilidini aç!</p>
+    <div class="login-benefits">
+      <div class="benefit-row">💬 Günlük <strong>35 mesaj</strong> hakkı <span style="color:var(--text-3,#64748b);font-size:0.75rem;">(misafir: 10)</span></div>
+      <div class="benefit-row">📁 Sohbetlerin <strong>buluta</strong> kaydedilir</div>
+      <div class="benefit-row">🖼️ <strong>Görsel gönderme</strong> aktif olur</div>
+      <div class="benefit-row">🔄 Farklı cihazlardan <strong>erişim</strong></div>
+    </div>
+    <button class="login-btn google-btn" id="googleLoginBtn" onclick="Auth.loginGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"> Google ile Giriş Yap
+    </button>
+    <div class="login-divider">veya e-posta ile</div>
+    <input type="email" id="loginEmail" class="login-input" placeholder="E-posta adresi">
+    <input type="password" id="loginPassword" class="login-input" placeholder="Şifre (en az 6 karakter)">
+    <button class="login-btn email-btn" onclick="Auth.loginEmailPass()">📧 Giriş Yap / Kayıt Ol</button>
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<!-- ── Settings Modal ── -->
+<div id="settingsModal">
+  <div class="settings-sheet">
+    <div class="settings-handle"></div>
+    <div class="settings-header">
+      <h3>⚙️ Nova Ayarları</h3>
+      <button class="close-btn" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-content">
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">🌙</span> Tema</div>
+        <div class="s-chip-row">
+          <button class="s-chip active" data-theme="dark">🌙 Karanlık</button>
+          <button class="s-chip" data-theme="light">☀️ Aydınlık</button>
+        </div>
       </div>
-      <div class="modal-body" id="updateList">
-      </div> <a href="hakkında.html">Nova</a>
-      <button class="modal-close-btn" onclick="closeUpdateModal()">Novaya Geç! 🚀</button>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">🎨</span> Tema Rengi</div>
+        <input type="color" id="colorPicker" value="#38bdf8">
+        <small>Tüm vurgu renklerini değiştirir.</small>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">💬</span> Baloncuk Stili</div>
+        <div class="s-chip-row">
+          <button class="s-chip active" data-bubble="default">Varsayılan</button>
+          <button class="s-chip" data-bubble="minimal">Minimal</button>
+          <button class="s-chip" data-bubble="sharp">Keskin</button>
+        </div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">🔡</span> Yazı Boyutu: <span id="fontSizeLabel">15px</span></div>
+        <div class="s-slider-row">
+          <span class="s-slider-label">12px</span>
+          <input type="range" id="fontSizeSlider" min="12" max="22" step="1" value="15">
+          <span class="s-slider-label">22px</span>
+        </div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">📐</span> Mesaj Aralığı</div>
+        <div class="s-chip-row">
+          <button class="s-chip" data-density="compact">Sıkışık</button>
+          <button class="s-chip active" data-density="normal">Normal</button>
+          <button class="s-chip" data-density="spacious">Geniş</button>
+        </div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">⌨️</span> Yazma Hızı: <span id="twSpeedLabel">Hızlı</span></div>
+        <div class="s-slider-row">
+          <span class="s-slider-label">Hızlı</span>
+          <input type="range" id="twSpeedSlider" min="1" max="40" step="1" value="6">
+          <span class="s-slider-label">Yavaş</span>
+        </div>
+        <small>Nova cevabını yazarken ne kadar hızlı yazsın.</small>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">🔊</span> Ses Okuma Hızı: <span id="ttsSpeedLabel">0.90</span></div>
+        <div class="s-slider-row">
+          <span class="s-slider-label">Yavaş</span>
+          <input type="range" id="ttsSpeedSlider" min="0.1" max="1.5" step="0.05" value="0.9">
+          <span class="s-slider-label">Hızlı</span>
+        </div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">🎵</span> Ses Tonu: <span id="ttsPitchLabel">1.00</span></div>
+        <div class="s-slider-row">
+          <span class="s-slider-label">Alçak</span>
+          <input type="range" id="ttsPitchSlider" min="0.5" max="2.0" step="0.05" value="1.0">
+          <span class="s-slider-label">Yüksek</span>
+        </div>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">🎙️</span> Ses Karakteri</div>
+        <div class="voice-card-scroll" id="voiceCardScroll">
+          <div style="color:var(--text-3);font-size:0.78rem;padding:6px;">Sesler yükleniyor...</div>
+        </div>
+        <small>Seçtikten sonra önizleme çalar.</small>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">🧠</span> AI Kişiliği</div>
+        <textarea id="customInstructions" rows="3" placeholder="Örn: Kısa cevap ver, espri yap, resmi ol..."></textarea>
+        <small>Nova bu talimatlara göre cevap verecek.</small>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">🌍</span> Uygulama Dili</div>
+        <select id="languageSelect">
+          <option value="tr">Türkçe 🇹🇷</option>
+          <option value="en">English 🇬🇧</option>
+        </select>
+      </div>
+
+      <div class="s-section">
+        <div class="s-section-title"><span class="s-icon">👨‍💻</span> Geliştirici</div>
+        <a href="developer.html" style="color:var(--seed);font-size:0.84rem;text-decoration:none;border-bottom:1px solid var(--seed-border);padding-bottom:2px;">Geliştirici Paneli →</a>
+      </div>
+
+      <button class="settings-save-btn" onclick="saveSettings()">💾 DEĞİŞİKLİKLERİ KAYDET</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Sidebar ── -->
+<div id="sideMenu">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">
+      <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="Nova">
+      <div class="sidebar-brand-text">
+        <span class="sidebar-brand-name">Nova AI</span>
+        <span class="sidebar-brand-sub">Intelligence</span>
+      </div>
     </div>
   </div>
 
-<div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000000; display:flex; align-items:center; justify-content:center; flex-direction:column; z-index:9999;">
-    <div class="logo-container">
-        <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="nova" class="spinning-logo">
+  <!-- Auth: misafir görünür, giriş yapınca değişir -->
+  <div id="sidebarAuthArea">
+    <button class="sidebar-login-btn" onclick="openLoginModal()">🔐 Giriş Yap / Kayıt Ol</button>
+  </div>
+
+  <button id="newChatBtn" style="width:calc(100% - 16px);margin:0 8px 6px;padding:10px;background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.25);border-radius:12px;color:#38bdf8;font-size:0.85rem;font-weight:600;cursor:pointer;">➕ Yeni Sohbet</button>
+
+  <div id="menu">
+    <div class="chat-section-label">Sohbetler</div>
+  </div>
+
+  <div class="sidebar-nav">
+    <button class="sidebar-nav-btn" onclick="window.location.href='sesli.html'">🎙️ Sesli Mod</button>
+    <button class="sidebar-nav-btn live" onclick="window.location.href='live.html'">
+      <span class="live-dot"></span> NoVa Live <span style="font-size:0.68rem;opacity:0.7;margin-left:auto">CANLI</span>
+    </button>
+    <button class="sidebar-nav-btn" id="themeToggleBtn">🌙 Tema Değiştir</button>
+    <button class="sidebar-nav-btn" id="settingsBtn">⚙️ Ayarlar</button>
+
+    <!-- ── YÖNLENDİRME BUTONU ── -->
+    <button
+      class="sidebar-nav-btn sidebar-social-btn"
+      onclick="window.location.href='yonlendirme.html'"
+      style="
+        background: linear-gradient(135deg, rgba(185,76,255,0.15), rgba(0,240,255,0.10));
+        border: 1px solid rgba(185,76,255,0.35);
+        color: #c97fff;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      "
+    >
+      🔗 Sosyal Medya &amp; Uygulama
+    </button>
+  </div>
+
+  <div class="sidebar-limit">
+    <div class="sidebar-limit-row">
+      <span class="sidebar-limit-label">Günlük Limit</span>
+      <span id="limitCountBadge">50 mesaj</span>
     </div>
-    
-    <h2 style="color:#00bfff; margin-top:30px; letter-spacing: 2px; font-weight: 400;" data-lang="loading_text">NOVA SİSTEMLERİ BAŞLATILIYOR</h2>
-    
-    <div class="loader-bar-container">
-        <div class="loader-bar-fill"></div>
-    </div>
-    
-    <p style="color:#4c6586; margin-top:15px; font-size: 0.8rem;" id="loading-status">Modüller yükleniyor...</p>
+    <div class="limit-track"><div id="limitFill"></div></div>
+    <div class="limit-reset-txt">Gece yarısı yenilenir</div>
+    <div id="limitWarningBar"></div>
+  </div>
 </div>
 
-  <div id="sideMenu">
-    <button id="newChatBtn">➕ Yeni Sohbet</button>
-    <div id="menu"></div>
-    <p></p>
-    <button id="themeToggle">🌙 Tema Değiştir</button> 
-    <p></p>
-    <button class="menu-nav-btn" onclick="window.location.href='sesli.html'">🎙️ Sesli Mod</button> <br>
-    <button class="menu-nav-btn" onclick="window.location.href='live.html'">🔴 NoVa Live</button> <br>
-    <button class="menu-nav-btn" onclick="openSettings()">⚙️ Nova Ayarları</button> <br>
-</div>
-  <div id="dragHandle"></div>
+<div id="dragHandle"></div>
 
-  <div id="mainContent">
-    <header>
-      <div style="display:flex; align-items:center;">
-        <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="Nova Logo">
-        💬 Nova Chat
+<!-- ── Main Content ── -->
+<div id="mainContent">
+  <!-- Misafir uyarı banner -->
+  <div id="guestBanner" onclick="openLoginModal()">
+    👤 Misafir moddasın — limit 10 mesaj, sohbetler kaydedilmiyor.
+    <span>Giriş yap →</span>
+  </div>
+
+  <header>
+    <div class="header-left">
+      <button id="menuToggle" title="Menü">☰</button>
+      <div class="header-logo-wrap">
+        <img src="ChatGPT Image 1 Kas 2025 12_57_42.png" alt="Nova">
       </div>
-      <span id="novaStatus">Hazır</span>
-    </header>
-    <div id="chatsContainer"></div>
+      <div class="header-title-col">
+        <div class="header-app-name">Nova AI <span id="headerUserName"></span></div>
+        <div class="header-chat-name" id="headerChatName">Yeni Sohbet</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div id="headerLimitBadge" class="header-icon-btn" title="Kalan hak">💬 50</div>
+      <button class="header-icon-btn" onclick="document.getElementById('themeToggleBtn').click()" title="Tema">🌙</button>
+      <button class="header-icon-btn" onclick="openSettings()" title="Ayarlar">⚙️</button>
+      <span id="novaStatus" style="font-size:0.73rem;color:var(--success);font-weight:500;white-space:nowrap;">● Hazır</span>
+    </div>
+  </header>
+
+  <div id="chatsContainer">
+    <div id="welcome-screen"></div>
+  </div>
+
+  <div id="inputAreaWrap">
+    <div id="imagePreview"></div>
     <div id="inputArea">
-      <textarea id="input" placeholder="NoVa'ya Sor ..." autocomplete="off" rows="1"></textarea>
-      <button type="button" class="sendBtn" id="sendBtn">↑</button>
-      <button type="button" class="sendBtn" id="stopBtn">Durdur</button>
+      <button class="input-icon-btn" id="imgPickBtn" title="Görsel Ekle">🖼️</button>
+      <div class="input-field-wrap">
+        <textarea id="input" rows="1" placeholder="Nova'ya yaz..." autocomplete="off"></textarea>
+      </div>
+      <button class="sendBtn" id="stopBtn" title="Durdur" style="display:none">⏹</button>
+      <button class="sendBtn" id="sendBtn" title="Gönder">↑</button>
     </div>
     <div id="quickBtns">
-      <button>Merhaba</button>
+      <button>Merhaba 👋</button>
       <button>Nasılsın?</button>
-      <button>Hava durumu</button>
+      <button>Kod yaz 💻</button>
+      <button>Çeviri yap 🌍</button>
+      <button>Özet çıkar 📄</button>
     </div>
     <div id="emojiPicker"></div>
   </div>
+</div>
 
-  <div id="toast"></div>
+<!-- ── Thinking Overlay ── -->
+<div id="thinkingOverlay">
+  <div class="th-dots">
+    <span></span><span></span><span></span>
+  </div>
+  Nova düşünüyor...
+</div>
 
-  <script src="chat.js"></script>
+<!-- ── Custom Confirm ── -->
+<div id="confirmOverlay">
+  <div class="confirm-box">
+    <p id="confirmMsg">Emin misin?</p>
+    <div class="confirm-btns">
+      <button class="confirm-cancel-btn" id="confirmCancel">İptal</button>
+      <button class="confirm-ok-btn" id="confirmOk">Sil</button>
+    </div>
+  </div>
+</div>
 
-</body>
+<div id="nova-active-pulse"></div>
+<div id="toast"></div>
+
+<script src="chat.js"></script>
 <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-      .then(() => console.log('Service Worker registered'))
-      .catch(err => console.log('SW registration failed', err));
+window.addEventListener("DOMContentLoaded", () => {
+  const nameEl = document.getElementById("headerUserName");
+  const userName = localStorage.getItem("nova_user");
+  if (nameEl && userName) nameEl.textContent = "· " + userName;
+
+  // Stop/Send toggle via MutationObserver on novaStatus
+  const sendBtn = document.getElementById("sendBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const statusEl = document.getElementById("novaStatus");
+  if (statusEl) {
+    const obs = new MutationObserver(() => {
+      const busy = statusEl.textContent.includes("Düşün");
+      if (sendBtn) sendBtn.style.display = busy ? "none" : "flex";
+      if (stopBtn) stopBtn.style.display = busy ? "flex" : "none";
+    });
+    obs.observe(statusEl, { childList: true, subtree: true, characterData: true });
   }
+});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 </script>
 
-
+</body>
 </html>
