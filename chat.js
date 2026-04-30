@@ -1,16 +1,16 @@
 // ============================================================
-// NOVA CHAT — chat.js  v3.2
-// Auth sistemi · Düzeltmeler · Yeni özellikler
+// NOVA CHAT — chat.js  v3.3
+// Auth sistemi · Firestore Senkronizasyon · Düzeltmeler
 // ============================================================
 
 // ============================================================
 // GÜNCELLEME NOTLARI
 // ============================================================
-const CURRENT_VERSION = "3.2";
+const CURRENT_VERSION = "3.3";
 const UPDATE_NOTES = [
     "🔐 Giriş sistemi eklendi (Google & E-posta)",
     "🌟 Giriş yapınca 35 günlük mesaj hakkı",
-    "📁 Giriş yapınca sohbetler buluta kaydedilir",
+    "☁️ Sohbetler Firestore'a kaydedilir (web + mobil senkron)",
     "🖼️ Görsel gönderme artık sadece giriş yapanlara",
     "💡 Misafir limiti: 10 mesaj/gün",
     "⌨️ Yazma hızı ayarlanabilir (Ayarlar'dan)",
@@ -41,7 +41,9 @@ window.closeUpdateModal = closeUpdateModal;
 // ============================================================
 // SABİTLER
 // ============================================================
-const BACKEND_URL     = "https://nova-chat-d50f.onrender.com/api";
+const BACKEND_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://127.0.0.1:10000/api"
+    : "https://nova-chat-d50f.onrender.com/api";
 const LIMIT_GUEST     = 10;
 const LIMIT_AUTH      = 35;
 
@@ -71,7 +73,7 @@ let appSettings = JSON.parse(localStorage.getItem("nova_settings_v3")) || {
     bubbleStyle:        "default",
     fontSize:           15,
     messageDensity:     "normal",
-    typewriterSpeed:    6,   // ms / karakter (1=hızlı, 40=yavaş)
+    typewriterSpeed:    6,
 };
 
 let userInfo = JSON.parse(localStorage.getItem("nova_user_info_" + userId) || "{}");
@@ -87,7 +89,6 @@ let isTyping           = false;
 let isResizing         = false;
 let selectedBase64Image = null;
 
-// Mesaj içerik kayıt defteri (sesli okuma için güvenli referans)
 const msgRegistry = {};
 
 // ============================================================
@@ -108,6 +109,205 @@ const FIREBASE_CONFIG = {
     storageBucket:     "nova-329c7.firebasestorage.app",
     messagingSenderId: "284547967902",
     appId:             "1:284547967902:web:7dd2e64d1a643a30e5c48f",
+};
+
+// ============================================================
+// FIRESTORE SENKRONIZASYON KATMANI
+// ============================================================
+// Firestore yapısı:
+//   users/{firebaseUID}/chats/{chatId}/messages/{messageId}
+//   {sender, text, timestamp, imgBase64?}
+//
+//   users/{firebaseUID}/chatMeta/{chatId}
+//   {label, createdAt, updatedAt}
+
+const FireStore = {
+    _db: null,
+
+    // Firestore referansı al (lazy init)
+    db() {
+        if (this._db) return this._db;
+        if (typeof firebase !== "undefined" && firebase.firestore) {
+            this._db = firebase.firestore();
+        }
+        return this._db;
+    },
+
+    // Giriş yapılmış mı ve Firestore hazır mı?
+    ready() {
+        return Auth.isLoggedIn() && !!this.db();
+    },
+
+    // Firebase UID'yi doğrudan kullan
+    uid() {
+        return Auth.user ? Auth.user.uid : (localStorage.getItem("nova_user_id") || "guest");
+    },
+
+    // ── Mesaj kaydet ──
+    async saveMessage(chatId, sender, text, imgBase64) {
+        const msg = { sender, text: text || "", imgBase64: imgBase64 || null, timestamp: Date.now() };
+        
+        // 1. Yerel yedekle (Kritik: Misafirler için)
+        try {
+            let local = JSON.parse(localStorage.getItem("nova_local_chats") || "{}");
+            if (!local[chatId]) local[chatId] = { id: chatId, label: text ? text.substring(0, 30) : "Sohbet", messages: [] };
+            local[chatId].messages.push(msg);
+            local[chatId].updatedAt = Date.now();
+            localStorage.setItem("nova_local_chats", JSON.stringify(local));
+        } catch(e) { console.warn("Local storage error", e); }
+
+        // 2. Firestore Sync (Giriş varsa)
+        if (this.ready()) {
+            try {
+                await this.db().collection("users").doc(this.uid()).collection("chats").doc(chatId).collection("messages").add({
+                    ...msg, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await this.db().collection("users").doc(this.uid()).collection("chatMeta").doc(chatId).set({
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    label: text ? text.substring(0, 30) : "Sohbet"
+                }, { merge: true });
+            } catch (err) { console.warn("[Firestore] saveMessage hatası:", err); }
+        }
+    },
+
+    // ── Sohbet meta bilgisini kaydet / güncelle ──
+    async saveChatMeta(chatId, label) {
+        if (!this.ready()) return;
+        try {
+            await this.db()
+                .collection("users").doc(this.uid())
+                .collection("chatMeta").doc(chatId)
+                .set({
+                    label:     label || "Yeni Sohbet",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+        } catch (err) {
+            console.warn("[Firestore] saveChatMeta hatası:", err);
+        }
+    },
+
+    // ── Sohbet etiketini güncelle ──
+    async updateChatLabel(chatId, label) {
+        if (!this.ready()) return;
+        try {
+            await this.db()
+                .collection("users").doc(this.uid())
+                .collection("chatMeta").doc(chatId)
+                .set({ label, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        } catch (err) {
+            console.warn("[Firestore] updateChatLabel hatası:", err);
+        }
+    },
+
+    // ── Tüm sohbet meta listesini getir ──
+    async getChatList() {
+        if (!this.ready()) return [];
+        try {
+            const snap = await this.db()
+                .collection("users").doc(this.uid())
+                .collection("chatMeta")
+                .orderBy("updatedAt", "desc")
+                .get();
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (err) {
+            console.warn("[Firestore] getChatList hatası:", err);
+            return [];
+        }
+    },
+
+    // ── Belirli sohbetin mesajlarını getir ──
+    async getMessages(chatId) {
+        // 1. Önce yerel veriye bak (hızlı sonuç)
+        try {
+            const local = JSON.parse(localStorage.getItem("nova_local_chats") || "{}");
+            if (local[chatId] && local[chatId].messages) {
+                return local[chatId].messages;
+            }
+        } catch(e) {}
+
+        // 2. Eğer yerelde yoksa veya giriş yapılmışsa Firestore'dan çek
+        if (this.ready()) {
+            try {
+                const snap = await this.db()
+                    .collection("users").doc(this.uid())
+                    .collection("chats").doc(chatId)
+                    .collection("messages")
+                    .orderBy("timestamp", "asc")
+                    .get();
+                return snap.docs.map(d => d.data());
+            } catch (err) {
+                console.warn("[Firestore] getMessages hatası:", err);
+            }
+        }
+        return [];
+    },
+
+    // ── Sohbeti sil ──
+    async deleteChat(chatId) {
+        if (!this.ready()) return;
+        try {
+            // Meta sil
+            await this.db()
+                .collection("users").doc(this.uid())
+                .collection("chatMeta").doc(chatId)
+                .delete();
+
+            // Mesajları sil (batch)
+            const msgSnap = await this.db()
+                .collection("users").doc(this.uid())
+                .collection("chats").doc(chatId)
+                .collection("messages")
+                .get();
+
+            const batch = this.db().batch();
+            msgSnap.docs.forEach(d => batch.delete(d.ref));
+            // Ana doc
+            batch.delete(
+                this.db()
+                    .collection("users").doc(this.uid())
+                    .collection("chats").doc(chatId)
+            );
+            await batch.commit();
+        } catch (err) {
+            console.warn("[Firestore] deleteChat hatası:", err);
+        }
+    },
+
+    // ── Kullanıcı giriş yaptığında tüm geçmişi yükle ──
+    async loadAllChats() {
+        const menu = document.getElementById("menu");
+        if (menu) menu.querySelectorAll(".chatRow").forEach(r => r.remove());
+
+        // 1. Yerel verileri çek
+        let combined = [];
+        try {
+            const local = JSON.parse(localStorage.getItem("nova_local_chats") || "{}");
+            combined = Object.values(local).map(c => ({ id: c.id, label: c.label, updatedAt: c.updatedAt }));
+        } catch(e) {}
+
+        // 2. Eğer girişliyse Firestore'dan çek ve birleştir
+        if (this.ready()) {
+            const remote = await this.getChatList();
+            remote.forEach(rc => {
+                if (!combined.find(c => c.id === rc.id)) combined.push(rc);
+            });
+        }
+
+        // Tarihe göre sırala
+        combined.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+        if (!combined.length) return;
+
+        for (const meta of combined) {
+            addChatToMenu(meta.id, meta.label || "Sohbet");
+        }
+
+        // Son kullanılanı bul ve aç
+        const lastChat = localStorage.getItem("nova_last_chat");
+        const foundId = combined.find(m => m.id === lastChat)?.id || combined[0].id;
+        if (foundId) loadChat(foundId);
+    },
 };
 
 // ============================================================
@@ -150,12 +350,13 @@ const Auth = {
 
     _onStateChange(user) {
         if (user) {
-            // Giriş yapıldı
             userId = "fb_" + user.uid;
             localStorage.setItem("nova_user_id", userId);
             userInfo.name = this.getDisplayName();
+
+            // Firestore'dan geçmişi yükle
+            setTimeout(() => FireStore.loadAllChats(), 300);
         } else {
-            // Misafir
             if (!userId || !userId.startsWith("guest_")) {
                 userId = "guest_" + Date.now() + "_" + Math.floor(Math.random() * 9999);
                 localStorage.setItem("nova_user_id", userId);
@@ -190,7 +391,6 @@ const Auth = {
         } catch (err) {
             if (["auth/user-not-found", "auth/invalid-credential", "auth/invalid-email"].includes(err.code) ||
                 err.message.includes("user-not-found") || err.message.includes("invalid-credential")) {
-                // Hesap yoksa oluştur
                 try {
                     await firebase.auth().createUserWithEmailAndPassword(email, password);
                     closeLoginModal();
@@ -213,7 +413,6 @@ const Auth = {
             localStorage.setItem("nova_user_id", userId);
             showToast("👋 Çıkış yapıldı");
             this._onStateChange(null);
-            // Mevcut sohbeti temizle
             startNewChat();
         } catch (err) {
             showToast("⚠️ Çıkış hatası");
@@ -224,12 +423,12 @@ window.Auth = Auth;
 
 function _authErrMsg(err) {
     const map = {
-        "auth/wrong-password":       "Şifre yanlış.",
-        "auth/weak-password":        "Şifre en az 6 karakter olmalı.",
-        "auth/email-already-in-use": "Bu e-posta zaten kayıtlı, giriş yapmayı dene.",
-        "auth/invalid-email":        "Geçersiz e-posta adresi.",
-        "auth/too-many-requests":    "Çok fazla deneme. Biraz bekle.",
-        "auth/popup-closed-by-user": "Popup kapatıldı.",
+        "auth/wrong-password":         "Şifre yanlış.",
+        "auth/weak-password":          "Şifre en az 6 karakter olmalı.",
+        "auth/email-already-in-use":   "Bu e-posta zaten kayıtlı, giriş yapmayı dene.",
+        "auth/invalid-email":          "Geçersiz e-posta adresi.",
+        "auth/too-many-requests":      "Çok fazla deneme. Biraz bekle.",
+        "auth/popup-closed-by-user":   "Popup kapatıldı.",
         "auth/network-request-failed": "Ağ hatası. İnternet bağlantını kontrol et.",
     };
     return map[err.code] || err.message || "Bilinmeyen hata.";
@@ -256,17 +455,18 @@ window.closeLoginModal = closeLoginModal;
 
 // Auth UI güncelle
 function updateAuthUI(user) {
-    const authArea  = document.getElementById("sidebarAuthArea");
+    const authArea    = document.getElementById("sidebarAuthArea");
     const guestBanner = document.getElementById("guestBanner");
-    const imgBtn    = document.getElementById("imgPickBtn");
+    const imgBtn      = document.getElementById("imgPickBtn");
 
     if (!authArea) return;
 
     if (user) {
-        // Giriş yapılmış: kullanıcı kartı göster
-        const photo   = Auth.getPhotoURL();
-        const name    = Auth.getDisplayName();
-        const email   = Auth.getEmail();
+        const photo      = Auth.getPhotoURL();
+        const name       = Auth.getDisplayName();
+        const email      = Auth.getEmail();
+        const shortEmail = email && email.length > 26 ? email.slice(0, 24) + '…' : (email || '');
+
         authArea.innerHTML = `
             <div class="sidebar-user-card">
                 <div class="sidebar-user-avatar">
@@ -277,16 +477,23 @@ function updateAuthUI(user) {
                     <div class="sidebar-user-badge">✓ Üye · 35 hak/gün</div>
                 </div>
                 <button class="sidebar-logout-btn" onclick="Auth.logout()" title="Çıkış Yap">↩</button>
-            </div>`;
+            </div>
+            ${email ? `
+            <div class="sidebar-email-badge">
+                <span class="email-icon">📧</span>
+                <span class="sidebar-email-text" title="${email}">${shortEmail}</span>
+            </div>
+            <div class="sidebar-sync-badge">
+                🔗 Sohbetler web + mobilde senkronize
+            </div>` : ''}`;
+
         if (guestBanner) guestBanner.style.display = "none";
         if (imgBtn) { imgBtn.disabled = false; imgBtn.style.opacity = "1"; imgBtn.title = "Görsel Ekle"; }
         const headerName = document.getElementById("headerUserName");
         if (headerName) headerName.textContent = "· " + name;
     } else {
-        // Misafir: giriş butonu
         authArea.innerHTML = `<button class="sidebar-login-btn" onclick="openLoginModal()">🔐 Giriş Yap / Kayıt Ol</button>`;
         if (guestBanner) guestBanner.style.display = "block";
-        // Görsel butonu devre dışı
         if (imgBtn) {
             imgBtn.disabled = true;
             imgBtn.style.opacity = "0.35";
@@ -300,7 +507,7 @@ function updateAuthUI(user) {
 // ============================================================
 const LimitSystem = {
     KEY:          "nova_daily_limit_v3",
-    currentLimit: LIMIT_GUEST,   // Auth init'ten önce misafir limiti
+    currentLimit: LIMIT_GUEST,
 
     getData() {
         const today = new Date().toDateString();
@@ -408,14 +615,14 @@ const LimitSystem = {
 };
 
 // ============================================================
-// ÖZEL ONAY DİYALOĞU (confirm() yerine)
+// ÖZEL ONAY DİYALOĞU
 // ============================================================
 function showConfirm(message, okLabel = "Sil") {
     return new Promise(resolve => {
-        const overlay  = document.getElementById("confirmOverlay");
-        const msgEl    = document.getElementById("confirmMsg");
-        const okBtn    = document.getElementById("confirmOk");
-        const cancelBtn= document.getElementById("confirmCancel");
+        const overlay   = document.getElementById("confirmOverlay");
+        const msgEl     = document.getElementById("confirmMsg");
+        const okBtn     = document.getElementById("confirmOk");
+        const cancelBtn = document.getElementById("confirmCancel");
         if (!overlay) { resolve(window.confirm(message)); return; }
         if (msgEl)  msgEl.textContent = message;
         if (okBtn)  okBtn.textContent = okLabel;
@@ -432,7 +639,7 @@ function showConfirm(message, okLabel = "Sil") {
 }
 
 // ============================================================
-// THINKING OVERLAY (1.5s bekleyince çıkar)
+// THINKING OVERLAY
 // ============================================================
 let _thinkingTimer = null;
 
@@ -464,17 +671,17 @@ function applySettings() {
     const s = appSettings;
     document.body.classList.toggle("light-mode", s.theme === "light");
     document.body.classList.toggle("dark-mode",  s.theme !== "light");
-    document.documentElement.style.setProperty("--seed",        s.seedColor);
+    document.documentElement.style.setProperty("--seed",          s.seedColor);
     document.documentElement.style.setProperty("--primary-color", s.seedColor);
     document.documentElement.style.setProperty("--accent-color",  s.seedColor);
-    document.documentElement.style.setProperty("--seed-dim",    hexToRgba(s.seedColor, 0.12));
-    document.documentElement.style.setProperty("--seed-glow",   hexToRgba(s.seedColor, 0.30));
-    document.documentElement.style.setProperty("--seed-border", hexToRgba(s.seedColor, 0.35));
-    document.documentElement.style.setProperty("--font-size",   s.fontSize + "px");
+    document.documentElement.style.setProperty("--seed-dim",      hexToRgba(s.seedColor, 0.12));
+    document.documentElement.style.setProperty("--seed-glow",     hexToRgba(s.seedColor, 0.30));
+    document.documentElement.style.setProperty("--seed-border",   hexToRgba(s.seedColor, 0.35));
+    document.documentElement.style.setProperty("--font-size",     s.fontSize + "px");
     const radii = { default: "20px", minimal: "8px", sharp: "4px" };
     document.documentElement.style.setProperty("--bubble-radius", radii[s.bubbleStyle] || "20px");
     const gaps = { compact: "10px", normal: "20px", spacious: "30px" };
-    document.documentElement.style.setProperty("--density-gap", gaps[s.messageDensity] || "20px");
+    document.documentElement.style.setProperty("--density-gap",   gaps[s.messageDensity] || "20px");
 
     const lang = s.language || "tr";
     document.querySelectorAll("[data-lang]").forEach(el => {
@@ -553,8 +760,11 @@ let _isSpeaking    = false;
 let _speakingMsgId = null;
 
 function cleanForSpeech(text) {
-    return text
-        .replace(/[\p{Emoji_Presentation}\p{Emoji}\p{Extended_Pictographic}]/gu, "")
+    if (!text) return "";
+    let cleanText = text.replace(/```[\s\S]*?```/g, ""); // Büyük kod bloklarını çıkar
+    cleanText = cleanText.replace(/`[^`]+`/g, "");      // Satır içi kodları çıkar
+    return cleanText
+        .replace(/[\p{Emoji_Presentation}\p{Emoji}\p{Extended_Pictographic}]/gu, "") // Emojileri çıkar
         .replace(/[^0-9a-zA-ZğüşıöçĞÜŞİÖÇ\s.,!?]/g, "")
         .replace(/,/g, ", ").replace(/\./g, ". ")
         .trim();
@@ -562,7 +772,6 @@ function cleanForSpeech(text) {
 
 function speakMessage(text, msgId) {
     const synth = window.speechSynthesis;
-    // Aynı mesaj tekrar tıklandıysa durdur
     if (_isSpeaking && _speakingMsgId === msgId) {
         synth.cancel();
         _isSpeaking = false; _speakingMsgId = null;
@@ -609,15 +818,32 @@ window.speakMessage = speakMessage;
 // ============================================================
 // KOD BLOĞU FORMATLAMA
 // ============================================================
-function formatCodeBlocks(text) {
-    return text.replace(/```(\w*)?([\s\S]*?)```/g, (_, lang, code) => {
+function formatMarkdown(text) {
+    if (!text) return "";
+    // 1. Kod bloklarını (```) koru ve formatla
+    let formatted = text.replace(/```(\w*)?([\s\S]*?)```/g, (_, lang, code) => {
         const l    = lang || "text";
         const safe = code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         return `<div class="code-window"><div class="code-header"><span>${l}</span><button class="copy-btn-code" data-copy>📋 Kopyala</button></div><pre><code class="language-${l}">${safe}</code></pre></div>`;
     });
+
+    // 2. Satır içi kodları (`) koru
+    formatted = formatted.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+
+    // 3. Kalın metinleri (**...**) yap
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+    // 4. Çift tırnak içindeki metinleri ("...") vurgula
+    formatted = formatted.replace(/"([^"<>]+)"/g, '<span class="quote-highlight">"$1"</span>');
+
+    // 5. Satır sonlarını (<br>) koru
+    // NOT: CSS'de white-space: pre-wrap olduğu için \n zaten çalışır, 
+    // ama innerHTML kullandığımızda \n -> <br> dönüşümü görsel tutarlılık sağlar.
+    formatted = formatted.replace(/\n/g, '<br>');
+
+    return formatted;
 }
 
-// delegated copy (onclick yerine event delegation)
 document.addEventListener("click", e => {
     if (!e.target.matches("[data-copy]")) return;
     const code = e.target.closest(".code-window")?.querySelector("code");
@@ -689,9 +915,10 @@ function addMessage(text, sender, imgBase64, container) {
         const img = document.createElement("img"); img.className = "msg-image";
         img.src = "data:image/jpeg;base64," + imgBase64; div.appendChild(img);
     }
-    const content = document.createElement("div"); content.className = "message-content"; content.textContent = text || ""; div.appendChild(content);
+    const content = document.createElement("div"); content.className = "message-content"; content.innerHTML = formatMarkdown(text || ""); div.appendChild(content);
     const ts = document.createElement("div"); ts.className = "timestamp"; ts.textContent = fmtTime(new Date()); div.appendChild(ts);
     parent.appendChild(div); scrollToBottom(); showNovaActivePulse(); toggleWelcomeScreen();
+    linkify(content); // Başta linkleri çevir
     return { div, msgId, content };
 }
 
@@ -712,25 +939,22 @@ async function addTypingMessage(text, sender, container) {
 
     isTyping = true;
     const baseDelay = appSettings.typewriterSpeed || 6;
-    // Uzun metinlerde daha hızlı
     const delay = text.length > 800 ? Math.max(1, Math.floor(baseDelay / 3)) : baseDelay;
     let cur = "";
     for (let i = 0; i < text.length; i++) {
         if (!isTyping) break;
-        cur += text[i]; content.textContent = cur;
+        cur += text[i]; content.innerText = cur;
         if (i % 5 === 0) scrollToBottom();
         if (delay > 0) await new Promise(r => setTimeout(r, delay));
     }
 
-    // Tam içeriği render et
-    content.innerHTML = formatCodeBlocks(text);
+    content.innerHTML = formatMarkdown(text);
     content.querySelectorAll("pre code").forEach(b => { if (typeof hljs !== "undefined") hljs.highlightElement(b); });
     linkify(content);
 
     const tsSp = document.createElement("div"); tsSp.className = "timestamp"; tsSp.textContent = fmtTime(new Date()); div.appendChild(tsSp);
 
     if (sender === "nova") {
-        // Metni registry'ye kaydet (sesli okuma için güvenli)
         msgRegistry[msgId] = text;
 
         const acts = document.createElement("div"); acts.className = "msg-actions";
@@ -809,7 +1033,6 @@ window.clearImagePreview = clearImagePreview;
 async function sendMessage(msg) {
     if (sending) return;
 
-    // Limit kontrolü
     if (LimitSystem.isBlocked()) {
         LimitSystem.showBlockOverlay();
         showToast("⛔ Günlük limit doldu!");
@@ -819,7 +1042,6 @@ async function sendMessage(msg) {
     const text = msg || document.getElementById("input")?.value.trim();
     if (!text && !selectedBase64Image) return;
 
-    // Misafir + görsel kontrolü
     if (selectedBase64Image && !Auth.canUseImages()) {
         showToast("🖼️ Görsel göndermek için giriş yapmalısın!");
         setTimeout(openLoginModal, 600);
@@ -827,7 +1049,6 @@ async function sendMessage(msg) {
         return;
     }
 
-    // Misafir: sohbet geçmişi uyarısı (sadece ilk mesajda)
     if (!Auth.keepHistory()) {
         const chatDiv = document.getElementById(currentChat);
         if (chatDiv && chatDiv.children.length === 0) {
@@ -845,7 +1066,16 @@ async function sendMessage(msg) {
 
     const displayText = imgToSend ? (text ? "[Görsel] " + text : "[Görsel Gönderildi]") : text;
     addMessage(displayText || "", "user", imgToSend, chatDiv);
-    updateChatBtnLabel(document.querySelector(`button.chatBtn[data-id="${currentChat}"]`), displayText || "Görsel");
+
+    // ── Kullanıcı mesajını Firestore'a kaydet ──
+    FireStore.saveMessage(currentChat, "user", displayText || "", imgToSend || null);
+
+    // İlk kullanıcı mesajıyla sohbet meta etiketini güncelle
+    const chatBtn = document.querySelector(`button.chatBtn[data-id="${currentChat}"]`);
+    if (chatBtn) {
+        updateChatBtnLabel(chatBtn, displayText || "Görsel");
+        FireStore.updateChatLabel(currentChat, (displayText || "Görsel").slice(0, 40));
+    }
 
     // Typing dots
     const typingDiv = document.createElement("div"); typingDiv.className = "typing-indicator";
@@ -853,9 +1083,8 @@ async function sendMessage(msg) {
     chatDiv.appendChild(typingDiv); scrollToBottom();
 
     const statusEl = document.getElementById("novaStatus");
-    if (statusEl) statusEl.textContent = "Düşünüyor...";
+    if (statusEl) statusEl.innerHTML = `<span class="pulse-text">Nova Düşünüyor...</span>`;
 
-    // 1.5 saniye sonra "thinking" overlay göster
     showThinkingOverlay();
 
     abortController = new AbortController();
@@ -874,13 +1103,13 @@ async function sendMessage(msg) {
                 body: JSON.stringify({
                     userId,
                     currentChat,
-                    message:          text || "Bu görseli analiz et.",
-                    image:            imgToSend,
+                    message:           text || "Bu görseli analiz et.",
+                    image:             imgToSend,
                     userInfo,
-                    systemPrompt:     appSettings.customInstructions || "",
-                    systemInstruction:appSettings.customInstructions || "",
-                    settings:         appSettings,
-                    saveHistory:      Auth.keepHistory(),
+                    systemPrompt:      appSettings.customInstructions || "",
+                    systemInstruction: appSettings.customInstructions || "",
+                    settings:          appSettings,
+                    saveHistory:       false,
                 }),
                 signal: abortController.signal,
             });
@@ -893,6 +1122,10 @@ async function sendMessage(msg) {
             if (data.response) {
                 LimitSystem.increment();
                 await addTypingMessage(data.response, "nova", chatDiv);
+
+                // ── Nova yanıtını Firestore'a kaydet ──
+                FireStore.saveMessage(currentChat, "nova", data.response, null);
+
                 if (data.updatedUserInfo) {
                     userInfo = data.updatedUserInfo;
                     localStorage.setItem("nova_user_info_" + userId, JSON.stringify(userInfo));
@@ -930,6 +1163,7 @@ async function sendMessage(msg) {
     sending = false;
     if (statusEl) statusEl.textContent = "Hazır";
     abortController = null;
+    scrollToBottom();
 }
 
 // ============================================================
@@ -950,24 +1184,17 @@ function addChatToMenu(chatId, label) {
         const confirmed = await showConfirm("Bu sohbeti silmek istiyor musun?", "🗑️ Sil");
         if (!confirmed) return;
 
-        // Önce UI'dan kaldır (her zaman çalışır)
+        // UI'dan kaldır
         row.remove();
         const chatEl = document.getElementById(chatId);
         if (chatEl) chatEl.remove();
 
-        // Eğer silinen aktif sohbetse yenisini başlat
         if (currentChat === chatId) startNewChat();
 
         showToast("🗑️ Sohbet silindi");
 
-        // Backend'e de bildir (arka planda, hata olursa önemli değil)
-        if (Auth.keepHistory()) {
-            fetch(`${BACKEND_URL}/delete_chat`, {
-                method:  "POST",
-                headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify({ userId, chatId }),
-            }).catch(() => {});
-        }
+        // Firestore'dan sil
+        FireStore.deleteChat(chatId);
     };
 
     row.appendChild(btn); row.appendChild(del);
@@ -996,16 +1223,29 @@ function loadChat(cid) {
     const lbl   = document.querySelector(`button.chatBtn[data-id="${cid}"]`)?.textContent;
     if (hName) hName.textContent = lbl || "Yeni Sohbet";
 
-    // Geçmiş sadece giriş yapanlarda yükle
-    if (Auth.keepHistory()) {
-        fetch(`${BACKEND_URL}/history?userId=${userId}`)
-            .then(r => r.json())
-            .then(data => {
-                const msgs = data[cid] || [];
-                if (div.innerHTML === "") msgs.forEach(m => addMessage(m.message || m.text, m.sender, null, div));
+    // ── Geçmiş: Firestore'dan yükle (giriş yapılmışsa) ──
+    if (Auth.keepHistory() && FireStore.ready()) {
+        if (div.innerHTML === "") {
+            // Yükleniyor göstergesi
+            const loadingEl = document.createElement("div");
+            loadingEl.className = "history-loading";
+            loadingEl.style.cssText = "text-align:center;padding:20px;color:var(--text-3,#64748b);font-size:0.82rem;";
+            loadingEl.textContent = "⏳ Geçmiş yükleniyor...";
+            div.appendChild(loadingEl);
+
+            FireStore.getMessages(cid).then(msgs => {
+                loadingEl.remove();
+                if (msgs.length) {
+                    msgs.forEach(m => addMessage(m.text || "", m.sender, m.imgBase64 || null, div));
+                }
                 toggleWelcomeScreen();
-            })
-            .catch(() => toggleWelcomeScreen());
+            }).catch(() => {
+                loadingEl.remove();
+                toggleWelcomeScreen();
+            });
+        } else {
+            toggleWelcomeScreen();
+        }
     } else {
         toggleWelcomeScreen();
     }
@@ -1013,8 +1253,13 @@ function loadChat(cid) {
 
 function startNewChat() {
     const id = "chat_" + Date.now() + "_" + Math.floor(Math.random() * 9999);
-    addChatToMenu(id, "Yeni Sohbet");
+    const label = "Yeni Sohbet";
+    addChatToMenu(id, label);
     loadChat(id);
+
+    // Firestore'a meta kaydet
+    FireStore.saveChatMeta(id, label);
+
     document.getElementById("sideMenu")?.classList.remove("active");
     showToast("✨ Yeni sohbet başlatıldı");
 }
@@ -1134,53 +1379,38 @@ async function initNovaNotifications() {
 // SAYFA YÜKLENDİĞİNDE
 // ============================================================
 window.addEventListener("DOMContentLoaded", () => {
-    // Splash
     const splash = document.getElementById("splash-screen");
     if (splash) setTimeout(() => { splash.classList.add("fade-out"); setTimeout(() => splash.style.display = "none", 800); }, 2000);
 
-    // Ayarları uygula
     applySettings();
-
-    // Firebase Auth başlat
-    Auth.init();
-
-    // Hoşgeldin
+    Auth.init();           // Firebase Auth + Firestore başlat
     buildWelcomeScreen();
-
-    // Sohbet + menü
     loadChat(currentChat);
     renderMenu();
     setTimeout(toggleWelcomeScreen, 500);
 
-    // Limit
     LimitSystem.currentLimit = Auth.getLimit();
     LimitSystem.updateUI();
     if (LimitSystem.isBlocked()) LimitSystem.startCountdown();
 
-    // Güncelleme
     setTimeout(checkAppUpdate, 1200);
-
-    // Bildirimler
     window.addEventListener("load", initNovaNotifications);
-
-    // Sunucu uyandır
     warmUpServer();
 
     // ── DOM ──
-    const sideMenu   = document.getElementById("sideMenu");
-    const menuToggle = document.getElementById("menuToggle");
-    const dragHandle = document.getElementById("dragHandle");
-    const input      = document.getElementById("input");
-    const sendBtn    = document.getElementById("sendBtn");
-    const stopBtn    = document.getElementById("stopBtn");
-    const newChatBtn = document.getElementById("newChatBtn");
-    const themeToggle= document.getElementById("themeToggleBtn");
-    const settingsBtn= document.getElementById("settingsBtn");
-    const imgBtn     = document.getElementById("imgPickBtn");
-    const quickBtns  = document.getElementById("quickBtns");
-    const emojiPicker= document.getElementById("emojiPicker");
+    const sideMenu    = document.getElementById("sideMenu");
+    const menuToggle  = document.getElementById("menuToggle");
+    const dragHandle  = document.getElementById("dragHandle");
+    const input       = document.getElementById("input");
+    const sendBtn     = document.getElementById("sendBtn");
+    const stopBtn     = document.getElementById("stopBtn");
+    const newChatBtn  = document.getElementById("newChatBtn");
+    const themeToggle = document.getElementById("themeToggleBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const imgBtn      = document.getElementById("imgPickBtn");
+    const quickBtns   = document.getElementById("quickBtns");
+    const emojiPicker = document.getElementById("emojiPicker");
 
-    // Tema
     themeToggle?.addEventListener("click", () => {
         appSettings.theme = appSettings.theme === "dark" ? "light" : "dark";
         applySettings();
@@ -1188,10 +1418,8 @@ window.addEventListener("DOMContentLoaded", () => {
         showToast(appSettings.theme === "dark" ? "🌙 Karanlık Mod" : "☀️ Aydınlık Mod");
     });
 
-    // Ayarlar
     settingsBtn?.addEventListener("click", openSettings);
 
-    // Menü
     menuToggle?.addEventListener("click", () => sideMenu?.classList.toggle("active"));
     document.addEventListener("click", e => {
         if (sideMenu?.classList.contains("active") && !sideMenu.contains(e.target) && e.target !== menuToggle)
@@ -1201,7 +1429,6 @@ window.addEventListener("DOMContentLoaded", () => {
         if (e.target.dataset.theme)   { document.querySelectorAll("[data-theme]").forEach(el=>el.classList.remove("active")); e.target.classList.add("active"); appSettings.theme=e.target.dataset.theme; applySettings(); }
     });
 
-    // Drag resize
     dragHandle?.addEventListener("mousedown", () => { isResizing=true; document.body.style.cursor="col-resize"; });
     document.addEventListener("mousemove", e => {
         if (!isResizing) return;
@@ -1211,7 +1438,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     document.addEventListener("mouseup", () => { if (isResizing) { isResizing=false; document.body.style.cursor="default"; } });
 
-    // Yeni sohbet / gönder / durdur
     newChatBtn?.addEventListener("click", e => { e.preventDefault(); startNewChat(); });
     sendBtn?.addEventListener("click",    e => { e.preventDefault(); sendMessage(); });
 
@@ -1230,7 +1456,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     imgBtn?.addEventListener("click", pickImage);
 
-    // Emoji
     if (emojiPicker) {
         "😀😂😍😎🤔😢❤️🤖🚀✨💡🔥".split("").forEach(em => {
             const s = document.createElement("span"); s.textContent = em;
@@ -1239,12 +1464,10 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Hızlı butonlar
     quickBtns?.querySelectorAll("button").forEach(b => {
         b.addEventListener("click", e => { e.preventDefault(); sendMessage(b.textContent); });
     });
 
-    // Slider canlı etiketler
     document.getElementById("fontSizeSlider")?.addEventListener("input", function() {
         const l = document.getElementById("fontSizeLabel"); if (l) l.textContent = this.value + "px";
         appSettings.fontSize = parseInt(this.value); applySettings();
@@ -1259,16 +1482,13 @@ window.addEventListener("DOMContentLoaded", () => {
         const l = document.getElementById("ttsPitchLabel"); if (l) l.textContent = Number(this.value).toFixed(2);
     });
 
-    // Renk picker canlı önizleme
     document.getElementById("colorPicker")?.addEventListener("input", function() {
         appSettings.seedColor = this.value; applySettings();
     });
 
-    // Login modal dışına tıklayınca kapat
     document.getElementById("loginModal")?.addEventListener("click", function(e) {
         if (e.target === this) closeLoginModal();
     });
 
-    // Mevcut mesajları linkify et
     document.querySelectorAll(".message-content").forEach(el => linkify(el));
 });
